@@ -129,7 +129,7 @@ function getRequiredSetSize(color: string): number {
   }
 }
 
-export function checkWinCondition(player: Player): boolean {
+export function getCompletedSetCount(player: Player): number {
   let completedSets = 0;
   for (const color in player.properties) {
     const requiredSize = getRequiredSetSize(color);
@@ -137,7 +137,11 @@ export function checkWinCondition(player: Player): boolean {
       completedSets++;
     }
   }
-  return completedSets >= 3;
+  return completedSets;
+}
+
+export function checkWinCondition(player: Player): boolean {
+  return getCompletedSetCount(player) >= 3;
 }
 
 /**

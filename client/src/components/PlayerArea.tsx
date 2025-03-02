@@ -20,9 +20,37 @@ function PlayerArea({ player }: PlayerAreaProps) {
     "Utility",
   ];
 
+  const getRequiredSetSize = (color: string): number => {
+    switch (color) {
+      case "Brown":
+      case "Blue":
+      case "Utility":
+        return 2;
+      case "Railroad":
+        return 4;
+      default:
+        return 3;
+    }
+  };
+
+  const getCompletedSetCount = (): number => {
+    let completedSets = 0;
+    for (const color in player.properties) {
+      const requiredSize = getRequiredSetSize(color);
+      if (player.properties[color].length >= requiredSize) {
+        completedSets++;
+      }
+    }
+    return completedSets;
+  };
+
+  const completedSets = getCompletedSetCount();
+
   return (
     <div className="border rounded-lg p-2 flex-1 bg-white shadow-sm">
-      <h3 className="font-bold text-lg border-b pb-1">{player.name}</h3>
+      <h3 className="font-bold text-lg border-b pb-1">
+        {player.name} ({completedSets}/3)
+      </h3>
 
       <div className="mt-2">
         <div className="text-sm font-semibold mb-1">Properties:</div>
@@ -31,9 +59,14 @@ function PlayerArea({ player }: PlayerAreaProps) {
             const cards = player.properties[color] || [];
             if (cards.length === 0) return null;
 
+            const requiredSize = getRequiredSetSize(color);
+            const isComplete = cards.length >= requiredSize;
+
             return (
               <div key={color} className="flex-shrink-0">
-                <div className="text-xs text-gray-600 mb-0.5">{color}</div>
+                <div className={`text-xs ${isComplete ? "text-green-600 font-semibold" : "text-gray-600"} mb-0.5`}>
+                  {color} ({cards.length}/{requiredSize})
+                </div>
                 <div className="flex gap-0.5">
                   {cards.map((card: Card) => (
                     <div key={card.id}>
