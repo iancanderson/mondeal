@@ -320,9 +320,19 @@ export function playCard(
 
     gameState.cardsPlayedThisTurn++;
 
+    // Reset pending action to ensure turn can pass
+    gameState.pendingAction = { type: "NONE" };
+
+    // Automatically end turn if this was the player's third card
+    if (gameState.cardsPlayedThisTurn >= 3) {
+      endTurn(gameState);
+    }
+
     // Send notification about the upgrade
     const newRent = calculateRent(propertySet, chosenColor);
-    const notification = `${player.name} added a ${card.name.toLowerCase()} to their ${chosenColor} set (Rent is now $${newRent}M)`;
+    const notification = `${
+      player.name
+    } added a ${card.name.toLowerCase()} to their ${chosenColor} set (Rent is now $${newRent}M)`;
     return { success: true, notificationType: card.name, player: notification };
   }
 
@@ -337,7 +347,7 @@ export function playCard(
       player.properties[propertyColor] = {
         cards: [],
         houses: 0,
-        hotels: 0
+        hotels: 0,
       };
     }
     player.properties[propertyColor].cards.push(card);
@@ -347,7 +357,8 @@ export function playCard(
 
     // Calculate rent amount for the chosen color
     const propertySet = player.properties[chosenColor];
-    if (!propertySet || propertySet.cards.length === 0) return { success: false };
+    if (!propertySet || propertySet.cards.length === 0)
+      return { success: false };
 
     const rentAmount = calculateRent(propertySet, chosenColor);
 
@@ -704,11 +715,16 @@ export function collectRent(
 
   // Get all possible payment sources
   const moneyPileCards = target.moneyPile;
-  const propertyCards = Object.values(target.properties).flatMap(set => set.cards);
+  const propertyCards = Object.values(target.properties).flatMap(
+    (set) => set.cards
+  );
   const availableCards = [...moneyPileCards, ...propertyCards];
 
   // Calculate total possible payment
-  const totalPossible = availableCards.reduce((sum, card) => sum + card.value, 0);
+  const totalPossible = availableCards.reduce(
+    (sum, card) => sum + card.value,
+    0
+  );
 
   // Check if this is a bankruptcy case (insufficient total funds)
   const isBankruptcy = totalPossible < totalRequired;
@@ -792,7 +808,7 @@ export function collectRent(
         collector.properties[color] = {
           cards: [],
           houses: 0,
-          hotels: 0
+          hotels: 0,
         };
       }
       collector.properties[color].cards.push(card);

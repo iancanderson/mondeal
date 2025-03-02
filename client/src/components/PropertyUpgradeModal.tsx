@@ -7,6 +7,7 @@ interface PropertyUpgradeModalProps {
   player: Player;
   onSelectPropertySet: (color: string) => void;
   onCancel: () => void;
+  cardsPlayedThisTurn: number; // Add cards played counter to show warning
 }
 
 function PropertyUpgradeModal({
@@ -14,6 +15,7 @@ function PropertyUpgradeModal({
   player,
   onSelectPropertySet,
   onCancel,
+  cardsPlayedThisTurn,
 }: PropertyUpgradeModalProps) {
   // Get required set size for a color
   const getRequiredSetSize = (color: string): number => {
@@ -91,12 +93,22 @@ function PropertyUpgradeModal({
     );
   }
 
+  // Flag to show if this is the 3rd action
+  const isThirdAction = cardsPlayedThisTurn === 2;
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white p-6 rounded-lg shadow-lg max-w-lg w-full">
         <h3 className="text-lg font-semibold mb-4">
           Select a complete property set to add a {cardName.toLowerCase()} to
         </h3>
+
+        {isThirdAction && (
+          <div className="bg-blue-50 border-blue-200 border p-2 mb-4 rounded text-sm">
+            This is your third action. Your turn will end after placing this{" "}
+            {cardName.toLowerCase()}.
+          </div>
+        )}
 
         <div className="space-y-4 max-h-60 overflow-y-auto">
           {completePropertySets.map(([color, propertySet]) => (

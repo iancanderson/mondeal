@@ -437,6 +437,7 @@ function Game() {
           player={myPlayer}
           onSelectPropertySet={handlePropertyUpgrade}
           onCancel={() => setShowPropertyUpgradeModal(null)}
+          cardsPlayedThisTurn={gameState.cardsPlayedThisTurn}
         />
       )}
 
