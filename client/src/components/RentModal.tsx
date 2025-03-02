@@ -20,6 +20,9 @@ function RentModal({
 
   if (pendingAction.type !== "RENT") return null;
 
+  // Don't show modal if player has already paid rent
+  if (!pendingAction.remainingPayers.includes(targetPlayer.id)) return null;
+
   const { amount } = pendingAction;
 
   // Calculate total value of selected cards

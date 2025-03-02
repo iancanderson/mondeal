@@ -40,6 +40,7 @@ export type ActionState =
       playerId: string;
       color: string;
       amount: number;
+      remainingPayers: string[];
     }
   | {
       type: "JUST_SAY_NO_OPPORTUNITY";

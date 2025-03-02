@@ -283,12 +283,13 @@ export function playCard(
         amount: rentAmount,
       };
     } else {
-      // Set up normal rent action
+      // Set up normal rent action with all other players needing to pay
       gameState.pendingAction = {
         type: "RENT",
         playerId,
         color: chosenColor,
         amount: rentAmount,
+        remainingPayers: otherPlayers.map((p) => p.id),
       };
     }
 
@@ -382,6 +383,7 @@ export function playCard(
         playerId,
         color: chosenColor,
         amount: rentAmount,
+        remainingPayers: otherPlayers.map((p) => p.id),
       };
     }
   } else if (card.type === "ACTION" && playAsAction) {
@@ -717,16 +719,23 @@ export function collectRent(
     return false;
   }
 
-  const { playerId: collectorId, amount } = gameState.pendingAction;
+  const {
+    playerId: collectorId,
+    amount,
+    remainingPayers,
+  } = gameState.pendingAction;
+
+  // Verify this player needs to pay
+  if (!remainingPayers.includes(targetPlayerId)) {
+    return false;
+  }
+
   const collector = gameState.players.find((p) => p.id === collectorId);
   const target = gameState.players.find((p) => p.id === targetPlayerId);
 
   if (!collector || !target) {
     return false;
   }
-
-  // Calculate total required payment
-  const totalRequired = amount;
 
   // Get all possible payment sources
   const moneyPileCards = target.moneyPile;
@@ -742,14 +751,14 @@ export function collectRent(
   );
 
   // Check if this is a bankruptcy case (insufficient total funds)
-  const isBankruptcy = totalPossible < totalRequired;
+  const isBankruptcy = totalPossible < amount;
 
   // In bankruptcy case, validate that ALL cards are being surrendered
   if (isBankruptcy && paymentCards.length !== availableCards.length) {
     return false;
   }
 
-  // Validate all payment cards exist in allowed sources (money pile or properties)
+  // Validate all payment cards exist in allowed sources
   for (const cardId of paymentCards) {
     const cardExists = availableCards.some((c) => c.id === cardId);
     if (!cardExists) {
@@ -833,12 +842,20 @@ export function collectRent(
     }
   }
 
-  // Reset pending action
-  gameState.pendingAction = { type: "NONE" };
+  // Remove this player from the remaining payers list
+  gameState.pendingAction = {
+    ...gameState.pendingAction,
+    remainingPayers: remainingPayers.filter((id) => id !== targetPlayerId),
+  };
 
-  // Check if this was the 3rd card played and end turn if so
-  if (gameState.cardsPlayedThisTurn >= 3) {
-    endTurn(gameState);
+  // Only reset the pending action when all players have paid
+  if (gameState.pendingAction.remainingPayers.length === 0) {
+    gameState.pendingAction = { type: "NONE" };
+
+    // Check if this was the 3rd card played and end turn if so
+    if (gameState.cardsPlayedThisTurn >= 3) {
+      endTurn(gameState);
+    }
   }
 
   return true;
@@ -914,11 +931,15 @@ export function handleJustSayNoResponse(
 
     case "RENT":
       if (!color || amount === undefined) return false;
+      // When a player allows rent to be charged, set up the rent collection with remaining payers
       gameState.pendingAction = {
         type: "RENT",
         playerId: sourcePlayerId,
         color,
         amount,
+        remainingPayers: gameState.players
+          .filter((p) => p.id !== sourcePlayerId) // Everyone except the rent collector
+          .map((p) => p.id),
       };
       return true;
 
