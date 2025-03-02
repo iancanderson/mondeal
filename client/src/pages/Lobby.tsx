@@ -25,12 +25,14 @@ function Lobby() {
   });
 
   const [availableRooms, setAvailableRooms] = useState<RoomInfo[]>([]);
+  const [currentPlayerId, setCurrentPlayerId] = useState<string>("");
   const navigate = useNavigate();
 
   useEffect(() => {
     socket.on(
       "roomJoined",
       (data: { gameState: GameState; playerId: string }) => {
+        setCurrentPlayerId(data.playerId);
         if (playerName) {
           localStorage.setItem(PLAYER_NAME_KEY, playerName);
         }
@@ -90,7 +92,13 @@ function Lobby() {
             type="text"
             placeholder="Your Name"
             value={playerName}
-            onChange={(e) => setPlayerName(e.target.value)}
+            onChange={(e) => {
+              const newName = e.target.value;
+              setPlayerName(newName);
+              localStorage.setItem(PLAYER_NAME_KEY, newName);
+              // Emit name change event to update in any active games
+              socket.emit("updatePlayerName", currentPlayerId, newName, playerUUID);
+            }}
           />
           <button
             className="w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"

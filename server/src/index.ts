@@ -11,6 +11,7 @@ import {
   getRoom,
   getAvailableRooms,
   removeRoom,
+  getRooms,
 } from "./roomManager";
 import {
   reassignWildcard,
@@ -21,6 +22,8 @@ import {
   ClientToServerEvents,
   ServerToClientEvents,
   ActionCardName,
+  Room,
+  Player,
 } from "./types";
 
 const app = express();
@@ -264,6 +267,27 @@ io.on("connection", (socket) => {
       }
     }
   );
+
+  socket.on("updatePlayerName", (playerId, newName, uuid) => {
+    // Update player name in all rooms where this player exists
+    const rooms = getRooms();
+    const roomsWithPlayer = rooms.filter((room: Room) =>
+      room.gameState.players.some((p: Player) => p.uuid === uuid)
+    );
+
+    roomsWithPlayer.forEach((room: Room) => {
+      // Update player name
+      const player = room.gameState.players.find((p: Player) => p.uuid === uuid);
+      if (player) {
+        player.name = newName;
+        // Broadcast the updated game state to all players in the room
+        io.to(room.roomId).emit("updateGameState", room.gameState);
+      }
+    });
+
+    // Update available rooms list if any room creators were updated
+    broadcastRoomUpdate();
+  });
 
   // Handle disconnections
   socket.on("disconnect", () => {
