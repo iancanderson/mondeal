@@ -9,7 +9,12 @@ interface PlayerAreaProps {
   canReassignWildCard?: boolean;
 }
 
-function PlayerArea({ player, isCurrentPlayer, onWildCardClick, canReassignWildCard }: PlayerAreaProps) {
+function PlayerArea({
+  player,
+  isCurrentPlayer,
+  onWildCardClick,
+  canReassignWildCard,
+}: PlayerAreaProps) {
   const propertyOrder = [
     "Brown",
     "LightBlue",
@@ -48,7 +53,12 @@ function PlayerArea({ player, isCurrentPlayer, onWildCardClick, canReassignWildC
   };
 
   const handleCardClick = (card: Card) => {
-    if (isCurrentPlayer && canReassignWildCard && card.isWildcard && onWildCardClick) {
+    if (
+      isCurrentPlayer &&
+      canReassignWildCard &&
+      card.isWildcard &&
+      onWildCardClick
+    ) {
       onWildCardClick(card);
     }
   };
@@ -73,16 +83,34 @@ function PlayerArea({ player, isCurrentPlayer, onWildCardClick, canReassignWildC
 
             return (
               <div key={color} className="flex-shrink-0">
-                <div className={`text-xs ${isComplete ? "text-green-600 font-semibold" : "text-gray-600"} mb-0.5`}>
+                <div
+                  className={`text-xs ${
+                    isComplete
+                      ? "text-green-600 font-semibold"
+                      : "text-gray-600"
+                  } mb-0.5`}
+                >
                   {color} ({cards.length}/{requiredSize})
                 </div>
                 <div className="flex gap-0.5">
                   {cards.map((card: Card) => (
-                    <div key={card.id} 
-                         className={isCurrentPlayer && canReassignWildCard && card.isWildcard ? "cursor-pointer hover:scale-105 transition-transform" : ""}>
+                    <div
+                      key={card.id}
+                      className={
+                        isCurrentPlayer &&
+                        canReassignWildCard &&
+                        card.isWildcard
+                          ? "cursor-pointer hover:scale-105 transition-transform"
+                          : ""
+                      }
+                    >
                       <CardView
                         card={card}
-                        clickable={isCurrentPlayer && canReassignWildCard && card.isWildcard}
+                        clickable={
+                          isCurrentPlayer &&
+                          canReassignWildCard &&
+                          card.isWildcard
+                        }
                         onClick={() => handleCardClick(card)}
                       />
                     </div>

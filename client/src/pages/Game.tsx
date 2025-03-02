@@ -25,7 +25,8 @@ function Game() {
   const [selectedWildcard, setSelectedWildcard] = React.useState<Card | null>(
     null
   );
-  const [selectedWildcardForReassign, setSelectedWildcardForReassign] = React.useState<Card | null>(null);
+  const [selectedWildcardForReassign, setSelectedWildcardForReassign] =
+    React.useState<Card | null>(null);
 
   // Handle window resize for confetti
   React.useEffect(() => {
@@ -121,7 +122,13 @@ function Game() {
 
   const handleColorPickForReassign = (color: string) => {
     if (selectedWildcardForReassign) {
-      socket.emit("reassignWildcard", roomId, playerId, selectedWildcardForReassign.id, color);
+      socket.emit(
+        "reassignWildcard",
+        roomId,
+        playerId,
+        selectedWildcardForReassign.id,
+        color
+      );
       setSelectedWildcardForReassign(null);
     }
   };
@@ -179,7 +186,9 @@ function Game() {
             </h2>
             {isMyTurn && (
               <div className="text-sm text-gray-600">
-                <div>Cards played this turn: {gameState.cardsPlayedThisTurn}/3</div>
+                <div>
+                  Cards played this turn: {gameState.cardsPlayedThisTurn}/3
+                </div>
                 {!gameState.wildCardReassignedThisTurn && (
                   <div className="text-blue-600">
                     You can reassign one wild card's color this turn
@@ -200,7 +209,9 @@ function Game() {
                 player={player}
                 isCurrentPlayer={player.id === playerId}
                 onWildCardClick={handleWildCardClick}
-                canReassignWildCard={isMyTurn && !gameState.wildCardReassignedThisTurn}
+                canReassignWildCard={
+                  isMyTurn && !gameState.wildCardReassignedThisTurn
+                }
               />
             ))}
           </div>

@@ -108,8 +108,13 @@ io.on("connection", (socket) => {
   socket.on("reassignWildcard", (roomId, playerId, cardId, newColor) => {
     const room = getRoom(roomId);
     if (!room) return;
-    
-    const success = reassignWildcard(room.gameState, playerId, cardId, newColor);
+
+    const success = reassignWildcard(
+      room.gameState,
+      playerId,
+      cardId,
+      newColor
+    );
     if (success) {
       io.to(roomId).emit("updateGameState", room.gameState);
     }

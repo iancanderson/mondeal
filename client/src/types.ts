@@ -50,8 +50,18 @@ export interface ClientToServerEvents {
   createRoom: (playerName: string) => void;
   joinRoom: (roomId: string, playerName: string) => void;
   toggleReady: (roomId: string, playerId: string) => void;
-  playCard: (roomId: string, playerId: string, cardId: string, chosenColor?: string) => void;
-  reassignWildcard: (roomId: string, playerId: string, cardId: string, newColor: string) => void;
+  playCard: (
+    roomId: string,
+    playerId: string,
+    cardId: string,
+    chosenColor?: string
+  ) => void;
+  reassignWildcard: (
+    roomId: string,
+    playerId: string,
+    cardId: string,
+    newColor: string
+  ) => void;
   endTurn: (roomId: string, playerId: string) => void;
   requestRooms: () => void;
 }

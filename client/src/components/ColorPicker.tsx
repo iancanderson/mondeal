@@ -7,16 +7,16 @@ interface ColorPickerProps {
 
 export function ColorPicker({ onColorPick, onCancel }: ColorPickerProps) {
   const colors = [
-    "Brown",
-    "LightBlue",
-    "Purple",
-    "Orange",
-    "Red",
-    "Yellow",
-    "Green",
-    "Blue",
-    "Railroad",
-    "Utility",
+    { name: "Brown", bgColor: "bg-amber-900" },
+    { name: "LightBlue", bgColor: "bg-sky-400" },
+    { name: "Purple", bgColor: "bg-purple-600" },
+    { name: "Orange", bgColor: "bg-orange-500" },
+    { name: "Red", bgColor: "bg-red-600" },
+    { name: "Yellow", bgColor: "bg-yellow-400" },
+    { name: "Green", bgColor: "bg-green-600" },
+    { name: "Blue", bgColor: "bg-blue-600" },
+    { name: "Railroad", bgColor: "bg-gray-800" },
+    { name: "Utility", bgColor: "bg-gray-600" },
   ];
 
   return (
@@ -26,11 +26,11 @@ export function ColorPicker({ onColorPick, onCancel }: ColorPickerProps) {
         <div className="grid grid-cols-2 gap-2">
           {colors.map((color) => (
             <button
-              key={color}
-              onClick={() => onColorPick(color)}
-              className="px-4 py-2 text-sm rounded hover:bg-gray-100 w-full text-left"
+              key={color.name}
+              onClick={() => onColorPick(color.name)}
+              className={`px-4 py-2 text-sm rounded hover:bg-gray-100 w-full text-left ${color.bgColor} text-white`}
             >
-              {color}
+              {color.name}
             </button>
           ))}
         </div>

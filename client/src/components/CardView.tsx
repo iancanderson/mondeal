@@ -74,7 +74,9 @@ function CardView({ card, clickable, onClick }: CardViewProps) {
       `}
       onClick={clickable ? onClick : undefined}
     >
-      <div className="text-xs font-bold mb-1 flex-1 leading-tight">{card.name}</div>
+      <div className="text-xs font-bold mb-1 flex-1 leading-tight">
+        {card.name}
+      </div>
 
       <div className="mt-auto">
         {card.type === "MONEY" && (

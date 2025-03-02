@@ -231,7 +231,7 @@ export function reassignWildcard(
   let oldColor: string | undefined;
 
   for (const [color, cards] of Object.entries(player.properties)) {
-    const cardIndex = cards.findIndex(c => c.id === cardId);
+    const cardIndex = cards.findIndex((c) => c.id === cardId);
     if (cardIndex !== -1) {
       foundCard = cards[cardIndex];
       oldColor = color;
