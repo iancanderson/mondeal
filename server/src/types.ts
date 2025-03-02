@@ -111,10 +111,6 @@ export interface ClientToServerEvents {
     color: string
   ) => void;
   endTurn: (roomId: string, playerId: string) => void;
-  updatePlayerName: (
-    playerId: string,
-    newName: string,
-    uuid: string
-  ) => void;
+  updatePlayerName: (playerId: string, newName: string, uuid: string) => void;
   requestRooms: () => void;
 }

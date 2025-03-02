@@ -97,7 +97,12 @@ function Lobby() {
               setPlayerName(newName);
               localStorage.setItem(PLAYER_NAME_KEY, newName);
               // Emit name change event to update in any active games
-              socket.emit("updatePlayerName", currentPlayerId, newName, playerUUID);
+              socket.emit(
+                "updatePlayerName",
+                currentPlayerId,
+                newName,
+                playerUUID
+              );
             }}
           />
           <button

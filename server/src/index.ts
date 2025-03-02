@@ -277,7 +277,9 @@ io.on("connection", (socket) => {
 
     roomsWithPlayer.forEach((room: Room) => {
       // Update player name
-      const player = room.gameState.players.find((p: Player) => p.uuid === uuid);
+      const player = room.gameState.players.find(
+        (p: Player) => p.uuid === uuid
+      );
       if (player) {
         player.name = newName;
         // Broadcast the updated game state to all players in the room
