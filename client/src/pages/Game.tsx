@@ -212,18 +212,19 @@ function Game() {
     }
   };
 
-  const handlePlayAsAction = () => {
-    if (selectedActionCard) {
-      socket.emit(
-        "playCard",
-        roomId,
-        playerId,
-        selectedActionCard.id,
-        undefined,
-        true
-      );
-      setSelectedActionCard(null);
-    }
+  const handlePlayAsAction = (color?: string) => {
+    if (!selectedActionCard) return;
+
+    // Play the card with the chosen color for rent cards, or without color for other actions
+    socket.emit(
+      "playCard",
+      roomId,
+      playerId,
+      selectedActionCard.id,
+      color,
+      true
+    );
+    setSelectedActionCard(null);
   };
 
   const handlePlayAsMoney = () => {
@@ -273,18 +274,15 @@ function Game() {
 
   const handleRentColorPick = (color: string) => {
     if (selectedActionCard && selectedActionCard.type === "RENT") {
-      // Only allow selecting a color that this card can collect rent for
-      if (selectedActionCard.rentColors?.includes(color)) {
-        socket.emit(
-          "playCard",
-          roomId,
-          playerId,
-          selectedActionCard.id,
-          color,
-          true
-        );
-        setSelectedActionCard(null);
-      }
+      socket.emit(
+        "playCard",
+        roomId,
+        playerId,
+        selectedActionCard.id,
+        color,
+        true
+      );
+      setSelectedActionCard(null);
     }
   };
 
@@ -340,13 +338,7 @@ function Game() {
         />
       )}
 
-      {selectedActionCard?.type === "RENT" ? (
-        <ColorPicker
-          onColorPick={handleRentColorPick}
-          onCancel={() => setSelectedActionCard(null)}
-          availableColors={selectedActionCard.rentColors}
-        />
-      ) : selectedActionCard ? (
+      {selectedActionCard ? (
         <ActionCardModal
           card={selectedActionCard}
           onPlayAsMoney={handlePlayAsMoney}
