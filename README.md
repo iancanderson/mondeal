@@ -9,18 +9,19 @@
 - Pass Go
 - Deal Breaker
 - Players shouldn't be able to cancel rent
+- Rent cards!
+- Just Say No
+- 2-color property wildcards (in addition to the "any color" wild card)
 
 ## TODO
 
-- Rent cards!
-- Just Say No
+- Bug: when a player does "Just Say No", and it cancels the current player's last action for their turn, the next person's turn should start automatically.
 - Forced Deal
 - Debt Collector
 - It's My Birthday
 - Double The Rent
 - House
 - Hotel
-- 2-color property wildcards (in addition to the "any color" wild card)
 - If a player has more cards for a color than the set limit, start a new set for that color
 - When you have 0 cards, you draw 5 cards instead of 2
 - Player has to discard down to 7 cards at end of turn
