@@ -348,17 +348,22 @@ function Game() {
           </div>
           {isMyTurn && !winner && (
             <div className="mt-4">
-              {!canPlayMoreCards && (
-                <div className="text-amber-600 mb-2">
-                  You've played the maximum of 3 cards this turn
+              {gameState.cardsPlayedThisTurn === 3 ? (
+                <div className="text-green-600 mb-2">
+                  You've played 3 cards this turn. The turn will pass automatically.
                 </div>
+              ) : gameState.pendingAction.type !== "NONE" ? (
+                <div className="text-blue-600 mb-2">
+                  Complete your action to continue your turn.
+                </div>
+              ) : (
+                <button
+                  className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                  onClick={handleEndTurn}
+                >
+                  End Turn
+                </button>
               )}
-              <button
-                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-                onClick={handleEndTurn}
-              >
-                End Turn
-              </button>
             </div>
           )}
         </>

@@ -162,10 +162,6 @@ export function startTurn(gameState: GameState) {
 
 /**
  * Handle playing a card from hand to property/money pile.
- * Simplified:
- * - PROPERTY -> goes to properties
- * - MONEY -> goes to money pile
- * - ACTION -> can go to money pile or discard pile (when played as action)
  */
 export function playCard(
   gameState: GameState,
@@ -225,6 +221,15 @@ export function playCard(
   }
 
   gameState.cardsPlayedThisTurn++;
+  
+  // Automatically end turn if this was the player's third card
+  if (gameState.cardsPlayedThisTurn >= 3) {
+    // Don't automatically end turn if there's a pending action
+    if (gameState.pendingAction.type === "NONE") {
+      endTurn(gameState);
+    }
+  }
+  
   return true;
 }
 

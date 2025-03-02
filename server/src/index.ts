@@ -102,6 +102,11 @@ io.on("connection", (socket) => {
         return;
       }
 
+      // Store player's name before playing the card
+      const currentPlayerName = room.gameState.players[room.gameState.currentPlayerIndex].name;
+      // Store the card count before playing
+      const cardCountBefore = room.gameState.cardsPlayedThisTurn;
+      
       const result = handlePlayCard(
         roomId,
         playerId,
@@ -122,12 +127,26 @@ io.on("connection", (socket) => {
           case "Pass Go":
             notificationMessage = `${result.player} played Pass Go and drew 2 cards.`;
             break;
+          case "Sly Deal":
+            notificationMessage = `${result.player} played Sly Deal. They can steal a property card!`;
+            break;
           // Add cases for other action cards as they are implemented
         }
 
         if (notificationMessage) {
           io.to(roomId).emit("gameNotification", notificationMessage);
         }
+      }
+      
+      // If this was their third card and turn ended automatically (current player index changed)
+      if (cardCountBefore === 2 && 
+          room.gameState.pendingAction.type === "NONE" && 
+          room.gameState.players[room.gameState.currentPlayerIndex].name !== currentPlayerName) {
+        const newPlayerName = room.gameState.players[room.gameState.currentPlayerIndex].name;
+        io.to(roomId).emit(
+          "gameNotification", 
+          `${currentPlayerName} played their 3rd card. Turn passed to ${newPlayerName}.`
+        );
       }
     }
   );
