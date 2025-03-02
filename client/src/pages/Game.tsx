@@ -15,18 +15,32 @@ function Game() {
   );
   const [playerId, setPlayerId] = React.useState<string>(state?.playerId || "");
   const [myPlayer, setMyPlayer] = React.useState<Player | null>(null);
+  const playerIdRef = React.useRef(playerId);
+
+  // Keep the ref up to date with the latest playerId
+  React.useEffect(() => {
+    playerIdRef.current = playerId;
+  }, [playerId]);
 
   React.useEffect(() => {
     socket.on(
       "roomJoined",
       (data: { gameState: GameState; playerId: string }) => {
+        console.log("roomJoined received, playerId:", data.playerId);
         setGameState(data.gameState);
         setPlayerId(data.playerId);
       }
     );
 
     socket.on("updateGameState", (gs: GameState) => {
-      setGameState(gs);
+      console.log("updateGameState received, current playerId:", playerIdRef.current);
+      setGameState((prevState) => {
+        // Preserve the same gameState reference if nothing changed
+        if (JSON.stringify(prevState) === JSON.stringify(gs)) {
+          return prevState;
+        }
+        return gs;
+      });
     });
 
     socket.on("error", (msg: string) => {
@@ -40,19 +54,21 @@ function Game() {
     };
   }, []);
 
+  // Update myPlayer whenever gameState changes, but maintain playerId
   React.useEffect(() => {
-    if (!gameState || !playerId) return;
-    const me = gameState.players.find((p) => p.id === playerId);
+    if (!gameState || !playerIdRef.current) return;
+    const me = gameState.players.find((p) => p.id === playerIdRef.current);
     if (me) {
       setMyPlayer(me);
     }
-  }, [gameState, playerId]);
+  }, [gameState]);
 
   if (!roomId || !gameState) {
     return <div className="p-4">No Game State found. Return to Lobby.</div>;
   }
 
   const handleToggleReady = () => {
+    if (!playerId) return;
     socket.emit("toggleReady", roomId, playerId);
   };
 
@@ -121,6 +137,7 @@ function Game() {
           <button
             className="bg-green-500 text-white px-4 py-2"
             onClick={handleToggleReady}
+            disabled={!playerId}
           >
             {myPlayer?.isReady ? "Unready" : "Ready"}
           </button>

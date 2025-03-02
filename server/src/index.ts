@@ -30,8 +30,8 @@ io.on("connection", (socket) => {
   socket.on("createRoom", (playerName) => {
     const { room, playerId } = createRoom(playerName);
     socket.join(room.roomId);
-    // Send both room info and playerId back
-    io.to(room.roomId).emit("roomJoined", {
+    // Only send roomJoined to the creator
+    socket.emit("roomJoined", {
       gameState: room.gameState,
       playerId,
     });
@@ -47,10 +47,13 @@ io.on("connection", (socket) => {
       return;
     }
     socket.join(room.roomId);
-    io.to(room.roomId).emit("roomJoined", {
+    // Send roomJoined only to the joining player
+    socket.emit("roomJoined", {
       gameState: room.gameState,
       playerId,
     });
+    // Send updateGameState to all other players in the room
+    socket.to(room.roomId).emit("updateGameState", room.gameState);
   });
 
   socket.on("toggleReady", (roomId, playerId) => {
