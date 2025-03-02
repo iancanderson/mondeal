@@ -24,3 +24,4 @@
 - When you have 0 cards, you draw 5 cards instead of 2
 - Player has to discard down to 7 cards at end of turn
 - It says "You already have an active room" even when there's only 1 room and i'm not in it
+- Disallow playing Just Say No as an action on your own turn, not in response to anything
