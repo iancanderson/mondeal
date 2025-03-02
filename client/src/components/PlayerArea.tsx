@@ -21,23 +21,23 @@ function PlayerArea({ player }: PlayerAreaProps) {
   ];
 
   return (
-    <div className="border rounded-lg p-4 flex-1 bg-white shadow-sm">
-      <h3 className="font-bold text-lg border-b pb-2">{player.name}</h3>
+    <div className="border rounded-lg p-2 flex-1 bg-white shadow-sm">
+      <h3 className="font-bold text-lg border-b pb-1">{player.name}</h3>
 
-      <div className="mt-4">
-        <div className="text-sm font-semibold mb-2">Properties:</div>
-        <div className="flex flex-wrap gap-4">
+      <div className="mt-2">
+        <div className="text-sm font-semibold mb-1">Properties:</div>
+        <div className="flex flex-wrap gap-2">
           {propertyOrder.map((color) => {
             const cards = player.properties[color] || [];
             if (cards.length === 0) return null;
 
             return (
               <div key={color} className="flex-shrink-0">
-                <div className="text-xs text-gray-600 mb-1">{color}</div>
-                <div className="flex gap-1">
+                <div className="text-xs text-gray-600 mb-0.5">{color}</div>
+                <div className="flex gap-0.5">
                   {cards.map((card: Card) => (
-                    <div className="transform scale-90 origin-top-left">
-                      <CardView key={card.id} card={card} />
+                    <div key={card.id}>
+                      <CardView card={card} />
                     </div>
                   ))}
                 </div>
@@ -47,9 +47,9 @@ function PlayerArea({ player }: PlayerAreaProps) {
         </div>
       </div>
 
-      <div className="mt-4">
-        <div className="text-sm font-semibold mb-2">Bank:</div>
-        <div className="flex gap-2 overflow-x-auto pb-2">
+      <div className="mt-2">
+        <div className="text-sm font-semibold mb-1">Bank:</div>
+        <div className="flex gap-1 overflow-x-auto pb-1">
           {player.moneyPile.map((card: Card) => (
             <CardView key={card.id} card={card} />
           ))}

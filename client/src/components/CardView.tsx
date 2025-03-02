@@ -63,7 +63,7 @@ function CardView({ card, clickable, onClick }: CardViewProps) {
   return (
     <div
       className={`
-        border-2 rounded-lg p-2 w-32 h-48 flex flex-col cursor-pointer
+        border rounded-lg p-1 w-16 h-24 flex flex-col cursor-pointer text-xs
         ${
           clickable
             ? "hover:shadow-lg transform hover:scale-105 transition-transform"
@@ -74,21 +74,21 @@ function CardView({ card, clickable, onClick }: CardViewProps) {
       `}
       onClick={clickable ? onClick : undefined}
     >
-      <div className="text-sm font-bold mb-2 flex-1">{card.name}</div>
+      <div className="text-xs font-bold mb-1 flex-1 leading-tight">{card.name}</div>
 
       <div className="mt-auto">
         {card.type === "MONEY" && (
-          <div className="text-2xl font-bold text-green-700">{card.name}</div>
+          <div className="text-base font-bold text-green-700">{card.name}</div>
         )}
         {card.type === "PROPERTY" && (
-          <div className="text-xs italic mb-1">
+          <div className="text-xs italic mb-0.5">
             {card.isWildcard ? "Wild Card" : card.color}
           </div>
         )}
         {card.type === "ACTION" && (
-          <div className="text-xs italic mb-1">Action Card</div>
+          <div className="text-xs italic mb-0.5">Action Card</div>
         )}
-        <div className="text-xs mt-1">Value: ${card.value}M</div>
+        <div className="text-xs">Value: ${card.value}M</div>
       </div>
     </div>
   );
