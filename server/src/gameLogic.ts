@@ -821,6 +821,11 @@ export function collectRent(
   // Reset pending action
   gameState.pendingAction = { type: "NONE" };
 
+  // Check if this was the 3rd card played and end turn if so
+  if (gameState.cardsPlayedThisTurn >= 3) {
+    endTurn(gameState);
+  }
+
   return true;
 }
 
