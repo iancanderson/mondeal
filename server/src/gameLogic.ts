@@ -613,7 +613,10 @@ export function collectRent(
   const availableCards = [...moneyPileCards, ...propertyCards];
 
   // Calculate total possible payment
-  const totalPossible = availableCards.reduce((sum, card) => sum + card.value, 0);
+  const totalPossible = availableCards.reduce(
+    (sum, card) => sum + card.value,
+    0
+  );
 
   // Check if this is a bankruptcy case (insufficient total funds)
   const isBankruptcy = totalPossible < totalRequired;
@@ -625,7 +628,7 @@ export function collectRent(
 
   // Validate all payment cards exist in allowed sources (money pile or properties)
   for (const cardId of paymentCards) {
-    const cardExists = availableCards.some(c => c.id === cardId);
+    const cardExists = availableCards.some((c) => c.id === cardId);
     if (!cardExists) {
       return false;
     }

@@ -34,7 +34,10 @@ function RentModal({
   const availableCards = [...moneyPileCards, ...propertyCards];
 
   // Calculate total possible payment from all available cards
-  const totalPossible = availableCards.reduce((sum, card) => sum + card.value, 0);
+  const totalPossible = availableCards.reduce(
+    (sum, card) => sum + card.value,
+    0
+  );
 
   const handleCardClick = (card: Card) => {
     if (selectedCards.find((c) => c.id === card.id)) {
@@ -98,11 +101,12 @@ function RentModal({
                       onClick={() => !isBankrupt && handleCardClick(card)}
                       className={`
                         transform transition 
-                        ${isBankrupt
-                          ? "opacity-50"
-                          : selectedCards.find((c) => c.id === card.id)
-                          ? "scale-110 ring-2 ring-blue-500"
-                          : "hover:scale-105 cursor-pointer"
+                        ${
+                          isBankrupt
+                            ? "opacity-50"
+                            : selectedCards.find((c) => c.id === card.id)
+                            ? "scale-110 ring-2 ring-blue-500"
+                            : "hover:scale-105 cursor-pointer"
                         }
                       `}
                     >
@@ -124,11 +128,12 @@ function RentModal({
                       onClick={() => !isBankrupt && handleCardClick(card)}
                       className={`
                         transform transition 
-                        ${isBankrupt
-                          ? "opacity-50"
-                          : selectedCards.find((c) => c.id === card.id)
-                          ? "scale-110 ring-2 ring-blue-500"
-                          : "hover:scale-105 cursor-pointer"
+                        ${
+                          isBankrupt
+                            ? "opacity-50"
+                            : selectedCards.find((c) => c.id === card.id)
+                            ? "scale-110 ring-2 ring-blue-500"
+                            : "hover:scale-105 cursor-pointer"
                         }
                       `}
                     >
