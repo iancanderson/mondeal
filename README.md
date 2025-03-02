@@ -19,6 +19,7 @@
 - Forced Deal
 - Debt Collector
 - Sly Deal said "no one has properties to steal" when they did.
+- Remove ability to cancel out of a forced deal. Game gets stuck otherwise
 
 ## TODO
 

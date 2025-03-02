@@ -527,7 +527,6 @@ function Game() {
           players={gameState.players}
           currentPlayerId={playerId}
           onExecuteForcedDeal={handleForcedDeal}
-          onCancel={() => setShowForcedDealModal(false)}
         />
       )}
 
