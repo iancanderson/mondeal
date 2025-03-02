@@ -8,6 +8,60 @@ interface CardViewProps {
 }
 
 function CardView({ card, clickable, onClick }: CardViewProps) {
+  const getColorClass = (color: string) => {
+    switch (color) {
+      case "Brown":
+        return "from-amber-900";
+      case "Blue":
+        return "from-blue-600";
+      case "Green":
+        return "from-green-600";
+      case "Yellow":
+        return "from-yellow-400";
+      case "Red":
+        return "from-red-600";
+      case "Orange":
+        return "from-orange-500";
+      case "Purple":
+        return "from-purple-600";
+      case "LightBlue":
+        return "from-sky-400";
+      case "Railroad":
+        return "from-gray-800";
+      case "Utility":
+        return "from-gray-600";
+      default:
+        return "from-gray-100";
+    }
+  };
+
+  const getSecondColorClass = (color: string) => {
+    switch (color) {
+      case "Brown":
+        return "to-amber-900";
+      case "Blue":
+        return "to-blue-600";
+      case "Green":
+        return "to-green-600";
+      case "Yellow":
+        return "to-yellow-400";
+      case "Red":
+        return "to-red-600";
+      case "Orange":
+        return "to-orange-500";
+      case "Purple":
+        return "to-purple-600";
+      case "LightBlue":
+        return "to-sky-400";
+      case "Railroad":
+        return "to-gray-800";
+      case "Utility":
+        return "to-gray-600";
+      default:
+        return "to-gray-100";
+    }
+  };
+
   const getBgColor = () => {
     if (card.type === "PROPERTY") {
       if (card.isWildcard) {
@@ -40,8 +94,8 @@ function CardView({ card, clickable, onClick }: CardViewProps) {
         }
       }
     }
-    if (card.type === "RENT") {
-      return "bg-gradient-to-br from-amber-100 to-amber-200";
+    if (card.type === "RENT" && card.rentColors && card.rentColors.length === 2) {
+      return `bg-gradient-to-b ${getColorClass(card.rentColors[0])} ${getSecondColorClass(card.rentColors[1])}`;
     }
     return card.type === "MONEY" ? "bg-emerald-100" : "bg-amber-50";
   };
