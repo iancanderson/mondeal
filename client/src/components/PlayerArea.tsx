@@ -65,8 +65,8 @@ function PlayerArea({
     propertySet: PropertySet
   ): number => {
     const baseRent = calculateBaseRent(color, propertySet.cards.length);
-    const isComplete = propertySet.cards.length >= getRequiredSetSize(color);
-    let rent = isComplete ? baseRent * 2 : baseRent;
+    // Don't double for complete sets - base rent is all we need
+    let rent = baseRent;
     rent += propertySet.houses * 3;
     rent += propertySet.hotels * 4;
     return rent;

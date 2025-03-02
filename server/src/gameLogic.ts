@@ -212,8 +212,8 @@ function calculateRent(propertySet: PropertySet, color: string): number {
   const rentIndex = Math.min(count, requiredSize) - 1;
   const baseRent = baseRents[color][rentIndex];
 
-  // Calculate total rent including houses and hotels
-  let totalRent = isComplete ? baseRent * 2 : baseRent;
+  // Calculate total rent including houses and hotels, but don't double for complete sets
+  let totalRent = baseRent;
   totalRent += propertySet.houses * 3;
   totalRent += propertySet.hotels * 4;
 
