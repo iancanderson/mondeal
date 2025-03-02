@@ -21,3 +21,4 @@
 - Hotel
 - 2-color property wildcards (in addition to the "any color" wild card)
 - If a player has more cards for a color than the set limit, start a new set for that color
+- When you have 0 cards, you draw 5 cards instead of 2
