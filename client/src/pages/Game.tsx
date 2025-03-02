@@ -1,5 +1,6 @@
 import React from "react";
-import { useParams, useLocation } from "react-router-dom";
+import { useParams, useLocation, Link } from "react-router-dom";
+import ReactConfetti from "react-confetti";
 import { socket } from "../services/socket";
 import CardView from "../components/CardView";
 import PlayerArea from "../components/PlayerArea";
@@ -16,6 +17,23 @@ function Game() {
   const [playerId, setPlayerId] = React.useState<string>(state?.playerId || "");
   const [myPlayer, setMyPlayer] = React.useState<Player | null>(null);
   const playerIdRef = React.useRef(playerId);
+  const [windowSize, setWindowSize] = React.useState({
+    width: window.innerWidth,
+    height: window.innerHeight,
+  });
+
+  // Handle window resize for confetti
+  React.useEffect(() => {
+    const handleResize = () => {
+      setWindowSize({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   // Keep the ref up to date with the latest playerId
   React.useEffect(() => {
@@ -33,10 +51,7 @@ function Game() {
     );
 
     socket.on("updateGameState", (gs: GameState) => {
-      console.log(
-        "updateGameState received, current playerId:",
-        playerIdRef.current
-      );
+      console.log("updateGameState received, current playerId:", playerIdRef.current);
       setGameState((prevState) => {
         // Preserve the same gameState reference if nothing changed
         if (JSON.stringify(prevState) === JSON.stringify(gs)) {
@@ -92,7 +107,26 @@ function Game() {
 
   return (
     <div className="p-4">
-      <h1 className="text-2xl font-bold">Game Room: {roomId}</h1>
+      {winner && (
+        <ReactConfetti
+          width={windowSize.width}
+          height={windowSize.height}
+          recycle={false}
+          numberOfPieces={1000}
+          gravity={0.2}
+        />
+      )}
+      
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold">Game Room: {roomId}</h1>
+        <Link
+          to="/"
+          className="text-blue-500 hover:text-blue-700 underline"
+        >
+          Back to Lobby
+        </Link>
+      </div>
+
       {gameState.isStarted ? (
         <>
           <div className="my-4">
@@ -106,8 +140,8 @@ function Game() {
               </div>
             )}
             {winner && (
-              <div className="text-green-600 text-xl font-bold">
-                Winner: {winner.name}
+              <div className="text-green-600 text-xl font-bold text-center py-4 bg-green-50 rounded-lg my-4">
+                🎉 Winner: {winner.name} 🎉
               </div>
             )}
           </div>
@@ -137,7 +171,7 @@ function Game() {
                 </div>
               )}
               <button
-                className="bg-blue-500 text-white px-4 py-2"
+                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
                 onClick={handleEndTurn}
               >
                 End Turn
@@ -151,7 +185,7 @@ function Game() {
             <p>Waiting for all players to be ready...</p>
           </div>
           <button
-            className="bg-green-500 text-white px-4 py-2"
+            className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
             onClick={handleToggleReady}
             disabled={!playerId}
           >
