@@ -97,8 +97,30 @@ io.on("connection", (socket) => {
       ) {
         return;
       }
-      handlePlayCard(roomId, playerId, cardId, chosenColor, playAsAction);
+
+      const result = handlePlayCard(
+        roomId,
+        playerId,
+        cardId,
+        chosenColor,
+        playAsAction
+      );
+
+      // Send game state update
       io.to(roomId).emit("updateGameState", room.gameState);
+
+      // If this was an action card, send a notification
+      if (result?.notificationType) {
+        let notificationMessage = "";
+
+        if (result.notificationType === "Pass Go") {
+          notificationMessage = `${result.player} played Pass Go and drew 2 cards.`;
+        }
+
+        if (notificationMessage) {
+          io.to(roomId).emit("gameNotification", notificationMessage);
+        }
+      }
     }
   );
 

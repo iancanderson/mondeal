@@ -6,6 +6,7 @@ import CardView from "../components/CardView";
 import PlayerArea from "../components/PlayerArea";
 import { ColorPicker } from "../components/ColorPicker";
 import ActionCardModal from "../components/ActionCardModal";
+import GameToast from "../components/GameToast";
 import { GameState, Player, Card } from "../types";
 
 function Game() {
@@ -30,6 +31,7 @@ function Game() {
     React.useState<Card | null>(null);
   const [selectedActionCard, setSelectedActionCard] =
     React.useState<Card | null>(null);
+  const [notifications, setNotifications] = React.useState<string[]>([]);
 
   // Handle window resize for confetti
   React.useEffect(() => {
@@ -77,10 +79,15 @@ function Game() {
       alert(msg);
     });
 
+    socket.on("gameNotification", (message: string) => {
+      setNotifications((prev) => [...prev, message]);
+    });
+
     return () => {
       socket.off("roomJoined");
       socket.off("updateGameState");
       socket.off("error");
+      socket.off("gameNotification");
     };
   }, []);
 
@@ -182,6 +189,10 @@ function Game() {
     : null;
   const canPlayMoreCards = gameState?.cardsPlayedThisTurn < 3;
 
+  const removeNotification = (index: number) => {
+    setNotifications((prev) => prev.filter((_, i) => i !== index));
+  };
+
   return (
     <div className="p-4">
       {winner && (
@@ -193,6 +204,15 @@ function Game() {
           gravity={0.2}
         />
       )}
+
+      {/* Display game notifications */}
+      {notifications.map((message, index) => (
+        <GameToast
+          key={index}
+          message={message}
+          onClose={() => removeNotification(index)}
+        />
+      ))}
 
       {selectedWildcard && (
         <ColorPicker

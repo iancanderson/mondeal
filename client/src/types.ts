@@ -43,6 +43,7 @@ export interface ServerToClientEvents {
   roomJoined: (data: { gameState: GameState; playerId: string }) => void;
   updateGameState: (gameState: GameState) => void;
   availableRooms: (rooms: RoomInfo[]) => void;
+  gameNotification: (message: string) => void;
   error: (msg: string) => void;
 }
 

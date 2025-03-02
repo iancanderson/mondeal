@@ -204,6 +204,11 @@ export function playCard(
   } else if (card.type === "ACTION" && playAsAction) {
     // When played as an action, add to the discard pile
     gameState.discardPile.push(card);
+
+    // Handle specific action card effects
+    if (card.name === "Pass Go") {
+      handlePassGoAction(gameState, player);
+    }
   } else {
     // Money cards and action cards played as money go to money pile
     player.moneyPile.push(card);
@@ -211,6 +216,19 @@ export function playCard(
 
   gameState.cardsPlayedThisTurn++;
   return true;
+}
+
+/**
+ * Handle the "Pass Go" action which allows the player to draw 2 extra cards
+ */
+function handlePassGoAction(gameState: GameState, player: Player): void {
+  // Draw 2 cards from the deck
+  for (let i = 0; i < 2; i++) {
+    if (gameState.deck.length > 0) {
+      const card = gameState.deck.pop()!;
+      player.hand.push(card);
+    }
+  }
 }
 
 export function reassignWildcard(

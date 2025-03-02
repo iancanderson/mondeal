@@ -142,7 +142,25 @@ export function handlePlayCard(
     return;
   }
 
-  playCard(room.gameState, playerId, cardId, chosenColor, playAsAction);
+  // Store result for action notification
+  const success = playCard(
+    room.gameState,
+    playerId,
+    cardId,
+    chosenColor,
+    playAsAction
+  );
+
+  // Return notification info for action cards
+  if (success && card.type === "ACTION" && playAsAction) {
+    return {
+      success: true,
+      notificationType: card.name,
+      player: player.name,
+    };
+  }
+
+  return { success };
 }
 
 export function handleEndTurn(roomId: string, playerId: string) {
