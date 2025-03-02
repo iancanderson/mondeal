@@ -101,6 +101,12 @@ export function joinRoom(
     return {};
   }
 
+  // Check if player already exists in the room
+  const existingPlayer = room.gameState.players.find(p => p.uuid === playerInfo.uuid);
+  if (existingPlayer) {
+    return { room, playerId: existingPlayer.id };
+  }
+
   const playerId = uuidv4();
   room.gameState.players.push({
     id: playerId,
