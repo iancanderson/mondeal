@@ -11,6 +11,7 @@ import {
   getRoom,
   getAvailableRooms,
 } from "./roomManager";
+import { reassignWildcard } from "./gameLogic";
 import { ClientToServerEvents, ServerToClientEvents } from "./types";
 
 const app = express();
@@ -102,6 +103,16 @@ io.on("connection", (socket) => {
     const room = getRoom(roomId);
     if (!room) return;
     io.to(roomId).emit("updateGameState", room.gameState);
+  });
+
+  socket.on("reassignWildcard", (roomId, playerId, cardId, newColor) => {
+    const room = getRoom(roomId);
+    if (!room) return;
+    
+    const success = reassignWildcard(room.gameState, playerId, cardId, newColor);
+    if (success) {
+      io.to(roomId).emit("updateGameState", room.gameState);
+    }
   });
 });
 

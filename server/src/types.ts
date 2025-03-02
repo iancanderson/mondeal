@@ -27,6 +27,7 @@ export interface GameState {
   isStarted: boolean;
   winnerId?: string;
   cardsPlayedThisTurn: number; // Track number of cards played this turn
+  wildCardReassignedThisTurn: boolean; // Track if a wild card was reassigned this turn
 }
 
 export interface Room {
@@ -57,6 +58,12 @@ export interface ClientToServerEvents {
     playerId: string,
     cardId: string,
     chosenColor?: string
+  ) => void;
+  reassignWildcard: (
+    roomId: string,
+    playerId: string,
+    cardId: string,
+    newColor: string
   ) => void;
   endTurn: (roomId: string, playerId: string) => void;
   requestRooms: () => void;

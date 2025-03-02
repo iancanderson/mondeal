@@ -25,6 +25,7 @@ function Game() {
   const [selectedWildcard, setSelectedWildcard] = React.useState<Card | null>(
     null
   );
+  const [selectedWildcardForReassign, setSelectedWildcardForReassign] = React.useState<Card | null>(null);
 
   // Handle window resize for confetti
   React.useEffect(() => {
@@ -112,6 +113,19 @@ function Game() {
     }
   };
 
+  const handleWildCardClick = (card: Card) => {
+    if (isMyTurn && !gameState.wildCardReassignedThisTurn) {
+      setSelectedWildcardForReassign(card);
+    }
+  };
+
+  const handleColorPickForReassign = (color: string) => {
+    if (selectedWildcardForReassign) {
+      socket.emit("reassignWildcard", roomId, playerId, selectedWildcardForReassign.id, color);
+      setSelectedWildcardForReassign(null);
+    }
+  };
+
   const handleEndTurn = () => {
     socket.emit("endTurn", roomId, playerId);
   };
@@ -142,6 +156,13 @@ function Game() {
         />
       )}
 
+      {selectedWildcardForReassign && (
+        <ColorPicker
+          onColorPick={handleColorPickForReassign}
+          onCancel={() => setSelectedWildcardForReassign(null)}
+        />
+      )}
+
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">Game Room: {roomId}</h1>
         <Link to="/" className="text-blue-500 hover:text-blue-700 underline">
@@ -158,7 +179,12 @@ function Game() {
             </h2>
             {isMyTurn && (
               <div className="text-sm text-gray-600">
-                Cards played this turn: {gameState.cardsPlayedThisTurn}/3
+                <div>Cards played this turn: {gameState.cardsPlayedThisTurn}/3</div>
+                {!gameState.wildCardReassignedThisTurn && (
+                  <div className="text-blue-600">
+                    You can reassign one wild card's color this turn
+                  </div>
+                )}
               </div>
             )}
             {winner && (
@@ -169,7 +195,13 @@ function Game() {
           </div>
           <div className="flex gap-4">
             {gameState.players.map((player) => (
-              <PlayerArea key={player.id} player={player} />
+              <PlayerArea
+                key={player.id}
+                player={player}
+                isCurrentPlayer={player.id === playerId}
+                onWildCardClick={handleWildCardClick}
+                canReassignWildCard={isMyTurn && !gameState.wildCardReassignedThisTurn}
+              />
             ))}
           </div>
           <div className="border p-2 mt-4">

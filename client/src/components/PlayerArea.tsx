@@ -4,9 +4,12 @@ import CardView from "./CardView";
 
 interface PlayerAreaProps {
   player: Player;
+  isCurrentPlayer?: boolean;
+  onWildCardClick?: (card: Card) => void;
+  canReassignWildCard?: boolean;
 }
 
-function PlayerArea({ player }: PlayerAreaProps) {
+function PlayerArea({ player, isCurrentPlayer, onWildCardClick, canReassignWildCard }: PlayerAreaProps) {
   const propertyOrder = [
     "Brown",
     "LightBlue",
@@ -44,6 +47,12 @@ function PlayerArea({ player }: PlayerAreaProps) {
     return completedSets;
   };
 
+  const handleCardClick = (card: Card) => {
+    if (isCurrentPlayer && canReassignWildCard && card.isWildcard && onWildCardClick) {
+      onWildCardClick(card);
+    }
+  };
+
   const completedSets = getCompletedSetCount();
 
   return (
@@ -69,8 +78,13 @@ function PlayerArea({ player }: PlayerAreaProps) {
                 </div>
                 <div className="flex gap-0.5">
                   {cards.map((card: Card) => (
-                    <div key={card.id}>
-                      <CardView card={card} />
+                    <div key={card.id} 
+                         className={isCurrentPlayer && canReassignWildCard && card.isWildcard ? "cursor-pointer hover:scale-105 transition-transform" : ""}>
+                      <CardView
+                        card={card}
+                        clickable={isCurrentPlayer && canReassignWildCard && card.isWildcard}
+                        onClick={() => handleCardClick(card)}
+                      />
                     </div>
                   ))}
                 </div>

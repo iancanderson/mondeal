@@ -155,8 +155,9 @@ export function startTurn(gameState: GameState) {
       currentPlayer.hand.push(card);
     }
   }
-  // Reset cards played counter at start of turn
+  // Reset turn counters
   gameState.cardsPlayedThisTurn = 0;
+  gameState.wildCardReassignedThisTurn = false;
 }
 
 /**
@@ -203,6 +204,56 @@ export function playCard(
   }
 
   gameState.cardsPlayedThisTurn++;
+  return true;
+}
+
+export function reassignWildcard(
+  gameState: GameState,
+  playerId: string,
+  cardId: string,
+  newColor: string
+): boolean {
+  // Only the current player can reassign
+  if (gameState.players[gameState.currentPlayerIndex].id !== playerId) {
+    return false;
+  }
+
+  // Only one wild card reassignment per turn
+  if (gameState.wildCardReassignedThisTurn) {
+    return false;
+  }
+
+  const player = gameState.players.find((p) => p.id === playerId);
+  if (!player) return false;
+
+  // Find the card in any property pile
+  let foundCard: Card | undefined;
+  let oldColor: string | undefined;
+
+  for (const [color, cards] of Object.entries(player.properties)) {
+    const cardIndex = cards.findIndex(c => c.id === cardId);
+    if (cardIndex !== -1) {
+      foundCard = cards[cardIndex];
+      oldColor = color;
+      // Remove from old color pile
+      cards.splice(cardIndex, 1);
+      break;
+    }
+  }
+
+  if (!foundCard || !oldColor || !foundCard.isWildcard) {
+    return false;
+  }
+
+  // Add to new color pile
+  if (!player.properties[newColor]) {
+    player.properties[newColor] = [];
+  }
+  player.properties[newColor].push(foundCard);
+
+  // Mark that we've reassigned a wild card this turn
+  gameState.wildCardReassignedThisTurn = true;
+
   return true;
 }
 
