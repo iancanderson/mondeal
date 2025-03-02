@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { socket } from "../services/socket";
+import { GameState } from "../types";
 
 function Lobby() {
   const [playerName, setPlayerName] = useState("");
@@ -8,12 +9,11 @@ function Lobby() {
   const navigate = useNavigate();
 
   React.useEffect(() => {
-    socket.on("roomJoined", (gameState) => {
-      // navigate to game room
+    socket.on("roomJoined", (gameState: GameState) => {
       navigate(`/game/${gameState.roomId}`, { state: { gameState } });
     });
 
-    socket.on("error", (msg) => {
+    socket.on("error", (msg: string) => {
       alert(msg);
     });
 
@@ -23,7 +23,8 @@ function Lobby() {
     };
   }, [navigate]);
 
-  const handleCreateRoom = () => {
+  const handleCreateRoom = (e: React.FormEvent) => {
+    e.preventDefault();
     if (!playerName) {
       alert("Enter player name");
       return;
@@ -31,7 +32,8 @@ function Lobby() {
     socket.emit("createRoom", playerName);
   };
 
-  const handleJoinRoom = () => {
+  const handleJoinRoom = (e: React.FormEvent) => {
+    e.preventDefault();
     if (!playerName || !roomId) {
       alert("Enter player name and room ID");
       return;

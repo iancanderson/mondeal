@@ -1,5 +1,5 @@
 import React from "react";
-import { Player } from "../types";
+import { Player, Card } from "../types";
 import CardView from "./CardView";
 
 interface PlayerAreaProps {
@@ -8,15 +8,15 @@ interface PlayerAreaProps {
 
 function PlayerArea({ player }: PlayerAreaProps) {
   return (
-    <div className="border p-2 w-64">
-      <h3 className="font-bold mb-2">{player.name}</h3>
-      <div className="mb-2">
-        <h4 className="font-semibold">Properties:</h4>
-        {Object.keys(player.properties).map((color) => (
-          <div key={color}>
-            <span className="underline">{color}:</span>
-            <div className="flex gap-1">
-              {player.properties[color].map((card) => (
+    <div className="border p-4 flex-1">
+      <h3 className="font-bold">{player.name}</h3>
+      <div className="my-2">
+        <div className="text-sm font-semibold">Properties:</div>
+        {Object.entries(player.properties).map(([color, cards]) => (
+          <div key={color} className="border-b py-1">
+            <div className="text-xs text-gray-600">{color}</div>
+            <div className="flex gap-2">
+              {cards.map((card: Card) => (
                 <CardView key={card.id} card={card} />
               ))}
             </div>
@@ -24,9 +24,9 @@ function PlayerArea({ player }: PlayerAreaProps) {
         ))}
       </div>
       <div>
-        <h4 className="font-semibold">Money/Action:</h4>
-        <div className="flex gap-1">
-          {player.moneyPile.map((card) => (
+        <div className="text-sm font-semibold">Money Pile:</div>
+        <div className="flex gap-2">
+          {player.moneyPile.map((card: Card) => (
             <CardView key={card.id} card={card} />
           ))}
         </div>

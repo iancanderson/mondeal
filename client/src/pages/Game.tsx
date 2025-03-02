@@ -3,24 +3,25 @@ import { useParams, useLocation } from "react-router-dom";
 import { socket } from "../services/socket";
 import CardView from "../components/CardView";
 import PlayerArea from "../components/PlayerArea";
+import { GameState, Player } from "../types";
 
 function Game() {
   const { roomId } = useParams();
-  const { state } = useLocation() as any;
-  const [gameState, setGameState] = React.useState(state?.gameState || null);
+  const { state } = useLocation() as { state: { gameState: GameState } | null };
+  const [gameState, setGameState] = React.useState<GameState | null>(
+    state?.gameState || null
+  );
   const [playerId, setPlayerId] = React.useState<string>("");
-  const [myPlayer, setMyPlayer] = React.useState<any>(null);
+  const [myPlayer, setMyPlayer] = React.useState<Player | null>(null);
 
   React.useEffect(() => {
-    // On joining, we have an initial gameState from Lobby, but we need to
-    // keep listening for updates:
-    socket.on("roomJoined", (gs) => {
+    socket.on("roomJoined", (gs: GameState) => {
       setGameState(gs);
     });
-    socket.on("updateGameState", (gs) => {
+    socket.on("updateGameState", (gs: GameState) => {
       setGameState(gs);
     });
-    socket.on("error", (msg) => {
+    socket.on("error", (msg: string) => {
       alert(msg);
     });
 
@@ -33,24 +34,11 @@ function Game() {
 
   React.useEffect(() => {
     if (!gameState) return;
-    // Identify which player is me. This is a naive approach:
-    // We'll guess the last joined player's id might be in localStorage or something
-    // but for simplicity, store it in a variable on creation/join.
-    // If you can't track it, you might do a more robust approach.
-    // In real usage, you'd store your playerId after "createRoom"/"joinRoom".
-    // For example:
-    // localStorage.getItem("playerId")
-    // Or pass via navigation state.
-
-    // This sample attempts to find if there's exactly 1 player that doesn't have a name mismatch...
-    // This is a placeholder logic if you want to store your ID on client.
-    // For simplicity we skip that. We'll set you to first player if missing.
     if (!playerId) {
       const firstPlayer = gameState.players[0]?.id || "";
       setPlayerId(firstPlayer);
     }
-
-    const me = gameState.players.find((p: any) => p.id === playerId);
+    const me = gameState.players.find((p) => p.id === playerId);
     if (me) {
       setMyPlayer(me);
     }
@@ -75,7 +63,7 @@ function Game() {
   const isMyTurn =
     gameState.players[gameState.currentPlayerIndex]?.id === playerId;
   const winner = gameState.winnerId
-    ? gameState.players.find((p: any) => p.id === gameState.winnerId)
+    ? gameState.players.find((p) => p.id === gameState.winnerId)
     : null;
 
   return (
@@ -95,14 +83,14 @@ function Game() {
             )}
           </div>
           <div className="flex gap-4">
-            {gameState.players.map((player: any) => (
+            {gameState.players.map((player) => (
               <PlayerArea key={player.id} player={player} />
             ))}
           </div>
           <div className="border p-2 mt-4">
             <h2 className="font-semibold">My Hand:</h2>
             <div className="flex gap-2">
-              {myPlayer?.hand?.map((card: any) => (
+              {myPlayer?.hand?.map((card) => (
                 <CardView
                   key={card.id}
                   card={card}
@@ -133,7 +121,7 @@ function Game() {
             {myPlayer?.isReady ? "Unready" : "Ready"}
           </button>
           <div className="mt-4">
-            {gameState.players.map((player: any) => (
+            {gameState.players.map((player) => (
               <div key={player.id} className="border-b py-1">
                 {player.name} - {player.isReady ? "Ready" : "Not Ready"}
               </div>
