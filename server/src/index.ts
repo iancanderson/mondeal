@@ -19,6 +19,7 @@ import {
   executeDealBreaker,
   executeForcedDeal,
   collectRent,
+  collectDebt,
   handleJustSayNoResponse,
 } from "./gameLogic";
 import {
@@ -410,6 +411,51 @@ io.on("connection", (socket) => {
     // Update available rooms list if any room creators were updated
     broadcastRoomUpdate();
   });
+
+  // Add a new socket handler for collecting debt
+  socket.on(
+    "collectDebt",
+    (roomId: string, sourcePlayerId: string, targetPlayerId: string, paymentCardIds: string[]) => {
+      const room = getRoom(roomId);
+      if (!room) return;
+
+      const sourcePlayer = room.gameState.players.find((p) => p.id === sourcePlayerId);
+      const targetPlayer = room.gameState.players.find((p) => p.id === targetPlayerId);
+
+      if (!sourcePlayer || !targetPlayer) return;
+
+      // Calculate if this is a bankruptcy case (giving up all cards)
+      const totalCards = [
+        ...targetPlayer.moneyPile,
+        ...Object.values(targetPlayer.properties).flatMap(set => set.cards),
+      ];
+      const isBankruptcy = paymentCardIds.length === totalCards.length;
+
+      const success = collectDebt(
+        room.gameState,
+        sourcePlayerId,
+        targetPlayerId,
+        paymentCardIds
+      );
+
+      if (success) {
+        io.to(roomId).emit("updateGameState", room.gameState);
+
+        // Send appropriate notification based on bankruptcy status
+        if (isBankruptcy) {
+          io.to(roomId).emit(
+            "gameNotification",
+            `${targetPlayer.name} went bankrupt and surrendered all cards to pay ${sourcePlayer.name}'s $5M debt!`
+          );
+        } else {
+          io.to(roomId).emit(
+            "gameNotification",
+            `${targetPlayer.name} paid $5M debt to ${sourcePlayer.name}.`
+          );
+        }
+      }
+    }
+  );
 
   // Handle disconnections
   socket.on("disconnect", () => {

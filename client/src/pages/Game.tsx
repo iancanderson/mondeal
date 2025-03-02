@@ -13,6 +13,7 @@ import RentModal from "../components/RentModal";
 import JustSayNoModal from "../components/JustSayNoModal";
 import PropertyUpgradeModal from "../components/PropertyUpgradeModal";
 import ForcedDealModal from "../components/ForcedDealModal";
+import DebtCollectorModal from "../components/DebtCollectorModal";
 import { GameState, Player, Card } from "../types";
 
 function Game() {
@@ -50,6 +51,7 @@ function Game() {
       type: "House" | "Hotel";
     } | null>(null);
   const [showForcedDealModal, setShowForcedDealModal] = React.useState(false);
+  const [showDebtCollectorModal, setShowDebtCollectorModal] = React.useState(false);
 
   // Handle window resize for confetti
   React.useEffect(() => {
@@ -170,6 +172,18 @@ function Game() {
     }
   }, [gameState?.pendingAction, playerId]);
 
+  // Add effect to show modal when Debt Collector is pending
+  React.useEffect(() => {
+    if (
+      gameState?.pendingAction.type === "DEBT_COLLECTOR" &&
+      gameState.pendingAction.playerId === playerId
+    ) {
+      setShowDebtCollectorModal(true);
+    } else {
+      setShowDebtCollectorModal(false);
+    }
+  }, [gameState?.pendingAction, playerId]);
+
   if (!roomId || !gameState) {
     return <div className="p-4">No Game State found. Return to Lobby.</div>;
   }
@@ -245,6 +259,21 @@ function Game() {
       );
       setSelectedActionCard(null);
       setShowForcedDealModal(true);
+      return;
+    }
+
+    // Special handling for Debt Collector
+    if (selectedActionCard.name === "Debt Collector") {
+      socket.emit(
+        "playCard",
+        roomId,
+        playerId,
+        selectedActionCard.id,
+        undefined,
+        true
+      );
+      setSelectedActionCard(null);
+      setShowDebtCollectorModal(true);
       return;
     }
 
@@ -355,6 +384,19 @@ function Game() {
       myCardId
     );
     setShowForcedDealModal(false);
+  };
+
+  const handleCollectDebt = (targetPlayerId: string, paymentCardIds: string[]) => {
+    if (!roomId || !playerId) return;
+
+    socket.emit(
+      "collectDebt",
+      roomId,
+      playerId,
+      targetPlayerId,
+      paymentCardIds
+    );
+    setShowDebtCollectorModal(false);
   };
 
   const isMyTurn =
@@ -485,6 +527,16 @@ function Game() {
         />
       )}
 
+      {showDebtCollectorModal && gameState && (
+        <DebtCollectorModal
+          players={gameState.players}
+          currentPlayerId={playerId}
+          amount={5} // Fixed $5M for Debt Collector
+          onCollectDebt={handleCollectDebt}
+          onCancel={() => setShowDebtCollectorModal(false)}
+        />
+      )}
+
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">Game Room: {roomId}</h1>
         <Link to="/" className="text-blue-500 hover:text-blue-700 underline">
@@ -530,7 +582,8 @@ function Game() {
             </div>
           )}
 
-          <h2 className="text-xl font-semibold">-1 h zn z gzbjdq ata</h2>
+          {/* Remove erroneous line and replace with Players heading */}
+          <h2 className="text-xl font-semibold">Players</h2>
 
           <div className="flex gap-4">
             {gameState.players.map((player) => (

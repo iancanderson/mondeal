@@ -17,10 +17,10 @@
 - House
 - Hotel
 - Forced Deal
+- Debt Collector
 
 ## TODO
 
-- Debt Collector
 - It's My Birthday
 - Double The Rent
 - If a player has more cards for a color than the set limit, start a new set for that color

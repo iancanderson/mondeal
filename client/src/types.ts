@@ -57,6 +57,11 @@ export type ActionState =
       playerId: string;
     }
   | {
+      type: "DEBT_COLLECTOR";
+      playerId: string;
+      amount: number;
+    }
+  | {
       type: "RENT";
       playerId: string;
       color: string;
@@ -65,7 +70,7 @@ export type ActionState =
   | {
       type: "JUST_SAY_NO_OPPORTUNITY";
       playerId: string;
-      actionType: "DEAL_BREAKER" | "SLY_DEAL" | "RENT" | "FORCED_DEAL";
+      actionType: "DEAL_BREAKER" | "SLY_DEAL" | "RENT" | "FORCED_DEAL" | "DEBT_COLLECTOR";
       sourcePlayerId: string;
       targetCardId?: string;
       myCardId?: string;
@@ -149,5 +154,11 @@ export interface ClientToServerEvents {
     roomId: string,
     playerId: string,
     useJustSayNo: boolean
+  ) => void;
+  collectDebt: (
+    roomId: string,
+    sourcePlayerId: string,
+    targetPlayerId: string,
+    paymentCardIds: string[]
   ) => void;
 }

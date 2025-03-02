@@ -33,6 +33,23 @@ function JustSayNoModal({
     }
   };
 
+  const getMessage = () => {
+    switch (pendingAction.actionType) {
+      case "DEAL_BREAKER":
+        return `${actionPlayer.name} is trying to steal your complete property set!`;
+      case "SLY_DEAL":
+        return `${actionPlayer.name} is trying to steal one of your properties!`;
+      case "RENT":
+        return `${actionPlayer.name} is trying to charge you $${pendingAction.amount}M in rent!`;
+      case "FORCED_DEAL":
+        return `${actionPlayer.name} is trying to force a property trade with you!`;
+      case "DEBT_COLLECTOR":
+        return `${actionPlayer.name} is trying to collect a $5M debt from you!`;
+      default:
+        return "An action is being played against you!";
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
