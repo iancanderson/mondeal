@@ -737,6 +737,13 @@ export function handleJustSayNoResponse(
 
     // Cancel the action
     gameState.pendingAction = { type: "NONE" };
+
+    // Check if the current player's turn should end
+    const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+    if (gameState.cardsPlayedThisTurn >= 3) {
+      endTurn(gameState);
+    }
+
     return true;
   }
 
