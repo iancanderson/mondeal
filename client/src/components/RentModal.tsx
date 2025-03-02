@@ -28,14 +28,13 @@ function RentModal({
     0
   );
 
-  // Get all cards that could be used for payment (hand + money pile)
-  const allCards = [...targetPlayer.hand, ...targetPlayer.moneyPile];
-  // For bankruptcy, also include all property cards
-  const allPropertyCards = Object.values(targetPlayer.properties).flat();
-  const totalCards = isBankrupt ? [...allCards, ...allPropertyCards] : allCards;
+  // Get all cards that could be used for payment (money pile + property cards)
+  const moneyPileCards = targetPlayer.moneyPile;
+  const propertyCards = Object.values(targetPlayer.properties).flat();
+  const availableCards = [...moneyPileCards, ...propertyCards];
 
-  // Calculate total possible payment
-  const totalPossible = totalCards.reduce((sum, card) => sum + card.value, 0);
+  // Calculate total possible payment from all available cards
+  const totalPossible = availableCards.reduce((sum, card) => sum + card.value, 0);
 
   const handleCardClick = (card: Card) => {
     if (selectedCards.find((c) => c.id === card.id)) {
@@ -48,7 +47,7 @@ function RentModal({
   const handleBankruptcy = () => {
     setIsBankrupt(true);
     // Select all available cards for payment
-    setSelectedCards(totalCards);
+    setSelectedCards(availableCards);
   };
 
   const handleSubmit = () => {
@@ -69,13 +68,13 @@ function RentModal({
           {totalPossible < amount && !isBankrupt && (
             <div className="mt-2">
               <p className="text-red-600 mb-2">
-                Warning: You don't have enough money to pay the full rent!
+                Warning: You don't have enough cards to pay the full rent!
               </p>
               <button
                 onClick={handleBankruptcy}
                 className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
               >
-                Declare Bankruptcy (Give up all money and properties)
+                Declare Bankruptcy (Give up all played cards)
               </button>
             </div>
           )}
@@ -87,20 +86,56 @@ function RentModal({
               ? "All cards to be surrendered:"
               : "Select cards to pay with:"}
           </h4>
-          <div className="flex flex-wrap gap-2 max-h-60 overflow-y-auto">
-            {totalCards.map((card) => (
-              <div
-                key={card.id}
-                onClick={() => !isBankrupt && handleCardClick(card)}
-                className={`transform transition ${
-                  isBankrupt
-                    ? "opacity-50"
-                    : selectedCards.find((c) => c.id === card.id)
-                    ? "scale-110 ring-2 ring-blue-500"
-                    : "hover:scale-105 cursor-pointer"
-                }`}
-              >
-                <CardView card={card} />
+          <div className="space-y-4 max-h-60 overflow-y-auto">
+            {/* Money pile section */}
+            {moneyPileCards.length > 0 && (
+              <div className="border-b pb-3">
+                <p className="font-medium mb-2">Money Pile:</p>
+                <div className="flex flex-wrap gap-2">
+                  {moneyPileCards.map((card) => (
+                    <div
+                      key={card.id}
+                      onClick={() => !isBankrupt && handleCardClick(card)}
+                      className={`
+                        transform transition 
+                        ${isBankrupt
+                          ? "opacity-50"
+                          : selectedCards.find((c) => c.id === card.id)
+                          ? "scale-110 ring-2 ring-blue-500"
+                          : "hover:scale-105 cursor-pointer"
+                        }
+                      `}
+                    >
+                      <CardView card={card} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Properties section */}
+            {Object.entries(targetPlayer.properties).map(([color, cards]) => (
+              <div key={color} className="border-b pb-3">
+                <p className="font-medium mb-2">{color} Properties:</p>
+                <div className="flex flex-wrap gap-2">
+                  {cards.map((card) => (
+                    <div
+                      key={card.id}
+                      onClick={() => !isBankrupt && handleCardClick(card)}
+                      className={`
+                        transform transition 
+                        ${isBankrupt
+                          ? "opacity-50"
+                          : selectedCards.find((c) => c.id === card.id)
+                          ? "scale-110 ring-2 ring-blue-500"
+                          : "hover:scale-105 cursor-pointer"
+                        }
+                      `}
+                    >
+                      <CardView card={card} />
+                    </div>
+                  ))}
+                </div>
               </div>
             ))}
           </div>

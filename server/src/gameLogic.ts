@@ -607,33 +607,39 @@ export function collectRent(
   // Calculate total required payment
   const totalRequired = amount;
 
-  // Get all property cards from the target player
-  const allPropertyCards = Object.values(target.properties).flat();
+  // Get all possible payment sources
+  const moneyPileCards = target.moneyPile;
+  const propertyCards = Object.values(target.properties).flat();
+  const availableCards = [...moneyPileCards, ...propertyCards];
 
-  // Calculate total possible payment from all sources
-  const totalPossible = [
-    ...target.hand,
-    ...target.moneyPile,
-    ...allPropertyCards,
-  ].reduce((sum, card) => sum + card.value, 0);
+  // Calculate total possible payment
+  const totalPossible = availableCards.reduce((sum, card) => sum + card.value, 0);
 
   // Check if this is a bankruptcy case (insufficient total funds)
   const isBankruptcy = totalPossible < totalRequired;
 
+  // In bankruptcy case, validate that ALL cards are being surrendered
+  if (isBankruptcy && paymentCards.length !== availableCards.length) {
+    return false;
+  }
+
+  // Validate all payment cards exist in allowed sources (money pile or properties)
+  for (const cardId of paymentCards) {
+    const cardExists = availableCards.some(c => c.id === cardId);
+    if (!cardExists) {
+      return false;
+    }
+  }
+
   // Transfer the selected cards
   const paymentCardsToTransfer: Card[] = [];
   for (const cardId of paymentCards) {
-    // Look for the card in all possible places
-    let card = target.hand.find((c) => c.id === cardId);
-    let location: "hand" | "money" | "property" = "hand";
+    // Look for the card in money pile first
+    let card = target.moneyPile.find((c) => c.id === cardId);
+    let location: "money" | "property" = "money";
 
     if (!card) {
-      card = target.moneyPile.find((c) => c.id === cardId);
-      location = "money";
-    }
-
-    if (!card && isBankruptcy) {
-      // For bankruptcy case, also look in properties
+      // Look in properties
       for (const [color, cards] of Object.entries(target.properties)) {
         const foundCard = cards.find((c) => c.id === cardId);
         if (foundCard) {
@@ -652,9 +658,6 @@ export function collectRent(
 
     // Remove card from its source
     switch (location) {
-      case "hand":
-        target.hand = target.hand.filter((c) => c.id !== cardId);
-        break;
       case "money":
         target.moneyPile = target.moneyPile.filter((c) => c.id !== cardId);
         break;
