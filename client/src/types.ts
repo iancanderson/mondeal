@@ -7,6 +7,7 @@ export interface Card {
   type: CardType;
   value: number;
   color?: string;
+  isWildcard?: boolean;
 }
 
 export interface Player {

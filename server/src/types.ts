@@ -6,6 +6,7 @@ export interface Card {
   type: CardType;
   value: number;
   color?: string; // For property cards
+  isWildcard?: boolean; // For property wild cards
 }
 
 export interface Player {
@@ -51,7 +52,12 @@ export interface ClientToServerEvents {
   createRoom: (playerName: string) => void;
   joinRoom: (roomId: string, playerName: string) => void;
   toggleReady: (roomId: string, playerId: string) => void;
-  playCard: (roomId: string, playerId: string, cardId: string) => void;
+  playCard: (
+    roomId: string,
+    playerId: string,
+    cardId: string,
+    chosenColor?: string
+  ) => void;
   endTurn: (roomId: string, playerId: string) => void;
   requestRooms: () => void;
 }

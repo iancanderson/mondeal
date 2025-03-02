@@ -40,6 +40,23 @@ export function createDeck(): Card[] {
     });
   });
 
+  // Add wild card properties (2 of each)
+  const wildcardNames = [
+    "Multi-Color Property 1",
+    "Multi-Color Property 2",
+    "Multi-Color Property 3",
+    "Multi-Color Property 4",
+  ];
+  wildcardNames.forEach((name) => {
+    deck.push({
+      id: uuidv4(),
+      name,
+      type: "PROPERTY",
+      value: 4,
+      isWildcard: true,
+    });
+  });
+
   // Add money cards with real values
   const moneyValues = [1, 1, 1, 1, 2, 2, 2, 3, 3, 4, 4, 5, 5];
   moneyValues.forEach((value) => {
@@ -147,7 +164,8 @@ export function startTurn(gameState: GameState) {
 export function playCard(
   gameState: GameState,
   playerId: string,
-  cardId: string
+  cardId: string,
+  chosenColor?: string // Optional parameter for wild cards
 ): boolean {
   // Check if player has already played 3 cards
   if (gameState.cardsPlayedThisTurn >= 3) {
@@ -161,20 +179,25 @@ export function playCard(
   if (cardIndex === -1) return false;
 
   const card = player.hand[cardIndex];
+
+  // For wild card properties, we need a chosen color
+  if (card.type === "PROPERTY" && card.isWildcard && !chosenColor) {
+    return false;
+  }
+
   // Remove from player's hand
   player.hand.splice(cardIndex, 1);
 
-  if (card.type === "PROPERTY" && card.color) {
-    if (!player.properties[card.color]) {
-      player.properties[card.color] = [];
+  if (card.type === "PROPERTY") {
+    const propertyColor = card.isWildcard ? chosenColor! : card.color!;
+    if (!player.properties[propertyColor]) {
+      player.properties[propertyColor] = [];
     }
-    player.properties[card.color].push(card);
+    player.properties[propertyColor].push(card);
   } else {
-    // For MONEY or ACTION, just put it in money pile
     player.moneyPile.push(card);
   }
 
-  // Increment cards played counter
   gameState.cardsPlayedThisTurn++;
   return true;
 }

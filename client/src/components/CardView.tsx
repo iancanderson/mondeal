@@ -9,42 +9,52 @@ interface CardViewProps {
 
 function CardView({ card, clickable, onClick }: CardViewProps) {
   const getBgColor = () => {
-    if (card.type === "PROPERTY" && card.color) {
-      switch (card.color) {
-        case "Brown":
-          return "bg-amber-900";
-        case "Blue":
-          return "bg-blue-600";
-        case "Green":
-          return "bg-green-600";
-        case "Yellow":
-          return "bg-yellow-400";
-        case "Red":
-          return "bg-red-600";
-        case "Orange":
-          return "bg-orange-500";
-        case "Purple":
-          return "bg-purple-600";
-        case "LightBlue":
-          return "bg-sky-400";
-        case "Railroad":
-          return "bg-gray-800";
-        case "Utility":
-          return "bg-gray-600";
-        default:
-          return "bg-gray-100";
+    if (card.type === "PROPERTY") {
+      if (card.isWildcard) {
+        return "bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500";
+      }
+      if (card.color) {
+        switch (card.color) {
+          case "Brown":
+            return "bg-amber-900";
+          case "Blue":
+            return "bg-blue-600";
+          case "Green":
+            return "bg-green-600";
+          case "Yellow":
+            return "bg-yellow-400";
+          case "Red":
+            return "bg-red-600";
+          case "Orange":
+            return "bg-orange-500";
+          case "Purple":
+            return "bg-purple-600";
+          case "LightBlue":
+            return "bg-sky-400";
+          case "Railroad":
+            return "bg-gray-800";
+          case "Utility":
+            return "bg-gray-600";
+          default:
+            return "bg-gray-100";
+        }
       }
     }
     return card.type === "MONEY" ? "bg-emerald-100" : "bg-amber-50";
   };
 
   const getTextColor = () => {
-    if (card.type === "PROPERTY" && card.color) {
-      switch (card.color) {
-        case "Yellow":
-          return "text-black";
-        default:
-          return "text-white";
+    if (card.type === "PROPERTY") {
+      if (card.isWildcard) {
+        return "text-white text-shadow";
+      }
+      if (card.color) {
+        switch (card.color) {
+          case "Yellow":
+            return "text-black";
+          default:
+            return "text-white";
+        }
       }
     }
     return "text-black";
@@ -71,7 +81,9 @@ function CardView({ card, clickable, onClick }: CardViewProps) {
           <div className="text-2xl font-bold text-green-700">{card.name}</div>
         )}
         {card.type === "PROPERTY" && (
-          <div className="text-xs italic mb-1">{card.color}</div>
+          <div className="text-xs italic mb-1">
+            {card.isWildcard ? "Wild Card" : card.color}
+          </div>
         )}
         {card.type === "ACTION" && (
           <div className="text-xs italic mb-1">Action Card</div>

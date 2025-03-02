@@ -116,17 +116,31 @@ export function toggleReady(roomId: string, playerId: string) {
 export function handlePlayCard(
   roomId: string,
   playerId: string,
-  cardId: string
+  cardId: string,
+  chosenColor?: string
 ) {
   const room = rooms.find((r) => r.roomId === roomId);
   if (!room) return;
+
   // Only the current player can play
   if (
     room.gameState.players[room.gameState.currentPlayerIndex].id !== playerId
   ) {
     return;
   }
-  playCard(room.gameState, playerId, cardId);
+
+  const player = room.gameState.players.find((p) => p.id === playerId);
+  if (!player) return;
+
+  const card = player.hand.find((c) => c.id === cardId);
+  if (!card) return;
+
+  // For wild card properties, ensure a color is chosen
+  if (card.type === "PROPERTY" && card.isWildcard && !chosenColor) {
+    return;
+  }
+
+  playCard(room.gameState, playerId, cardId, chosenColor);
 }
 
 export function handleEndTurn(roomId: string, playerId: string) {

@@ -4,7 +4,8 @@ import ReactConfetti from "react-confetti";
 import { socket } from "../services/socket";
 import CardView from "../components/CardView";
 import PlayerArea from "../components/PlayerArea";
-import { GameState, Player } from "../types";
+import { ColorPicker } from "../components/ColorPicker";
+import { GameState, Player, Card } from "../types";
 
 function Game() {
   const { roomId } = useParams();
@@ -21,6 +22,9 @@ function Game() {
     width: window.innerWidth,
     height: window.innerHeight,
   });
+  const [selectedWildcard, setSelectedWildcard] = React.useState<Card | null>(
+    null
+  );
 
   // Handle window resize for confetti
   React.useEffect(() => {
@@ -51,7 +55,10 @@ function Game() {
     );
 
     socket.on("updateGameState", (gs: GameState) => {
-      console.log("updateGameState received, current playerId:", playerIdRef.current);
+      console.log(
+        "updateGameState received, current playerId:",
+        playerIdRef.current
+      );
       setGameState((prevState) => {
         // Preserve the same gameState reference if nothing changed
         if (JSON.stringify(prevState) === JSON.stringify(gs)) {
@@ -90,8 +97,19 @@ function Game() {
     socket.emit("toggleReady", roomId, playerId);
   };
 
-  const handlePlayCard = (cardId: string) => {
-    socket.emit("playCard", roomId, playerId, cardId);
+  const handlePlayCard = (card: Card) => {
+    if (card.type === "PROPERTY" && card.isWildcard) {
+      setSelectedWildcard(card);
+      return;
+    }
+    socket.emit("playCard", roomId, playerId, card.id);
+  };
+
+  const handleColorPick = (color: string) => {
+    if (selectedWildcard) {
+      socket.emit("playCard", roomId, playerId, selectedWildcard.id, color);
+      setSelectedWildcard(null);
+    }
   };
 
   const handleEndTurn = () => {
@@ -116,13 +134,17 @@ function Game() {
           gravity={0.2}
         />
       )}
-      
+
+      {selectedWildcard && (
+        <ColorPicker
+          onColorPick={handleColorPick}
+          onCancel={() => setSelectedWildcard(null)}
+        />
+      )}
+
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">Game Room: {roomId}</h1>
-        <Link
-          to="/"
-          className="text-blue-500 hover:text-blue-700 underline"
-        >
+        <Link to="/" className="text-blue-500 hover:text-blue-700 underline">
           Back to Lobby
         </Link>
       </div>
@@ -158,7 +180,7 @@ function Game() {
                   key={card.id}
                   card={card}
                   clickable={isMyTurn && !winner && canPlayMoreCards}
-                  onClick={() => handlePlayCard(card.id)}
+                  onClick={() => handlePlayCard(card)}
                 />
               ))}
             </div>

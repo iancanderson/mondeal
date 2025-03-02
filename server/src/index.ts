@@ -84,10 +84,16 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("playCard", (roomId, playerId, cardId) => {
-    handlePlayCard(roomId, playerId, cardId);
+  socket.on("playCard", (roomId, playerId, cardId, chosenColor) => {
     const room = getRoom(roomId);
     if (!room) return;
+    // Only the current player can play
+    if (
+      room.gameState.players[room.gameState.currentPlayerIndex].id !== playerId
+    ) {
+      return;
+    }
+    handlePlayCard(roomId, playerId, cardId, chosenColor);
     io.to(roomId).emit("updateGameState", room.gameState);
   });
 
