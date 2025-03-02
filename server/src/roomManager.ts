@@ -118,7 +118,8 @@ export function handlePlayCard(
   roomId: string,
   playerId: string,
   cardId: string,
-  chosenColor?: string
+  chosenColor?: string,
+  playAsAction: boolean = false
 ) {
   const room = rooms.find((r) => r.roomId === roomId);
   if (!room) return;
@@ -141,7 +142,7 @@ export function handlePlayCard(
     return;
   }
 
-  playCard(room.gameState, playerId, cardId, chosenColor);
+  playCard(room.gameState, playerId, cardId, chosenColor, playAsAction);
 }
 
 export function handleEndTurn(roomId: string, playerId: string) {

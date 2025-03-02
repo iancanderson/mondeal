@@ -5,6 +5,7 @@ import { socket } from "../services/socket";
 import CardView from "../components/CardView";
 import PlayerArea from "../components/PlayerArea";
 import { ColorPicker } from "../components/ColorPicker";
+import ActionCardModal from "../components/ActionCardModal";
 import { GameState, Player, Card } from "../types";
 
 function Game() {
@@ -26,6 +27,8 @@ function Game() {
     null
   );
   const [selectedWildcardForReassign, setSelectedWildcardForReassign] =
+    React.useState<Card | null>(null);
+  const [selectedActionCard, setSelectedActionCard] =
     React.useState<Card | null>(null);
 
   // Handle window resize for confetti
@@ -104,6 +107,13 @@ function Game() {
       setSelectedWildcard(card);
       return;
     }
+
+    if (card.type === "ACTION") {
+      setSelectedActionCard(card);
+      return;
+    }
+
+    // Play money cards directly
     socket.emit("playCard", roomId, playerId, card.id);
   };
 
@@ -133,16 +143,44 @@ function Game() {
     }
   };
 
+  const handlePlayAsAction = () => {
+    if (selectedActionCard) {
+      socket.emit(
+        "playCard",
+        roomId,
+        playerId,
+        selectedActionCard.id,
+        undefined,
+        true
+      );
+      setSelectedActionCard(null);
+    }
+  };
+
+  const handlePlayAsMoney = () => {
+    if (selectedActionCard) {
+      socket.emit(
+        "playCard",
+        roomId,
+        playerId,
+        selectedActionCard.id,
+        undefined,
+        false
+      );
+      setSelectedActionCard(null);
+    }
+  };
+
   const handleEndTurn = () => {
     socket.emit("endTurn", roomId, playerId);
   };
 
   const isMyTurn =
-    gameState.players[gameState.currentPlayerIndex]?.id === playerId;
-  const winner = gameState.winnerId
+    gameState?.players[gameState.currentPlayerIndex]?.id === playerId;
+  const winner = gameState?.winnerId
     ? gameState.players.find((p) => p.id === gameState.winnerId)
     : null;
-  const canPlayMoreCards = gameState.cardsPlayedThisTurn < 3;
+  const canPlayMoreCards = gameState?.cardsPlayedThisTurn < 3;
 
   return (
     <div className="p-4">
@@ -170,6 +208,15 @@ function Game() {
         />
       )}
 
+      {selectedActionCard && (
+        <ActionCardModal
+          card={selectedActionCard}
+          onPlayAsMoney={handlePlayAsMoney}
+          onPlayAsAction={handlePlayAsAction}
+          onCancel={() => setSelectedActionCard(null)}
+        />
+      )}
+
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">Game Room: {roomId}</h1>
         <Link to="/" className="text-blue-500 hover:text-blue-700 underline">
@@ -177,7 +224,7 @@ function Game() {
         </Link>
       </div>
 
-      {gameState.isStarted ? (
+      {gameState?.isStarted ? (
         <>
           <div className="my-4">
             <h2 className="font-semibold text-lg">
@@ -202,6 +249,19 @@ function Game() {
               </div>
             )}
           </div>
+
+          {/* Add discard pile display */}
+          {gameState.discardPile.length > 0 && (
+            <div className="my-4 p-3 bg-gray-100 rounded-lg">
+              <h3 className="font-semibold mb-2">Action Card Discard Pile:</h3>
+              <div className="flex gap-2 overflow-x-auto pb-2">
+                {gameState.discardPile.map((card, index) => (
+                  <CardView key={card.id} card={card} />
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="flex gap-4">
             {gameState.players.map((player) => (
               <PlayerArea
@@ -257,7 +317,7 @@ function Game() {
             {myPlayer?.isReady ? "Unready" : "Ready"}
           </button>
           <div className="mt-4">
-            {gameState.players.map((player) => (
+            {gameState?.players.map((player) => (
               <div key={player.id} className="border-b py-1">
                 {player.name} - {player.isReady ? "Ready" : "Not Ready"}
               </div>

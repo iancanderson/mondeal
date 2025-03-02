@@ -164,13 +164,15 @@ export function startTurn(gameState: GameState) {
  * Handle playing a card from hand to property/money pile.
  * Simplified:
  * - PROPERTY -> goes to properties
- * - MONEY/ACTION -> goes to money pile (though real game might treat action differently)
+ * - MONEY -> goes to money pile
+ * - ACTION -> can go to money pile or discard pile (when played as action)
  */
 export function playCard(
   gameState: GameState,
   playerId: string,
   cardId: string,
-  chosenColor?: string // Optional parameter for wild cards
+  chosenColor?: string, // Optional parameter for wild cards
+  playAsAction: boolean = false // Optional parameter for action cards
 ): boolean {
   // Check if player has already played 3 cards
   if (gameState.cardsPlayedThisTurn >= 3) {
@@ -199,7 +201,11 @@ export function playCard(
       player.properties[propertyColor] = [];
     }
     player.properties[propertyColor].push(card);
+  } else if (card.type === "ACTION" && playAsAction) {
+    // When played as an action, add to the discard pile
+    gameState.discardPile.push(card);
   } else {
+    // Money cards and action cards played as money go to money pile
     player.moneyPile.push(card);
   }
 

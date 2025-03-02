@@ -54,7 +54,8 @@ export interface ClientToServerEvents {
     roomId: string,
     playerId: string,
     cardId: string,
-    chosenColor?: string
+    chosenColor?: string,
+    playAsAction?: boolean
   ) => void;
   reassignWildcard: (
     roomId: string,
