@@ -1,6 +1,18 @@
 // Mirror minimal shared types on client side
 export type CardType = "PROPERTY" | "MONEY" | "ACTION";
 
+export type ActionCardName =
+  | "Deal Breaker"
+  | "Just Say No"
+  | "Sly Deal"
+  | "Forced Deal"
+  | "Debt Collector"
+  | "It's My Birthday"
+  | "Double The Rent"
+  | "House"
+  | "Hotel"
+  | "Pass Go";
+
 export interface Card {
   id: string;
   name: string;

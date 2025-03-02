@@ -12,7 +12,7 @@ import {
   getAvailableRooms,
 } from "./roomManager";
 import { reassignWildcard } from "./gameLogic";
-import { ClientToServerEvents, ServerToClientEvents } from "./types";
+import { ClientToServerEvents, ServerToClientEvents, ActionCardName } from "./types";
 
 const app = express();
 app.use(cors());
@@ -113,8 +113,12 @@ io.on("connection", (socket) => {
       if (result?.notificationType) {
         let notificationMessage = "";
 
-        if (result.notificationType === "Pass Go") {
-          notificationMessage = `${result.player} played Pass Go and drew 2 cards.`;
+        // Use type-safe switch statement with ActionCardName
+        switch (result.notificationType as ActionCardName) {
+          case "Pass Go":
+            notificationMessage = `${result.player} played Pass Go and drew 2 cards.`;
+            break;
+          // Add cases for other action cards as they are implemented
         }
 
         if (notificationMessage) {

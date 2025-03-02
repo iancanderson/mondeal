@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
-import { Room, GameState, Player, RoomInfo } from "./types";
+import { Room, GameState, Player, RoomInfo, ActionCardName } from "./types";
 import {
   createDeck,
   dealInitialCards,
@@ -120,26 +120,30 @@ export function handlePlayCard(
   cardId: string,
   chosenColor?: string,
   playAsAction: boolean = false
-) {
+): {
+  success: boolean;
+  notificationType?: ActionCardName;
+  player?: string;
+} {
   const room = rooms.find((r) => r.roomId === roomId);
-  if (!room) return;
+  if (!room) return { success: false };
 
   // Only the current player can play
   if (
     room.gameState.players[room.gameState.currentPlayerIndex].id !== playerId
   ) {
-    return;
+    return { success: false };
   }
 
   const player = room.gameState.players.find((p) => p.id === playerId);
-  if (!player) return;
+  if (!player) return { success: false };
 
   const card = player.hand.find((c) => c.id === cardId);
-  if (!card) return;
+  if (!card) return { success: false };
 
   // For wild card properties, ensure a color is chosen
   if (card.type === "PROPERTY" && card.isWildcard && !chosenColor) {
-    return;
+    return { success: false };
   }
 
   // Store result for action notification
@@ -155,7 +159,7 @@ export function handlePlayCard(
   if (success && card.type === "ACTION" && playAsAction) {
     return {
       success: true,
-      notificationType: card.name,
+      notificationType: card.name as ActionCardName,
       player: player.name,
     };
   }

@@ -1,4 +1,4 @@
-import { Card, Player, GameState } from "./types";
+import { Card, Player, GameState, ActionCardName } from "./types";
 import { v4 as uuidv4 } from "uuid";
 
 /**
@@ -69,7 +69,7 @@ export function createDeck(): Card[] {
   });
 
   // Add action cards with real names
-  const actionCards = [
+  const actionCards: ActionCardName[] = [
     "Deal Breaker",
     "Just Say No",
     "Sly Deal",
@@ -205,9 +205,12 @@ export function playCard(
     // When played as an action, add to the discard pile
     gameState.discardPile.push(card);
 
-    // Handle specific action card effects
-    if (card.name === "Pass Go") {
-      handlePassGoAction(gameState, player);
+    // Handle specific action card effects using the typed name
+    switch (card.name as ActionCardName) {
+      case "Pass Go":
+        handlePassGoAction(gameState, player);
+        break;
+      // Other action cards can be added here
     }
   } else {
     // Money cards and action cards played as money go to money pile
