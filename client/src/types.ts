@@ -51,6 +51,15 @@ export type ActionState =
       playerId: string;
       color: string;
       amount: number;
+    }
+  | {
+      type: "JUST_SAY_NO_OPPORTUNITY";
+      playerId: string;
+      actionType: "DEAL_BREAKER" | "SLY_DEAL" | "RENT";
+      sourcePlayerId: string;
+      targetCardId?: string;
+      color?: string;
+      amount?: number;
     };
 
 export interface GameState {
@@ -118,4 +127,9 @@ export interface ClientToServerEvents {
   endTurn: (roomId: string, playerId: string) => void;
   updatePlayerName: (playerId: string, newName: string, uuid: string) => void;
   requestRooms: () => void;
+  respondToAction: (
+    roomId: string,
+    playerId: string,
+    useJustSayNo: boolean
+  ) => void;
 }

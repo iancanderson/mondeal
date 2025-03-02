@@ -94,8 +94,14 @@ function CardView({ card, clickable, onClick }: CardViewProps) {
         }
       }
     }
-    if (card.type === "RENT" && card.rentColors && card.rentColors.length === 2) {
-      return `bg-gradient-to-b ${getColorClass(card.rentColors[0])} ${getSecondColorClass(card.rentColors[1])}`;
+    if (
+      card.type === "RENT" &&
+      card.rentColors &&
+      card.rentColors.length === 2
+    ) {
+      return `bg-gradient-to-b ${getColorClass(
+        card.rentColors[0]
+      )} ${getSecondColorClass(card.rentColors[1])}`;
     }
     return card.type === "MONEY" ? "bg-emerald-100" : "bg-amber-50";
   };

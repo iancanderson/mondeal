@@ -10,6 +10,7 @@ import GameToast from "../components/GameToast";
 import PropertyStealModal from "../components/PropertyStealModal";
 import DealBreakerModal from "../components/DealBreakerModal";
 import RentModal from "../components/RentModal";
+import JustSayNoModal from "../components/JustSayNoModal";
 import { GameState, Player, Card } from "../types";
 
 function Game() {
@@ -40,6 +41,7 @@ function Game() {
     React.useState(false);
   const [showDealBreakerModal, setShowDealBreakerModal] = React.useState(false);
   const [showRentModal, setShowRentModal] = React.useState(false);
+  const [showJustSayNoModal, setShowJustSayNoModal] = React.useState(false);
 
   // Handle window resize for confetti
   React.useEffect(() => {
@@ -145,6 +147,18 @@ function Game() {
       setShowRentModal(true);
     } else {
       setShowRentModal(false);
+    }
+  }, [gameState?.pendingAction, playerId]);
+
+  // Add effect to show Just Say No modal
+  React.useEffect(() => {
+    if (
+      gameState?.pendingAction.type === "JUST_SAY_NO_OPPORTUNITY" &&
+      gameState.pendingAction.playerId === playerId
+    ) {
+      setShowJustSayNoModal(true);
+    } else {
+      setShowJustSayNoModal(false);
     }
   }, [gameState?.pendingAction, playerId]);
 
@@ -274,6 +288,12 @@ function Game() {
     }
   };
 
+  const handleJustSayNoResponse = (useJustSayNo: boolean) => {
+    if (!roomId || !playerId || !gameState) return;
+    socket.emit("respondToAction", roomId, playerId, useJustSayNo);
+    setShowJustSayNoModal(false);
+  };
+
   const isMyTurn =
     gameState?.players[gameState.currentPlayerIndex]?.id === playerId;
   const winner = gameState?.winnerId
@@ -367,6 +387,28 @@ function Game() {
             onCancel={() => setShowRentModal(false)}
           />
         )}
+
+      {/* Just Say No Modal */}
+      {showJustSayNoModal &&
+        gameState &&
+        (() => {
+          const pendingAction = gameState.pendingAction;
+          if (pendingAction.type !== "JUST_SAY_NO_OPPORTUNITY") return null;
+
+          const actionPlayer = gameState.players.find(
+            (p) => p.id === pendingAction.sourcePlayerId
+          );
+          if (!actionPlayer) return null;
+
+          return (
+            <JustSayNoModal
+              player={myPlayer!}
+              actionPlayer={actionPlayer}
+              pendingAction={pendingAction}
+              onRespond={handleJustSayNoResponse}
+            />
+          );
+        })()}
 
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">Game Room: {roomId}</h1>

@@ -18,6 +18,7 @@ import {
   executePropertySteal,
   executeDealBreaker,
   collectRent,
+  handleJustSayNoResponse,
 } from "./gameLogic";
 import {
   ClientToServerEvents,
@@ -293,6 +294,33 @@ io.on("connection", (socket) => {
         // Send notification about the deal breaker
         const notification = `${sourcePlayer.name} used Deal Breaker to steal a complete property set from ${targetPlayer.name}`;
         io.to(roomId).emit("gameNotification", notification);
+      }
+    }
+  );
+
+  socket.on(
+    "respondToAction",
+    (roomId: string, playerId: string, useJustSayNo: boolean) => {
+      const room = getRoom(roomId);
+      if (!room) return;
+
+      const player = room.gameState.players.find((p) => p.id === playerId);
+      if (!player) return;
+
+      const success = handleJustSayNoResponse(
+        room.gameState,
+        playerId,
+        useJustSayNo
+      );
+
+      if (success) {
+        io.to(roomId).emit("updateGameState", room.gameState);
+        if (useJustSayNo) {
+          io.to(roomId).emit(
+            "gameNotification",
+            `${player.name} used Just Say No to prevent the action!`
+          );
+        }
       }
     }
   );

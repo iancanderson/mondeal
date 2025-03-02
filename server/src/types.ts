@@ -31,6 +31,15 @@ export type ActionState =
       playerId: string;
       color: string;
       amount: number;
+    }
+  | {
+      type: "JUST_SAY_NO_OPPORTUNITY";
+      playerId: string;
+      actionType: "DEAL_BREAKER" | "SLY_DEAL" | "RENT";
+      sourcePlayerId: string;
+      targetCardId?: string;
+      color?: string;
+      amount?: number;
     };
 
 export interface Card {
@@ -118,12 +127,13 @@ export interface ClientToServerEvents {
     targetPlayerId: string,
     color: string
   ) => void;
-  payRent: (
-    roomId: string,
-    payerId: string,
-    paymentCardIds: string[]
-  ) => void;
+  payRent: (roomId: string, payerId: string, paymentCardIds: string[]) => void;
   endTurn: (roomId: string, playerId: string) => void;
   updatePlayerName: (playerId: string, newName: string, uuid: string) => void;
   requestRooms: () => void;
+  respondToAction: (
+    roomId: string,
+    playerId: string,
+    useJustSayNo: boolean
+  ) => void;
 }

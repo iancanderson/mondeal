@@ -265,13 +265,28 @@ export function playCard(
     const playerProperties = player.properties[chosenColor] || [];
     const rentAmount = calculateRent(playerProperties, chosenColor);
 
-    // Set up pending rent action
-    gameState.pendingAction = {
-      type: "RENT",
-      playerId,
-      color: chosenColor,
-      amount: rentAmount,
-    };
+    // Check if any other player has Just Say No before setting up rent action
+    const otherPlayers = gameState.players.filter((p) => p.id !== playerId);
+    const playerWithJustSayNo = otherPlayers.find((p) => getJustSayNoCard(p));
+
+    if (playerWithJustSayNo) {
+      gameState.pendingAction = {
+        type: "JUST_SAY_NO_OPPORTUNITY",
+        playerId: playerWithJustSayNo.id,
+        actionType: "RENT",
+        sourcePlayerId: playerId,
+        color: chosenColor,
+        amount: rentAmount,
+      };
+    } else {
+      // Set up normal rent action
+      gameState.pendingAction = {
+        type: "RENT",
+        playerId,
+        color: chosenColor,
+        amount: rentAmount,
+      };
+    }
   } else if (card.type === "ACTION" && playAsAction) {
     // When played as an action, add to the discard pile
     gameState.discardPile.push(card);
@@ -412,7 +427,23 @@ export function executePropertySteal(
   targetPlayerId: string,
   targetCardId: string
 ): boolean {
-  // Verify that a Sly Deal action is pending and initiated by sourcePlayerId
+  // First check if target has Just Say No
+  const target = gameState.players.find((p) => p.id === targetPlayerId);
+  if (!target) return false;
+
+  if (getJustSayNoCard(target)) {
+    // Give target player opportunity to use Just Say No
+    gameState.pendingAction = {
+      type: "JUST_SAY_NO_OPPORTUNITY",
+      playerId: targetPlayerId,
+      actionType: "SLY_DEAL",
+      sourcePlayerId,
+      targetCardId,
+    };
+    return true;
+  }
+
+  // Original Sly Deal logic
   if (
     gameState.pendingAction.type !== "SLY_DEAL" ||
     gameState.pendingAction.playerId !== sourcePlayerId
@@ -421,17 +452,13 @@ export function executePropertySteal(
   }
 
   const sourcePlayer = gameState.players.find((p) => p.id === sourcePlayerId);
-  const targetPlayer = gameState.players.find((p) => p.id === targetPlayerId);
-
-  if (!sourcePlayer || !targetPlayer) {
-    return false;
-  }
+  if (!sourcePlayer || !target) return false;
 
   // Find the card in target player's properties
   let stolenCard: Card | undefined;
   let cardColor: string | undefined;
 
-  for (const [color, cards] of Object.entries(targetPlayer.properties)) {
+  for (const [color, cards] of Object.entries(target.properties)) {
     const cardIndex = cards.findIndex((c) => c.id === targetCardId);
     if (cardIndex !== -1) {
       stolenCard = cards[cardIndex];
@@ -448,7 +475,7 @@ export function executePropertySteal(
 
       // Clean up empty arrays
       if (cards.length === 0) {
-        delete targetPlayer.properties[color];
+        delete target.properties[color];
       }
 
       break;
@@ -480,7 +507,22 @@ export function executeDealBreaker(
   targetPlayerId: string,
   color: string
 ): boolean {
-  // Verify that a Deal Breaker action is pending and initiated by sourcePlayerId
+  const target = gameState.players.find((p) => p.id === targetPlayerId);
+  if (!target) return false;
+
+  if (getJustSayNoCard(target)) {
+    // Give target player opportunity to use Just Say No
+    gameState.pendingAction = {
+      type: "JUST_SAY_NO_OPPORTUNITY",
+      playerId: targetPlayerId,
+      actionType: "DEAL_BREAKER",
+      sourcePlayerId,
+      color,
+    };
+    return true;
+  }
+
+  // Original Deal Breaker logic
   if (
     gameState.pendingAction.type !== "DEAL_BREAKER" ||
     gameState.pendingAction.playerId !== sourcePlayerId
@@ -489,14 +531,10 @@ export function executeDealBreaker(
   }
 
   const sourcePlayer = gameState.players.find((p) => p.id === sourcePlayerId);
-  const targetPlayer = gameState.players.find((p) => p.id === targetPlayerId);
-
-  if (!sourcePlayer || !targetPlayer) {
-    return false;
-  }
+  if (!sourcePlayer || !target) return false;
 
   // Get the property set from target player
-  const propertySet = targetPlayer.properties[color];
+  const propertySet = target.properties[color];
   if (!propertySet) {
     return false;
   }
@@ -514,7 +552,7 @@ export function executeDealBreaker(
   sourcePlayer.properties[color].push(...propertySet);
 
   // Remove properties from target player
-  delete targetPlayer.properties[color];
+  delete target.properties[color];
 
   // Reset the pending action
   gameState.pendingAction = { type: "NONE" };
@@ -584,4 +622,79 @@ export function collectRent(
   gameState.pendingAction = { type: "NONE" };
 
   return true;
+}
+
+export function getJustSayNoCard(player: Player): Card | undefined {
+  return player.hand.find((card) => card.name === "Just Say No");
+}
+
+function removeFromHand(player: Player, cardId: string) {
+  player.hand = player.hand.filter((c) => c.id !== cardId);
+}
+
+export function handleJustSayNoResponse(
+  gameState: GameState,
+  playerId: string,
+  useJustSayNo: boolean
+): boolean {
+  if (gameState.pendingAction.type !== "JUST_SAY_NO_OPPORTUNITY") {
+    return false;
+  }
+
+  const player = gameState.players.find((p) => p.id === playerId);
+  if (!player) return false;
+
+  if (useJustSayNo) {
+    // Check if player has Just Say No card
+    const justSayNoCard = getJustSayNoCard(player);
+    if (!justSayNoCard) return false;
+
+    // Remove Just Say No from hand and add to discard
+    removeFromHand(player, justSayNoCard.id);
+    gameState.discardPile.push(justSayNoCard);
+
+    // Cancel the action
+    gameState.pendingAction = { type: "NONE" };
+    return true;
+  }
+
+  // Allow the action to proceed
+  const { actionType, sourcePlayerId, targetCardId, color, amount } =
+    gameState.pendingAction;
+
+  // Convert the JUST_SAY_NO_OPPORTUNITY back to the original action
+  switch (actionType) {
+    case "SLY_DEAL":
+      if (!targetCardId) return false;
+      gameState.pendingAction = {
+        type: "SLY_DEAL",
+        playerId: sourcePlayerId,
+      };
+      return executePropertySteal(
+        gameState,
+        sourcePlayerId,
+        playerId,
+        targetCardId
+      );
+
+    case "DEAL_BREAKER":
+      if (!color) return false;
+      gameState.pendingAction = {
+        type: "DEAL_BREAKER",
+        playerId: sourcePlayerId,
+      };
+      return executeDealBreaker(gameState, sourcePlayerId, playerId, color);
+
+    case "RENT":
+      if (!color || amount === undefined) return false;
+      gameState.pendingAction = {
+        type: "RENT",
+        playerId: sourcePlayerId,
+        color,
+        amount,
+      };
+      return true;
+  }
+
+  return false;
 }

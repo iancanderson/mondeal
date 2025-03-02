@@ -14,9 +14,10 @@ function ActionCardModal({
   onPlayAsAction,
   onCancel,
 }: ActionCardModalProps) {
-  const actionDescription = card.type === "RENT" 
-    ? "Collect rent from other players"
-    : `${card.name} action`;
+  const actionDescription =
+    card.type === "RENT"
+      ? "Collect rent from other players"
+      : `${card.name} action`;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -39,7 +40,9 @@ function ActionCardModal({
             onClick={onPlayAsAction}
             className="px-4 py-3 bg-blue-500 text-white rounded hover:bg-blue-600 flex flex-col items-center"
           >
-            <span className="font-bold">As {card.type === "RENT" ? "Rent" : "Action"}</span>
+            <span className="font-bold">
+              As {card.type === "RENT" ? "Rent" : "Action"}
+            </span>
             <span className="text-sm mt-1">{actionDescription}</span>
           </button>
         </div>
