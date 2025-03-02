@@ -17,6 +17,7 @@ import {
   reassignWildcard,
   executePropertySteal,
   executeDealBreaker,
+  executeForcedDeal,
   collectRent,
   handleJustSayNoResponse,
 } from "./gameLogic";
@@ -312,6 +313,49 @@ io.on("connection", (socket) => {
 
         // Send notification about the deal breaker
         const notification = `${sourcePlayer.name} used Deal Breaker to steal a complete property set from ${targetPlayer.name}`;
+        io.to(roomId).emit("gameNotification", notification);
+      }
+    }
+  );
+
+  socket.on(
+    "executeForcedDeal",
+    (roomId, sourcePlayerId, targetPlayerId, targetCardId, myCardId) => {
+      const room = getRoom(roomId);
+      if (!room) return;
+
+      const sourcePlayer = room.gameState.players.find(
+        (p) => p.id === sourcePlayerId
+      );
+      const targetPlayer = room.gameState.players.find(
+        (p) => p.id === targetPlayerId
+      );
+
+      if (!sourcePlayer || !targetPlayer) {
+        return;
+      }
+
+      // Set up pending action if it's not already set
+      if (room.gameState.pendingAction.type === "NONE") {
+        room.gameState.pendingAction = {
+          type: "FORCED_DEAL",
+          playerId: sourcePlayerId,
+        };
+      }
+
+      const success = executeForcedDeal(
+        room.gameState,
+        sourcePlayerId,
+        targetPlayerId,
+        targetCardId,
+        myCardId
+      );
+
+      if (success) {
+        io.to(roomId).emit("updateGameState", room.gameState);
+
+        // Send notification about the forced deal
+        const notification = `${sourcePlayer.name} used Forced Deal to trade a property with ${targetPlayer.name}`;
         io.to(roomId).emit("gameNotification", notification);
       }
     }

@@ -12,6 +12,7 @@ import DealBreakerModal from "../components/DealBreakerModal";
 import RentModal from "../components/RentModal";
 import JustSayNoModal from "../components/JustSayNoModal";
 import PropertyUpgradeModal from "../components/PropertyUpgradeModal";
+import ForcedDealModal from "../components/ForcedDealModal";
 import { GameState, Player, Card } from "../types";
 
 function Game() {
@@ -48,6 +49,7 @@ function Game() {
       cardId: string;
       type: "House" | "Hotel";
     } | null>(null);
+  const [showForcedDealModal, setShowForcedDealModal] = React.useState(false);
 
   // Handle window resize for confetti
   React.useEffect(() => {
@@ -231,6 +233,21 @@ function Game() {
   const handlePlayAsAction = (color?: string) => {
     if (!selectedActionCard) return;
 
+    // Special handling for Forced Deal
+    if (selectedActionCard.name === "Forced Deal") {
+      socket.emit(
+        "playCard",
+        roomId,
+        playerId,
+        selectedActionCard.id,
+        undefined,
+        true
+      );
+      setSelectedActionCard(null);
+      setShowForcedDealModal(true);
+      return;
+    }
+
     // Play the card with the chosen color for rent cards, or without color for other actions
     socket.emit(
       "playCard",
@@ -320,6 +337,24 @@ function Game() {
       true
     );
     setShowPropertyUpgradeModal(null);
+  };
+
+  const handleForcedDeal = (
+    targetPlayerId: string,
+    targetCardId: string,
+    myCardId: string
+  ) => {
+    if (!roomId || !playerId) return;
+
+    socket.emit(
+      "executeForcedDeal",
+      roomId,
+      playerId,
+      targetPlayerId,
+      targetCardId,
+      myCardId
+    );
+    setShowForcedDealModal(false);
   };
 
   const isMyTurn =
@@ -438,6 +473,15 @@ function Game() {
           onSelectPropertySet={handlePropertyUpgrade}
           onCancel={() => setShowPropertyUpgradeModal(null)}
           cardsPlayedThisTurn={gameState.cardsPlayedThisTurn}
+        />
+      )}
+
+      {showForcedDealModal && gameState && (
+        <ForcedDealModal
+          players={gameState.players}
+          currentPlayerId={playerId}
+          onExecuteForcedDeal={handleForcedDeal}
+          onCancel={() => setShowForcedDealModal(false)}
         />
       )}
 

@@ -407,6 +407,13 @@ export function playCard(
           playerId: playerId,
         };
         break;
+      case "Forced Deal":
+        // Set up pending action for Forced Deal
+        gameState.pendingAction = {
+          type: "FORCED_DEAL",
+          playerId: playerId,
+        };
+        break;
       // Other action cards can be added here
     }
   } else {
@@ -909,4 +916,125 @@ export function handleJustSayNoResponse(
   }
 
   return false;
+}
+
+/**
+ * Execute a Forced Deal action: trade a property from another player
+ */
+export function executeForcedDeal(
+  gameState: GameState,
+  sourcePlayerId: string,
+  targetPlayerId: string,
+  targetCardId: string,
+  myCardId: string
+): boolean {
+  // First check if target has Just Say No
+  const target = gameState.players.find((p) => p.id === targetPlayerId);
+  if (!target) return false;
+
+  if (getJustSayNoCard(target)) {
+    // Give target player opportunity to use Just Say No
+    gameState.pendingAction = {
+      type: "JUST_SAY_NO_OPPORTUNITY",
+      playerId: targetPlayerId,
+      actionType: "FORCED_DEAL",
+      sourcePlayerId,
+      targetCardId,
+      myCardId,
+    };
+    return true;
+  }
+
+  // Make sure the gameState has a FORCED_DEAL pending action
+  if (
+    gameState.pendingAction.type !== "FORCED_DEAL" &&
+    gameState.pendingAction.type !== "NONE"
+  ) {
+    return false;
+  }
+
+  const sourcePlayer = gameState.players.find((p) => p.id === sourcePlayerId);
+  if (!sourcePlayer || !target) return false;
+
+  // Find the card in target player's properties
+  let theirCard: Card | undefined;
+  let theirColor: string | undefined;
+
+  for (const [color, propertySet] of Object.entries(target.properties)) {
+    const cardIndex = propertySet.cards.findIndex((c) => c.id === targetCardId);
+    if (cardIndex !== -1) {
+      theirCard = propertySet.cards[cardIndex];
+      theirColor = color;
+
+      // Don't allow stealing if it would break a complete set
+      const requiredSize = getRequiredSetSize(color);
+      if (propertySet.cards.length === requiredSize) {
+        return false;
+      }
+
+      // Remove from target player's properties
+      propertySet.cards.splice(cardIndex, 1);
+      if (propertySet.cards.length === 0) {
+        delete target.properties[color];
+      }
+      break;
+    }
+  }
+
+  if (!theirCard || !theirColor) {
+    return false;
+  }
+
+  // Find the card in source player's properties
+  let myCard: Card | undefined;
+  let myColor: string | undefined;
+
+  for (const [color, propertySet] of Object.entries(sourcePlayer.properties)) {
+    const cardIndex = propertySet.cards.findIndex((c) => c.id === myCardId);
+    if (cardIndex !== -1) {
+      myCard = propertySet.cards[cardIndex];
+      myColor = color;
+
+      // Remove from source player's properties
+      propertySet.cards.splice(cardIndex, 1);
+      if (propertySet.cards.length === 0) {
+        delete sourcePlayer.properties[color];
+      }
+      break;
+    }
+  }
+
+  if (!myCard || !myColor) {
+    return false;
+  }
+
+  // Add target's card to source player's properties
+  if (!sourcePlayer.properties[theirColor]) {
+    sourcePlayer.properties[theirColor] = {
+      cards: [],
+      houses: 0,
+      hotels: 0,
+    };
+  }
+  sourcePlayer.properties[theirColor].cards.push(theirCard);
+
+  // Add source's card to target player's properties
+  if (!target.properties[myColor]) {
+    target.properties[myColor] = {
+      cards: [],
+      houses: 0,
+      hotels: 0,
+    };
+  }
+  target.properties[myColor].cards.push(myCard);
+
+  // Reset the pending action
+  gameState.pendingAction = { type: "NONE" };
+
+  // Check if this was the 3rd card played and end turn if so
+  if (gameState.cardsPlayedThisTurn >= 3) {
+    endTurn(gameState);
+  }
+
+  return true;
 }

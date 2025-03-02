@@ -53,6 +53,10 @@ export type ActionState =
       playerId: string;
     }
   | {
+      type: "FORCED_DEAL";
+      playerId: string;
+    }
+  | {
       type: "RENT";
       playerId: string;
       color: string;
@@ -61,9 +65,10 @@ export type ActionState =
   | {
       type: "JUST_SAY_NO_OPPORTUNITY";
       playerId: string;
-      actionType: "DEAL_BREAKER" | "SLY_DEAL" | "RENT";
+      actionType: "DEAL_BREAKER" | "SLY_DEAL" | "RENT" | "FORCED_DEAL";
       sourcePlayerId: string;
       targetCardId?: string;
+      myCardId?: string;
       color?: string;
       amount?: number;
     };
@@ -128,6 +133,13 @@ export interface ClientToServerEvents {
     sourcePlayerId: string,
     targetPlayerId: string,
     color: string
+  ) => void;
+  executeForcedDeal: (
+    roomId: string,
+    sourcePlayerId: string,
+    targetPlayerId: string,
+    targetCardId: string,
+    myCardId: string
   ) => void;
   payRent: (roomId: string, payerId: string, paymentCardIds: string[]) => void;
   endTurn: (roomId: string, playerId: string) => void;

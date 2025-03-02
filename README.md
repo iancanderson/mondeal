@@ -14,12 +14,12 @@
 - 2-color property wildcards (in addition to the "any color" wild card)
 - Bug: when a player does "Just Say No", and it cancels the current player's last action for their turn, the next person's turn should start automatically.
 - Don't allow players to pay rent with cards from their hand
-
-## TODO
-
 - House
 - Hotel
 - Forced Deal
+
+## TODO
+
 - Debt Collector
 - It's My Birthday
 - Double The Rent
