@@ -220,32 +220,38 @@ export function playCard(
   cardId: string,
   chosenColor?: string, // Optional parameter for wild cards or rent cards
   playAsAction: boolean = false // Optional parameter for action cards
-): boolean {
+): { success: boolean; notificationType?: ActionCardName; player?: string } {
   // Check if player has already played 3 cards
   if (gameState.cardsPlayedThisTurn >= 3) {
-    return false;
+    return { success: false };
   }
 
   const player = gameState.players.find((p) => p.id === playerId);
-  if (!player) return false;
+  if (!player) return { success: false };
 
   const cardIndex = player.hand.findIndex((c) => c.id === cardId);
-  if (cardIndex === -1) return false;
+  if (cardIndex === -1) return { success: false };
 
   const card = player.hand[cardIndex];
 
   // For wild card properties, we need a chosen color
   if (card.type === "PROPERTY" && card.isWildcard && !chosenColor) {
-    return false;
+    return { success: false };
   }
 
-  // For rent cards played as action, we need a chosen color from their available colors
-  if (
-    card.type === "RENT" &&
-    playAsAction &&
-    (!chosenColor || !card.rentColors?.includes(chosenColor))
-  ) {
-    return false;
+  // For rent cards played as action, validate:
+  // 1. We need a chosen color from their available colors
+  // 2. Player must own at least one property of that color
+  if (card.type === "RENT" && playAsAction) {
+    if (!chosenColor || !card.rentColors?.includes(chosenColor)) {
+      return { success: false };
+    }
+
+    // Check if player owns any properties of the chosen color
+    const playerProperties = player.properties[chosenColor] || [];
+    if (playerProperties.length === 0) {
+      return { success: false };
+    }
   }
 
   // Remove from player's hand
@@ -327,7 +333,24 @@ export function playCard(
     }
   }
 
-  return true;
+  // Return notification info for action cards
+  if (card.type === "ACTION" && playAsAction) {
+    return {
+      success: true,
+      notificationType: card.name as ActionCardName,
+      player: player.name,
+    };
+  }
+
+  if (card.type === "RENT" && playAsAction) {
+    return {
+      success: true,
+      notificationType: "Rent",
+      player: player.name,
+    };
+  }
+
+  return { success: true };
 }
 
 /**
