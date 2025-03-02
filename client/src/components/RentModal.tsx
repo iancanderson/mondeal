@@ -18,6 +18,7 @@ function RentModal({
   onCancel,
 }: RentModalProps) {
   const [selectedCards, setSelectedCards] = useState<Card[]>([]);
+  const [isBankrupt, setIsBankrupt] = useState(false);
 
   if (pendingAction.type !== "RENT") return null;
 
@@ -31,9 +32,12 @@ function RentModal({
 
   // Get all cards that could be used for payment (hand + money pile)
   const allCards = [...targetPlayer.hand, ...targetPlayer.moneyPile];
+  // For bankruptcy, also include all property cards
+  const allPropertyCards = Object.values(targetPlayer.properties).flat();
+  const totalCards = isBankrupt ? [...allCards, ...allPropertyCards] : allCards;
 
   // Calculate total possible payment
-  const totalPossible = allCards.reduce((sum, card) => sum + card.value, 0);
+  const totalPossible = totalCards.reduce((sum, card) => sum + card.value, 0);
 
   const handleCardClick = (card: Card) => {
     if (selectedCards.find((c) => c.id === card.id)) {
@@ -43,10 +47,14 @@ function RentModal({
     }
   };
 
+  const handleBankruptcy = () => {
+    setIsBankrupt(true);
+    // Select all available cards for payment
+    setSelectedCards(totalCards);
+  };
+
   const handleSubmit = () => {
-    if (totalSelected >= amount) {
-      onPayRent(selectedCards.map((card) => card.id));
-    }
+    onPayRent(selectedCards.map((card) => card.id));
   };
 
   return (
@@ -60,24 +68,38 @@ function RentModal({
           <p className="text-gray-700">
             You owe ${amount}M in rent for {pendingAction.color} properties.
           </p>
-          {totalPossible < amount && (
-            <p className="text-red-600 mt-2">
-              Warning: You don't have enough money to pay the full rent!
-            </p>
+          {totalPossible < amount && !isBankrupt && (
+            <div className="mt-2">
+              <p className="text-red-600 mb-2">
+                Warning: You don't have enough money to pay the full rent!
+              </p>
+              <button
+                onClick={handleBankruptcy}
+                className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+              >
+                Declare Bankruptcy (Give up all money and properties)
+              </button>
+            </div>
           )}
         </div>
 
         <div className="mb-4">
-          <h4 className="font-medium mb-2">Select cards to pay with:</h4>
+          <h4 className="font-medium mb-2">
+            {isBankrupt
+              ? "All cards to be surrendered:"
+              : "Select cards to pay with:"}
+          </h4>
           <div className="flex flex-wrap gap-2 max-h-60 overflow-y-auto">
-            {allCards.map((card) => (
+            {totalCards.map((card) => (
               <div
                 key={card.id}
-                onClick={() => handleCardClick(card)}
-                className={`cursor-pointer transform transition ${
-                  selectedCards.find((c) => c.id === card.id)
+                onClick={() => !isBankrupt && handleCardClick(card)}
+                className={`transform transition ${
+                  isBankrupt
+                    ? "opacity-50"
+                    : selectedCards.find((c) => c.id === card.id)
                     ? "scale-110 ring-2 ring-blue-500"
-                    : "hover:scale-105"
+                    : "hover:scale-105 cursor-pointer"
                 }`}
               >
                 <CardView card={card} />
@@ -89,24 +111,27 @@ function RentModal({
         <div className="flex justify-between items-center">
           <div className="text-gray-700">
             Selected: ${totalSelected}M / ${amount}M required
+            {isBankrupt && " (Bankruptcy)"}
           </div>
           <div className="space-x-2">
-            <button
-              onClick={onCancel}
-              className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
-            >
-              Cancel
-            </button>
+            {!isBankrupt && (
+              <button
+                onClick={onCancel}
+                className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+              >
+                Cancel
+              </button>
+            )}
             <button
               onClick={handleSubmit}
-              disabled={totalSelected < amount}
+              disabled={!isBankrupt && totalSelected < amount}
               className={`px-4 py-2 rounded ${
-                totalSelected >= amount
+                isBankrupt || totalSelected >= amount
                   ? "bg-green-500 text-white hover:bg-green-600"
                   : "bg-gray-300 text-gray-500 cursor-not-allowed"
               }`}
             >
-              Pay Rent
+              {isBankrupt ? "Surrender All Cards" : "Pay Rent"}
             </button>
           </div>
         </div>

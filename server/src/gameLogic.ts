@@ -604,42 +604,101 @@ export function collectRent(
     return false;
   }
 
-  // Calculate total payment value
-  let totalPayment = 0;
-  const paymentCardsToTransfer: Card[] = [];
+  // Calculate total required payment
+  const totalRequired = amount;
 
+  // Get all property cards from the target player
+  const allPropertyCards = Object.values(target.properties).flat();
+
+  // Calculate total possible payment from all sources
+  const totalPossible = [
+    ...target.hand,
+    ...target.moneyPile,
+    ...allPropertyCards,
+  ].reduce((sum, card) => sum + card.value, 0);
+
+  // Check if this is a bankruptcy case (insufficient total funds)
+  const isBankruptcy = totalPossible < totalRequired;
+
+  // Transfer the selected cards
+  const paymentCardsToTransfer: Card[] = [];
   for (const cardId of paymentCards) {
-    // Find card in player's hand and money pile
+    // Look for the card in all possible places
     let card = target.hand.find((c) => c.id === cardId);
-    let inHand = true;
+    let location: "hand" | "money" | "property" = "hand";
+
     if (!card) {
       card = target.moneyPile.find((c) => c.id === cardId);
-      inHand = false;
+      location = "money";
+    }
+
+    if (!card && isBankruptcy) {
+      // For bankruptcy case, also look in properties
+      for (const [color, cards] of Object.entries(target.properties)) {
+        const foundCard = cards.find((c) => c.id === cardId);
+        if (foundCard) {
+          card = foundCard;
+          location = "property";
+          break;
+        }
+      }
     }
 
     if (!card) {
       return false;
     }
 
-    totalPayment += card.value;
     paymentCardsToTransfer.push(card);
 
-    // Remove card from source
-    if (inHand) {
-      target.hand = target.hand.filter((c) => c.id !== cardId);
-    } else {
-      target.moneyPile = target.moneyPile.filter((c) => c.id !== cardId);
+    // Remove card from its source
+    switch (location) {
+      case "hand":
+        target.hand = target.hand.filter((c) => c.id !== cardId);
+        break;
+      case "money":
+        target.moneyPile = target.moneyPile.filter((c) => c.id !== cardId);
+        break;
+      case "property":
+        // Remove from the appropriate property color set
+        for (const [color, cards] of Object.entries(target.properties)) {
+          const cardIndex = cards.findIndex((c) => c.id === cardId);
+          if (cardIndex !== -1) {
+            cards.splice(cardIndex, 1);
+            // Clean up empty property arrays
+            if (cards.length === 0) {
+              delete target.properties[color];
+            }
+            break;
+          }
+        }
+        break;
     }
   }
 
-  // Verify payment amount
-  if (totalPayment < amount) {
-    // Payment insufficient
+  // For non-bankruptcy case, verify payment amount
+  if (
+    !isBankruptcy &&
+    paymentCardsToTransfer.reduce((sum, card) => sum + card.value, 0) < amount
+  ) {
     return false;
   }
 
-  // Transfer cards to collector's money pile
-  collector.moneyPile.push(...paymentCardsToTransfer);
+  // Sort cards: properties go to collector's properties, others to money pile
+  for (const card of paymentCardsToTransfer) {
+    if (card.type === "PROPERTY") {
+      // Add to collector's properties
+      const color = card.isWildcard
+        ? Object.keys(collector.properties)[0] || "Brown"
+        : card.color!;
+      if (!collector.properties[color]) {
+        collector.properties[color] = [];
+      }
+      collector.properties[color].push(card);
+    } else {
+      // Add to collector's money pile
+      collector.moneyPile.push(card);
+    }
+  }
 
   // Reset pending action
   gameState.pendingAction = { type: "NONE" };

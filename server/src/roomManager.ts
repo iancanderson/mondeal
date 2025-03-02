@@ -182,7 +182,7 @@ export function handlePlayCard(
   }
 
   // Store result for action notification
-  const success = playCard(
+  const { success } = playCard(
     room.gameState,
     playerId,
     cardId,

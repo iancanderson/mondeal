@@ -194,16 +194,35 @@ io.on("connection", (socket) => {
       if (!room) return;
 
       const payer = room.gameState.players.find((p) => p.id === payerId);
-      if (!payer) return;
+      const collector =
+        room.gameState.players[room.gameState.currentPlayerIndex];
+      if (!payer || !collector) return;
+
+      // Calculate if this is a bankruptcy case (giving up all cards)
+      const totalCards = [
+        ...payer.hand,
+        ...payer.moneyPile,
+        ...Object.values(payer.properties).flat(),
+      ];
+      const isBankruptcy = paymentCardIds.length === totalCards.length;
 
       const success = collectRent(room.gameState, payerId, paymentCardIds);
 
       if (success) {
         io.to(roomId).emit("updateGameState", room.gameState);
-        io.to(roomId).emit(
-          "gameNotification",
-          `${payer.name} paid their rent.`
-        );
+
+        // Send appropriate notification based on bankruptcy status
+        if (isBankruptcy) {
+          io.to(roomId).emit(
+            "gameNotification",
+            `${payer.name} went bankrupt and surrendered all cards to ${collector.name}!`
+          );
+        } else {
+          io.to(roomId).emit(
+            "gameNotification",
+            `${payer.name} paid their rent.`
+          );
+        }
       }
     }
   );
