@@ -356,6 +356,8 @@ function Game() {
             </div>
           )}
 
+          <h2 className="text-xl font-semibold">-1 h zn z gzbjdq ata</h2>
+
           <div className="flex gap-4">
             {gameState.players.map((player) => (
               <PlayerArea
