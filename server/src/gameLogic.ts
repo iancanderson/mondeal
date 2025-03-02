@@ -8,39 +8,66 @@ import { v4 as uuidv4 } from "uuid";
 export function createDeck(): Card[] {
   const deck: Card[] = [];
 
-  // Example property sets: Red, Blue, Green
-  const colors = ["Red", "Blue", "Green"];
-  for (const color of colors) {
-    for (let i = 1; i <= 3; i++) {
+  // Property cards with real Monopoly colors and names
+  const properties = {
+    Brown: ["Mediterranean Avenue", "Baltic Avenue"],
+    Blue: ["Boardwalk", "Park Place"],
+    Green: ["Pacific Avenue", "North Carolina Avenue", "Pennsylvania Avenue"],
+    Yellow: ["Atlantic Avenue", "Ventnor Avenue", "Marvin Gardens"],
+    Red: ["Kentucky Avenue", "Indiana Avenue", "Illinois Avenue"],
+    Orange: ["St. James Place", "Tennessee Avenue", "New York Avenue"],
+    Purple: ["St. Charles Place", "Virginia Avenue", "States Avenue"],
+    LightBlue: ["Connecticut Avenue", "Vermont Avenue", "Oriental Avenue"],
+    Railroad: ["Reading Railroad", "Pennsylvania Railroad", "B&O Railroad", "Short Line"],
+    Utility: ["Electric Company", "Water Works"]
+  };
+
+  // Add property cards
+  Object.entries(properties).forEach(([color, propertyNames]) => {
+    propertyNames.forEach(name => {
       deck.push({
         id: uuidv4(),
-        name: `${color} Property ${i}`,
+        name,
         type: "PROPERTY",
-        value: 2,
-        color: color,
+        value: color === "Railroad" || color === "Utility" ? 2 : 3,
+        color
       });
-    }
-  }
+    });
+  });
 
-  // Add some money cards
-  for (let i = 0; i < 10; i++) {
+  // Add money cards with real values
+  const moneyValues = [1, 1, 1, 1, 2, 2, 2, 3, 3, 4, 4, 5, 5];
+  moneyValues.forEach(value => {
     deck.push({
       id: uuidv4(),
-      name: `Money ${i + 1}`,
+      name: `$${value}M`,
       type: "MONEY",
-      value: 1,
+      value
     });
-  }
+  });
 
-  // Add a few action cards
-  for (let i = 0; i < 5; i++) {
+  // Add action cards with real names
+  const actionCards = [
+    "Deal Breaker",
+    "Just Say No",
+    "Sly Deal",
+    "Forced Deal",
+    "Debt Collector",
+    "It's My Birthday",
+    "Double The Rent",
+    "House",
+    "Hotel",
+    "Pass Go"
+  ];
+
+  actionCards.forEach(name => {
     deck.push({
       id: uuidv4(),
-      name: `Action Card ${i + 1}`,
+      name,
       type: "ACTION",
-      value: 2,
+      value: 1
     });
-  }
+  });
 
   // Shuffle the deck
   for (let i = deck.length - 1; i > 0; i--) {
@@ -67,11 +94,24 @@ export function dealInitialCards(gameState: GameState) {
  * Checks if a player has 3 full property sets.
  * For simplicity, we assume a full set is 3 properties of the same color.
  */
+function getRequiredSetSize(color: string): number {
+  switch (color) {
+    case "Brown":
+    case "Blue":
+    case "Utility":
+      return 2;
+    case "Railroad":
+      return 4;
+    default:
+      return 3;
+  }
+}
+
 export function checkWinCondition(player: Player): boolean {
   let completedSets = 0;
   for (const color in player.properties) {
-    // in this simplified rule, 3 or more cards of the same color is a "full set"
-    if (player.properties[color].length >= 3) {
+    const requiredSize = getRequiredSetSize(color);
+    if (player.properties[color].length >= requiredSize) {
       completedSets++;
     }
   }
