@@ -3,8 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { socket } from "../services/socket";
 import { GameState, RoomInfo } from "../types";
 
+// Local storage key for player name
+const PLAYER_NAME_KEY = "monopolyDeal_playerName";
+
 function Lobby() {
-  const [playerName, setPlayerName] = useState("");
+  const [playerName, setPlayerName] = useState(() => {
+    // Initialize from local storage if available
+    return localStorage.getItem(PLAYER_NAME_KEY) || "";
+  });
   const [roomId, setRoomId] = useState("");
   const [availableRooms, setAvailableRooms] = useState<RoomInfo[]>([]);
   const navigate = useNavigate();
@@ -13,6 +19,10 @@ function Lobby() {
     socket.on(
       "roomJoined",
       (data: { gameState: GameState; playerId: string }) => {
+        // Save player name to local storage when joining a game
+        if (playerName) {
+          localStorage.setItem(PLAYER_NAME_KEY, playerName);
+        }
         navigate(`/game/${data.gameState.roomId}`, { state: data });
       }
     );
@@ -33,7 +43,7 @@ function Lobby() {
       socket.off("availableRooms");
       socket.off("error");
     };
-  }, [navigate]);
+  }, [navigate, playerName]);
 
   const handleCreateRoom = (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,6 +51,8 @@ function Lobby() {
       alert("Enter player name");
       return;
     }
+    // Save player name to local storage when creating a game
+    localStorage.setItem(PLAYER_NAME_KEY, playerName);
     socket.emit("createRoom", playerName);
   };
 
@@ -49,6 +61,8 @@ function Lobby() {
       alert("Enter player name");
       return;
     }
+    // Save player name to local storage when joining a game
+    localStorage.setItem(PLAYER_NAME_KEY, playerName);
     socket.emit("joinRoom", roomIdToJoin, playerName);
   };
 
