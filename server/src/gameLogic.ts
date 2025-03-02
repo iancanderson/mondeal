@@ -213,6 +213,13 @@ export function playCard(
           playerId: playerId,
         };
         break;
+      case "Deal Breaker":
+        // Set up pending action for Deal Breaker
+        gameState.pendingAction = {
+          type: "DEAL_BREAKER",
+          playerId: playerId,
+        };
+        break;
       // Other action cards can be added here
     }
   } else {
@@ -382,6 +389,57 @@ export function executePropertySteal(
     sourcePlayer.properties[cardColor] = [];
   }
   sourcePlayer.properties[cardColor].push(stolenCard);
+
+  // Reset the pending action
+  gameState.pendingAction = { type: "NONE" };
+
+  return true;
+}
+
+/**
+ * Execute the Deal Breaker action: steal a complete property set from another player
+ */
+export function executeDealBreaker(
+  gameState: GameState,
+  sourcePlayerId: string,
+  targetPlayerId: string,
+  color: string
+): boolean {
+  // Verify that a Deal Breaker action is pending and initiated by sourcePlayerId
+  if (
+    gameState.pendingAction.type !== "DEAL_BREAKER" ||
+    gameState.pendingAction.playerId !== sourcePlayerId
+  ) {
+    return false;
+  }
+
+  const sourcePlayer = gameState.players.find((p) => p.id === sourcePlayerId);
+  const targetPlayer = gameState.players.find((p) => p.id === targetPlayerId);
+
+  if (!sourcePlayer || !targetPlayer) {
+    return false;
+  }
+
+  // Get the property set from target player
+  const propertySet = targetPlayer.properties[color];
+  if (!propertySet) {
+    return false;
+  }
+
+  // Check if it's a complete set
+  const requiredSize = getRequiredSetSize(color);
+  if (propertySet.length < requiredSize) {
+    return false;
+  }
+
+  // Move all properties from target to source
+  if (!sourcePlayer.properties[color]) {
+    sourcePlayer.properties[color] = [];
+  }
+  sourcePlayer.properties[color].push(...propertySet);
+
+  // Remove properties from target player
+  delete targetPlayer.properties[color];
 
   // Reset the pending action
   gameState.pendingAction = { type: "NONE" };

@@ -12,7 +12,11 @@ import {
   getAvailableRooms,
   removeRoom,
 } from "./roomManager";
-import { reassignWildcard, executePropertySteal } from "./gameLogic";
+import {
+  reassignWildcard,
+  executePropertySteal,
+  executeDealBreaker,
+} from "./gameLogic";
 import {
   ClientToServerEvents,
   ServerToClientEvents,
@@ -143,6 +147,9 @@ io.on("connection", (socket) => {
           case "Sly Deal":
             notificationMessage = `${result.player} played Sly Deal. They can steal a property card!`;
             break;
+          case "Deal Breaker":
+            notificationMessage = `${result.player} played Deal Breaker. They can steal a complete property set!`;
+            break;
           // Add cases for other action cards as they are implemented
         }
 
@@ -219,6 +226,40 @@ io.on("connection", (socket) => {
 
         // Send notification about the steal
         const notification = `${sourcePlayer.name} used Sly Deal to steal a property from ${targetPlayer.name}`;
+        io.to(roomId).emit("gameNotification", notification);
+      }
+    }
+  );
+
+  socket.on(
+    "executeDealBreaker",
+    (roomId, sourcePlayerId, targetPlayerId, color) => {
+      const room = getRoom(roomId);
+      if (!room) return;
+
+      const sourcePlayer = room.gameState.players.find(
+        (p) => p.id === sourcePlayerId
+      );
+      const targetPlayer = room.gameState.players.find(
+        (p) => p.id === targetPlayerId
+      );
+
+      if (!sourcePlayer || !targetPlayer) {
+        return;
+      }
+
+      const success = executeDealBreaker(
+        room.gameState,
+        sourcePlayerId,
+        targetPlayerId,
+        color
+      );
+
+      if (success) {
+        io.to(roomId).emit("updateGameState", room.gameState);
+
+        // Send notification about the deal breaker
+        const notification = `${sourcePlayer.name} used Deal Breaker to steal a complete property set from ${targetPlayer.name}`;
         io.to(roomId).emit("gameNotification", notification);
       }
     }

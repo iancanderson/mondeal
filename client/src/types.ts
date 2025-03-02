@@ -39,6 +39,10 @@ export type ActionState =
   | {
       type: "SLY_DEAL";
       playerId: string;
+    }
+  | {
+      type: "DEAL_BREAKER";
+      playerId: string;
     };
 
 export interface GameState {

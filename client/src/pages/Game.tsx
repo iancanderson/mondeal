@@ -8,6 +8,7 @@ import { ColorPicker } from "../components/ColorPicker";
 import ActionCardModal from "../components/ActionCardModal";
 import GameToast from "../components/GameToast";
 import PropertyStealModal from "../components/PropertyStealModal";
+import DealBreakerModal from "../components/DealBreakerModal";
 import { GameState, Player, Card } from "../types";
 
 function Game() {
@@ -36,6 +37,7 @@ function Game() {
   const [notifications, setNotifications] = React.useState<string[]>([]);
   const [showPropertyStealModal, setShowPropertyStealModal] =
     React.useState(false);
+  const [showDealBreakerModal, setShowDealBreakerModal] = React.useState(false);
 
   // Handle window resize for confetti
   React.useEffect(() => {
@@ -117,6 +119,18 @@ function Game() {
       setShowPropertyStealModal(true);
     } else {
       setShowPropertyStealModal(false);
+    }
+  }, [gameState?.pendingAction, playerId]);
+
+  // Check if we should show the deal breaker modal
+  React.useEffect(() => {
+    if (
+      gameState?.pendingAction.type === "DEAL_BREAKER" &&
+      gameState.pendingAction.playerId === playerId
+    ) {
+      setShowDealBreakerModal(true);
+    } else {
+      setShowDealBreakerModal(false);
     }
   }, [gameState?.pendingAction, playerId]);
 
@@ -215,6 +229,13 @@ function Game() {
     setShowPropertyStealModal(false);
   };
 
+  const handleDealBreaker = (targetPlayerId: string, color: string) => {
+    if (!roomId || !playerId) return;
+
+    socket.emit("executeDealBreaker", roomId, playerId, targetPlayerId, color);
+    setShowDealBreakerModal(false);
+  };
+
   const isMyTurn =
     gameState?.players[gameState.currentPlayerIndex]?.id === playerId;
   const winner = gameState?.winnerId
@@ -277,6 +298,16 @@ function Game() {
           currentPlayerId={playerId}
           onSelectProperty={handlePropertySteal}
           onCancel={() => setShowPropertyStealModal(false)}
+        />
+      )}
+
+      {/* Deal Breaker Modal */}
+      {showDealBreakerModal && gameState && (
+        <DealBreakerModal
+          players={gameState.players}
+          currentPlayerId={playerId}
+          onSelectPropertySet={handleDealBreaker}
+          onCancel={() => setShowDealBreakerModal(false)}
         />
       )}
 

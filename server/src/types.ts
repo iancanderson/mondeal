@@ -20,6 +20,10 @@ export type ActionState =
   | {
       type: "SLY_DEAL";
       playerId: string;
+    }
+  | {
+      type: "DEAL_BREAKER";
+      playerId: string;
     };
 
 export interface Card {
@@ -99,6 +103,12 @@ export interface ClientToServerEvents {
     sourcePlayerId: string,
     targetPlayerId: string,
     targetCardId: string
+  ) => void;
+  executeDealBreaker: (
+    roomId: string,
+    sourcePlayerId: string,
+    targetPlayerId: string,
+    color: string
   ) => void;
   endTurn: (roomId: string, playerId: string) => void;
   requestRooms: () => void;
