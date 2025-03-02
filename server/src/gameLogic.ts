@@ -221,7 +221,7 @@ export function playCard(
   }
 
   gameState.cardsPlayedThisTurn++;
-  
+
   // Automatically end turn if this was the player's third card
   if (gameState.cardsPlayedThisTurn >= 3) {
     // Don't automatically end turn if there's a pending action
@@ -229,7 +229,7 @@ export function playCard(
       endTurn(gameState);
     }
   }
-  
+
   return true;
 }
 

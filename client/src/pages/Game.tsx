@@ -350,7 +350,8 @@ function Game() {
             <div className="mt-4">
               {gameState.cardsPlayedThisTurn === 3 ? (
                 <div className="text-green-600 mb-2">
-                  You've played 3 cards this turn. The turn will pass automatically.
+                  You've played 3 cards this turn. The turn will pass
+                  automatically.
                 </div>
               ) : gameState.pendingAction.type !== "NONE" ? (
                 <div className="text-blue-600 mb-2">
