@@ -31,6 +31,15 @@ export interface Player {
   isReady: boolean;
 }
 
+export type ActionState =
+  | {
+      type: "NONE";
+    }
+  | {
+      type: "SLY_DEAL";
+      playerId: string;
+    };
+
 export interface GameState {
   roomId: string;
   players: Player[];
@@ -41,6 +50,7 @@ export interface GameState {
   winnerId?: string;
   cardsPlayedThisTurn: number;
   wildCardReassignedThisTurn: boolean;
+  pendingAction: ActionState;
 }
 
 export interface RoomInfo {
@@ -75,6 +85,12 @@ export interface ClientToServerEvents {
     playerId: string,
     cardId: string,
     newColor: string
+  ) => void;
+  executePropertySteal: (
+    roomId: string,
+    sourcePlayerId: string,
+    targetPlayerId: string,
+    targetCardId: string
   ) => void;
   endTurn: (roomId: string, playerId: string) => void;
   requestRooms: () => void;

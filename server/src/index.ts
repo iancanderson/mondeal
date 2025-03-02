@@ -11,8 +11,12 @@ import {
   getRoom,
   getAvailableRooms,
 } from "./roomManager";
-import { reassignWildcard } from "./gameLogic";
-import { ClientToServerEvents, ServerToClientEvents, ActionCardName } from "./types";
+import { reassignWildcard, executePropertySteal } from "./gameLogic";
+import {
+  ClientToServerEvents,
+  ServerToClientEvents,
+  ActionCardName,
+} from "./types";
 
 const app = express();
 app.use(cors());
@@ -149,6 +153,40 @@ io.on("connection", (socket) => {
       io.to(roomId).emit("updateGameState", room.gameState);
     }
   });
+
+  socket.on(
+    "executePropertySteal",
+    (roomId, sourcePlayerId, targetPlayerId, targetCardId) => {
+      const room = getRoom(roomId);
+      if (!room) return;
+
+      const sourcePlayer = room.gameState.players.find(
+        (p) => p.id === sourcePlayerId
+      );
+      const targetPlayer = room.gameState.players.find(
+        (p) => p.id === targetPlayerId
+      );
+
+      if (!sourcePlayer || !targetPlayer) {
+        return;
+      }
+
+      const success = executePropertySteal(
+        room.gameState,
+        sourcePlayerId,
+        targetPlayerId,
+        targetCardId
+      );
+
+      if (success) {
+        io.to(roomId).emit("updateGameState", room.gameState);
+
+        // Send notification about the steal
+        const notification = `${sourcePlayer.name} used Sly Deal to steal a property from ${targetPlayer.name}`;
+        io.to(roomId).emit("gameNotification", notification);
+      }
+    }
+  );
 });
 
 const PORT = process.env.PORT || 4000;

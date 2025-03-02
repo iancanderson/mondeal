@@ -7,6 +7,7 @@ import PlayerArea from "../components/PlayerArea";
 import { ColorPicker } from "../components/ColorPicker";
 import ActionCardModal from "../components/ActionCardModal";
 import GameToast from "../components/GameToast";
+import PropertyStealModal from "../components/PropertyStealModal";
 import { GameState, Player, Card } from "../types";
 
 function Game() {
@@ -32,6 +33,8 @@ function Game() {
   const [selectedActionCard, setSelectedActionCard] =
     React.useState<Card | null>(null);
   const [notifications, setNotifications] = React.useState<string[]>([]);
+  const [showPropertyStealModal, setShowPropertyStealModal] =
+    React.useState(false);
 
   // Handle window resize for confetti
   React.useEffect(() => {
@@ -99,6 +102,18 @@ function Game() {
       setMyPlayer(me);
     }
   }, [gameState]);
+
+  // Check if we should show the property steal modal (when Sly Deal is pending)
+  React.useEffect(() => {
+    if (
+      gameState?.pendingAction.type === "SLY_DEAL" &&
+      gameState.pendingAction.playerId === playerId
+    ) {
+      setShowPropertyStealModal(true);
+    } else {
+      setShowPropertyStealModal(false);
+    }
+  }, [gameState?.pendingAction, playerId]);
 
   if (!roomId || !gameState) {
     return <div className="p-4">No Game State found. Return to Lobby.</div>;
@@ -182,6 +197,19 @@ function Game() {
     socket.emit("endTurn", roomId, playerId);
   };
 
+  const handlePropertySteal = (targetPlayerId: string, cardId: string) => {
+    if (!roomId || !playerId) return;
+
+    socket.emit(
+      "executePropertySteal",
+      roomId,
+      playerId,
+      targetPlayerId,
+      cardId
+    );
+    setShowPropertyStealModal(false);
+  };
+
   const isMyTurn =
     gameState?.players[gameState.currentPlayerIndex]?.id === playerId;
   const winner = gameState?.winnerId
@@ -234,6 +262,16 @@ function Game() {
           onPlayAsMoney={handlePlayAsMoney}
           onPlayAsAction={handlePlayAsAction}
           onCancel={() => setSelectedActionCard(null)}
+        />
+      )}
+
+      {/* Property Steal Modal */}
+      {showPropertyStealModal && gameState && (
+        <PropertyStealModal
+          players={gameState.players}
+          currentPlayerId={playerId}
+          onSelectProperty={handlePropertySteal}
+          onCancel={() => setShowPropertyStealModal(false)}
         />
       )}
 

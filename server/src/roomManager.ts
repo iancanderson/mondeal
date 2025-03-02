@@ -54,6 +54,7 @@ export function createRoom(playerName: string): {
       isStarted: false,
       cardsPlayedThisTurn: 0,
       wildCardReassignedThisTurn: false,
+      pendingAction: { type: "NONE" },
     },
   };
   rooms.push(newRoom);

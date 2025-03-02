@@ -12,6 +12,16 @@ export type ActionCardName =
   | "Hotel"
   | "Pass Go";
 
+// Add a type for different action states
+export type ActionState =
+  | {
+      type: "NONE";
+    }
+  | {
+      type: "SLY_DEAL";
+      playerId: string;
+    };
+
 export interface Card {
   id: string;
   name: string;
@@ -40,6 +50,7 @@ export interface GameState {
   winnerId?: string;
   cardsPlayedThisTurn: number; // Track number of cards played this turn
   wildCardReassignedThisTurn: boolean; // Track if a wild card was reassigned this turn
+  pendingAction: ActionState;
 }
 
 export interface Room {
@@ -78,6 +89,12 @@ export interface ClientToServerEvents {
     playerId: string,
     cardId: string,
     newColor: string
+  ) => void;
+  executePropertySteal: (
+    roomId: string,
+    sourcePlayerId: string,
+    targetPlayerId: string,
+    targetCardId: string
   ) => void;
   endTurn: (roomId: string, playerId: string) => void;
   requestRooms: () => void;

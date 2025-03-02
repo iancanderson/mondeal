@@ -210,6 +210,13 @@ export function playCard(
       case "Pass Go":
         handlePassGoAction(gameState, player);
         break;
+      case "Sly Deal":
+        // Set up pending action for Sly Deal
+        gameState.pendingAction = {
+          type: "SLY_DEAL",
+          playerId: playerId,
+        };
+        break;
       // Other action cards can be added here
     }
   } else {
@@ -300,4 +307,79 @@ export function endTurn(gameState: GameState) {
     (gameState.currentPlayerIndex + 1) % gameState.players.length;
   // Start that player's turn
   startTurn(gameState);
+}
+
+/**
+ * Initialize the game state's pendingAction field
+ */
+export function initializeGameState(gameState: GameState): void {
+  gameState.pendingAction = { type: "NONE" };
+}
+
+/**
+ * Execute the Sly Deal action: steal a property from another player
+ */
+export function executePropertySteal(
+  gameState: GameState,
+  sourcePlayerId: string,
+  targetPlayerId: string,
+  targetCardId: string
+): boolean {
+  // Verify that a Sly Deal action is pending and initiated by sourcePlayerId
+  if (
+    gameState.pendingAction.type !== "SLY_DEAL" ||
+    gameState.pendingAction.playerId !== sourcePlayerId
+  ) {
+    return false;
+  }
+
+  const sourcePlayer = gameState.players.find((p) => p.id === sourcePlayerId);
+  const targetPlayer = gameState.players.find((p) => p.id === targetPlayerId);
+
+  if (!sourcePlayer || !targetPlayer) {
+    return false;
+  }
+
+  // Find the card in target player's properties
+  let stolenCard: Card | undefined;
+  let cardColor: string | undefined;
+
+  for (const [color, cards] of Object.entries(targetPlayer.properties)) {
+    const cardIndex = cards.findIndex((c) => c.id === targetCardId);
+    if (cardIndex !== -1) {
+      stolenCard = cards[cardIndex];
+      cardColor = color;
+
+      // Don't allow stealing if it would break a complete set
+      const requiredSize = getRequiredSetSize(color);
+      if (cards.length === requiredSize) {
+        return false;
+      }
+
+      // Remove from target player's properties
+      cards.splice(cardIndex, 1);
+
+      // Clean up empty arrays
+      if (cards.length === 0) {
+        delete targetPlayer.properties[color];
+      }
+
+      break;
+    }
+  }
+
+  if (!stolenCard || !cardColor) {
+    return false;
+  }
+
+  // Add to source player's properties
+  if (!sourcePlayer.properties[cardColor]) {
+    sourcePlayer.properties[cardColor] = [];
+  }
+  sourcePlayer.properties[cardColor].push(stolenCard);
+
+  // Reset the pending action
+  gameState.pendingAction = { type: "NONE" };
+
+  return true;
 }
