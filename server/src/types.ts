@@ -32,9 +32,17 @@ export interface Room {
   gameState: GameState;
 }
 
+export interface RoomInfo {
+  roomId: string;
+  playerCount: number;
+  creatorName: string;
+  isStarted: boolean;
+}
+
 export interface ServerToClientEvents {
   roomJoined: (data: { gameState: GameState; playerId: string }) => void;
   updateGameState: (gameState: GameState) => void;
+  availableRooms: (rooms: RoomInfo[]) => void;
   error: (msg: string) => void;
 }
 
@@ -44,4 +52,5 @@ export interface ClientToServerEvents {
   toggleReady: (roomId: string, playerId: string) => void;
   playCard: (roomId: string, playerId: string, cardId: string) => void;
   endTurn: (roomId: string, playerId: string) => void;
+  requestRooms: () => void;
 }

@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
-import { Room, GameState, Player } from "./types";
+import { Room, GameState, Player, RoomInfo } from "./types";
 import {
   createDeck,
   dealInitialCards,
@@ -9,6 +9,20 @@ import {
 } from "./gameLogic";
 
 const rooms: Room[] = [];
+
+/**
+ * Get a list of available rooms that haven't started yet
+ */
+export function getAvailableRooms(): RoomInfo[] {
+  return rooms
+    .filter((room) => !room.gameState.isStarted)
+    .map((room) => ({
+      roomId: room.roomId,
+      playerCount: room.gameState.players.length,
+      creatorName: room.gameState.players[0].name,
+      isStarted: room.gameState.isStarted,
+    }));
+}
 
 /**
  * Create a new room with a new GameState

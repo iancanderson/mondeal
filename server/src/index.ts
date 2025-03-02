@@ -9,6 +9,7 @@ import {
   handlePlayCard,
   handleEndTurn,
   getRoom,
+  getAvailableRooms,
 } from "./roomManager";
 import { ClientToServerEvents, ServerToClientEvents } from "./types";
 
@@ -23,9 +24,21 @@ const io = new Server<ClientToServerEvents, ServerToClientEvents>(server, {
   },
 });
 
+// Broadcast room updates to all connected clients in the lobby
+function broadcastRoomUpdate() {
+  io.emit("availableRooms", getAvailableRooms());
+}
+
 // Socket.IO event handling
 io.on("connection", (socket) => {
   console.log("A user connected:", socket.id);
+
+  // Send initial room list when client connects
+  socket.emit("availableRooms", getAvailableRooms());
+
+  socket.on("requestRooms", () => {
+    socket.emit("availableRooms", getAvailableRooms());
+  });
 
   socket.on("createRoom", (playerName) => {
     const { room, playerId } = createRoom(playerName);
@@ -35,6 +48,8 @@ io.on("connection", (socket) => {
       gameState: room.gameState,
       playerId,
     });
+    // Broadcast updated room list to everyone
+    broadcastRoomUpdate();
   });
 
   socket.on("joinRoom", (roomId, playerName) => {
@@ -54,6 +69,8 @@ io.on("connection", (socket) => {
     });
     // Send updateGameState to all other players in the room
     socket.to(room.roomId).emit("updateGameState", room.gameState);
+    // Broadcast updated room list to everyone
+    broadcastRoomUpdate();
   });
 
   socket.on("toggleReady", (roomId, playerId) => {
@@ -61,6 +78,10 @@ io.on("connection", (socket) => {
     const room = getRoom(roomId);
     if (!room) return;
     io.to(roomId).emit("updateGameState", room.gameState);
+    // If game started, update room list to remove it from available rooms
+    if (room.gameState.isStarted) {
+      broadcastRoomUpdate();
+    }
   });
 
   socket.on("playCard", (roomId, playerId, cardId) => {
