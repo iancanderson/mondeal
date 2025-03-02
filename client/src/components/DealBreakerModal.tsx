@@ -36,9 +36,9 @@ function DealBreakerModal({
     if (player.id === currentPlayerId) return false;
 
     // Check if player has any complete sets
-    return Object.entries(player.properties).some(([color, cards]) => {
+    return Object.entries(player.properties).some(([color, propertySet]) => {
       const requiredSize = getRequiredSetSize(color);
-      return cards.length >= requiredSize;
+      return propertySet.cards.length >= requiredSize;
     });
   });
 
@@ -70,12 +70,14 @@ function DealBreakerModal({
   const completePropertySets: { color: string; cards: Card[] }[] = [];
 
   if (selectedPlayer) {
-    Object.entries(selectedPlayer.properties).forEach(([color, cards]) => {
-      const requiredSize = getRequiredSetSize(color);
-      if (cards.length >= requiredSize) {
-        completePropertySets.push({ color, cards });
+    Object.entries(selectedPlayer.properties).forEach(
+      ([color, propertySet]) => {
+        const requiredSize = getRequiredSetSize(color);
+        if (propertySet.cards.length >= requiredSize) {
+          completePropertySets.push({ color, cards: propertySet.cards });
+        }
       }
-    });
+    );
   }
 
   return (
