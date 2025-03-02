@@ -51,7 +51,8 @@ function Game() {
       type: "House" | "Hotel";
     } | null>(null);
   const [showForcedDealModal, setShowForcedDealModal] = React.useState(false);
-  const [showDebtCollectorModal, setShowDebtCollectorModal] = React.useState(false);
+  const [showDebtCollectorModal, setShowDebtCollectorModal] =
+    React.useState(false);
 
   // Handle window resize for confetti
   React.useEffect(() => {
@@ -386,7 +387,10 @@ function Game() {
     setShowForcedDealModal(false);
   };
 
-  const handleCollectDebt = (targetPlayerId: string, paymentCardIds: string[]) => {
+  const handleCollectDebt = (
+    targetPlayerId: string,
+    paymentCardIds: string[]
+  ) => {
     if (!roomId || !playerId) return;
 
     socket.emit(

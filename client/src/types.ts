@@ -70,7 +70,12 @@ export type ActionState =
   | {
       type: "JUST_SAY_NO_OPPORTUNITY";
       playerId: string;
-      actionType: "DEAL_BREAKER" | "SLY_DEAL" | "RENT" | "FORCED_DEAL" | "DEBT_COLLECTOR";
+      actionType:
+        | "DEAL_BREAKER"
+        | "SLY_DEAL"
+        | "RENT"
+        | "FORCED_DEAL"
+        | "DEBT_COLLECTOR";
       sourcePlayerId: string;
       targetCardId?: string;
       myCardId?: string;

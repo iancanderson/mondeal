@@ -22,7 +22,9 @@ function DebtCollectorModal({
   const [isBankrupt, setIsBankrupt] = useState(false);
 
   // Filter out the current player
-  const otherPlayers = players.filter(player => player.id !== currentPlayerId);
+  const otherPlayers = players.filter(
+    (player) => player.id !== currentPlayerId
+  );
 
   // If no eligible players, show a message
   if (otherPlayers.length === 0) {
@@ -44,7 +46,7 @@ function DebtCollectorModal({
     );
   }
 
-  const selectedPlayer = selectedPlayerId 
+  const selectedPlayer = selectedPlayerId
     ? players.find((p) => p.id === selectedPlayerId)
     : null;
 
@@ -58,27 +60,36 @@ function DebtCollectorModal({
 
   const handleExecuteDebt = () => {
     if (selectedPlayerId) {
-      onCollectDebt(selectedPlayerId, selectedCards.map(card => card.id));
+      onCollectDebt(
+        selectedPlayerId,
+        selectedCards.map((card) => card.id)
+      );
     }
   };
 
   // Get available payment sources if a player is selected
   const getAvailableCards = () => {
     if (!selectedPlayer) return [];
-    
+
     return [
       ...selectedPlayer.moneyPile,
-      ...Object.values(selectedPlayer.properties).flatMap(set => set.cards)
+      ...Object.values(selectedPlayer.properties).flatMap((set) => set.cards),
     ];
   };
 
   const availableCards = getAvailableCards();
-  
+
   // Calculate total possible payment from all available cards
-  const totalPossible = availableCards.reduce((sum, card) => sum + card.value, 0);
-  
+  const totalPossible = availableCards.reduce(
+    (sum, card) => sum + card.value,
+    0
+  );
+
   // Calculate total value of selected cards
-  const totalSelected = selectedCards.reduce((sum, card) => sum + card.value, 0);
+  const totalSelected = selectedCards.reduce(
+    (sum, card) => sum + card.value,
+    0
+  );
 
   const handleBankruptcy = () => {
     setIsBankrupt(true);
@@ -142,7 +153,8 @@ function DebtCollectorModal({
           {totalPossible < amount && !isBankrupt && (
             <div className="mt-2">
               <p className="text-red-600 mb-2">
-                Warning: {selectedPlayer?.name} doesn't have enough cards to pay the full debt!
+                Warning: {selectedPlayer?.name} doesn't have enough cards to pay
+                the full debt!
               </p>
               <button
                 onClick={handleBankruptcy}
@@ -189,15 +201,17 @@ function DebtCollectorModal({
             )}
 
             {/* Properties section */}
-            {selectedPlayer && Object.entries(selectedPlayer.properties).map(([color, propertySet]) => (
-              <div key={color} className="border-b pb-3">
-                <p className="font-medium mb-2">{color} Properties:</p>
-                <div className="flex flex-wrap gap-2">
-                  {propertySet.cards.map((card) => (
-                    <div
-                      key={card.id}
-                      onClick={() => !isBankrupt && handleCardClick(card)}
-                      className={`
+            {selectedPlayer &&
+              Object.entries(selectedPlayer.properties).map(
+                ([color, propertySet]) => (
+                  <div key={color} className="border-b pb-3">
+                    <p className="font-medium mb-2">{color} Properties:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {propertySet.cards.map((card) => (
+                        <div
+                          key={card.id}
+                          onClick={() => !isBankrupt && handleCardClick(card)}
+                          className={`
                         transform transition 
                         ${
                           isBankrupt
@@ -207,13 +221,14 @@ function DebtCollectorModal({
                             : "hover:scale-105 cursor-pointer"
                         }
                       `}
-                    >
-                      <CardView card={card} />
+                        >
+                          <CardView card={card} />
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              </div>
-            ))}
+                  </div>
+                )
+              )}
           </div>
         </div>
 
@@ -236,7 +251,7 @@ function DebtCollectorModal({
             </button>
           </div>
         </div>
-        
+
         <button
           onClick={onCancel}
           className="w-full mt-4 px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"

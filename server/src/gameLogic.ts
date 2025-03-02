@@ -928,7 +928,13 @@ export function handleJustSayNoResponse(
         type: "FORCED_DEAL",
         playerId: sourcePlayerId,
       };
-      return executeForcedDeal(gameState, sourcePlayerId, playerId, targetCardId, myCardId);
+      return executeForcedDeal(
+        gameState,
+        sourcePlayerId,
+        playerId,
+        targetCardId,
+        myCardId
+      );
 
     case "DEBT_COLLECTOR":
       if (amount === undefined) return false;
@@ -1092,11 +1098,16 @@ export function collectDebt(
 
   // Get all possible payment sources
   const moneyPileCards = target.moneyPile;
-  const propertyCards = Object.values(target.properties).flatMap(set => set.cards);
+  const propertyCards = Object.values(target.properties).flatMap(
+    (set) => set.cards
+  );
   const availableCards = [...moneyPileCards, ...propertyCards];
 
   // Calculate total possible payment
-  const totalPossible = availableCards.reduce((sum, card) => sum + card.value, 0);
+  const totalPossible = availableCards.reduce(
+    (sum, card) => sum + card.value,
+    0
+  );
 
   // Check if this is a bankruptcy case (insufficient total funds)
   const isBankruptcy = totalPossible < amount;
@@ -1192,7 +1203,7 @@ export function collectDebt(
 
   // Reset pending action
   gameState.pendingAction = { type: "NONE" };
-  
+
   // Check if this was the 3rd card played and end turn if so
   if (gameState.cardsPlayedThisTurn >= 3) {
     endTurn(gameState);

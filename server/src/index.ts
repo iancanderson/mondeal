@@ -415,19 +415,28 @@ io.on("connection", (socket) => {
   // Add a new socket handler for collecting debt
   socket.on(
     "collectDebt",
-    (roomId: string, sourcePlayerId: string, targetPlayerId: string, paymentCardIds: string[]) => {
+    (
+      roomId: string,
+      sourcePlayerId: string,
+      targetPlayerId: string,
+      paymentCardIds: string[]
+    ) => {
       const room = getRoom(roomId);
       if (!room) return;
 
-      const sourcePlayer = room.gameState.players.find((p) => p.id === sourcePlayerId);
-      const targetPlayer = room.gameState.players.find((p) => p.id === targetPlayerId);
+      const sourcePlayer = room.gameState.players.find(
+        (p) => p.id === sourcePlayerId
+      );
+      const targetPlayer = room.gameState.players.find(
+        (p) => p.id === targetPlayerId
+      );
 
       if (!sourcePlayer || !targetPlayer) return;
 
       // Calculate if this is a bankruptcy case (giving up all cards)
       const totalCards = [
         ...targetPlayer.moneyPile,
-        ...Object.values(targetPlayer.properties).flatMap(set => set.cards),
+        ...Object.values(targetPlayer.properties).flatMap((set) => set.cards),
       ];
       const isBankruptcy = paymentCardIds.length === totalCards.length;
 
