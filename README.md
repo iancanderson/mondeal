@@ -25,3 +25,4 @@
 - Player has to discard down to 7 cards at end of turn
 - It says "You already have an active room" even when there's only 1 room and i'm not in it
 - Disallow playing Just Say No as an action on your own turn, not in response to anything
+- Don't allow players to pay rent with cards from their hand
