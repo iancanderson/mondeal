@@ -376,7 +376,6 @@ function Game() {
             currentPlayer={gameState.players[gameState.currentPlayerIndex]}
             targetPlayer={myPlayer!}
             onPayRent={handleRentPayment}
-            onCancel={() => setShowRentModal(false)}
           />
         )}
 

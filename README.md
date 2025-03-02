@@ -8,6 +8,7 @@
 - Sly Deal
 - Pass Go
 - Deal Breaker
+- Players shouldn't be able to cancel rent
 
 ## TODO
 

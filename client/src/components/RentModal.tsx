@@ -7,7 +7,6 @@ interface RentModalProps {
   currentPlayer: Player;
   targetPlayer: Player;
   onPayRent: (cardIds: string[]) => void;
-  onCancel: () => void;
 }
 
 function RentModal({
@@ -15,7 +14,6 @@ function RentModal({
   currentPlayer,
   targetPlayer,
   onPayRent,
-  onCancel,
 }: RentModalProps) {
   const [selectedCards, setSelectedCards] = useState<Card[]>([]);
   const [isBankrupt, setIsBankrupt] = useState(false);
@@ -114,14 +112,6 @@ function RentModal({
             {isBankrupt && " (Bankruptcy)"}
           </div>
           <div className="space-x-2">
-            {!isBankrupt && (
-              <button
-                onClick={onCancel}
-                className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
-              >
-                Cancel
-              </button>
-            )}
             <button
               onClick={handleSubmit}
               disabled={!isBankrupt && totalSelected < amount}
