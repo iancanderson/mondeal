@@ -1,17 +1,29 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { v4 as uuidv4 } from "uuid";
 import { socket } from "../services/socket";
 import { GameState, RoomInfo } from "../types";
 
-// Local storage key for player name
+// Local storage keys
 const PLAYER_NAME_KEY = "monopolyDeal_playerName";
+const PLAYER_UUID_KEY = "monopolyDeal_playerUUID";
 
 function Lobby() {
   const [playerName, setPlayerName] = useState(() => {
-    // Initialize from local storage if available
     return localStorage.getItem(PLAYER_NAME_KEY) || "";
   });
-  const [roomId, setRoomId] = useState("");
+
+  const [playerUUID] = useState(() => {
+    // Initialize UUID from local storage or create new one
+    const existingUUID = localStorage.getItem(PLAYER_UUID_KEY);
+    if (existingUUID) {
+      return existingUUID;
+    }
+    const newUUID = uuidv4();
+    localStorage.setItem(PLAYER_UUID_KEY, newUUID);
+    return newUUID;
+  });
+
   const [availableRooms, setAvailableRooms] = useState<RoomInfo[]>([]);
   const navigate = useNavigate();
 
@@ -19,7 +31,6 @@ function Lobby() {
     socket.on(
       "roomJoined",
       (data: { gameState: GameState; playerId: string }) => {
-        // Save player name to local storage when joining a game
         if (playerName) {
           localStorage.setItem(PLAYER_NAME_KEY, playerName);
         }
@@ -35,7 +46,6 @@ function Lobby() {
       alert(msg);
     });
 
-    // Request initial room list
     socket.emit("requestRooms");
 
     return () => {
@@ -51,9 +61,8 @@ function Lobby() {
       alert("Enter player name");
       return;
     }
-    // Save player name to local storage when creating a game
     localStorage.setItem(PLAYER_NAME_KEY, playerName);
-    socket.emit("createRoom", playerName);
+    socket.emit("createRoom", { name: playerName, uuid: playerUUID });
   };
 
   const handleJoinRoom = (roomIdToJoin: string) => {
@@ -61,9 +70,11 @@ function Lobby() {
       alert("Enter player name");
       return;
     }
-    // Save player name to local storage when joining a game
     localStorage.setItem(PLAYER_NAME_KEY, playerName);
-    socket.emit("joinRoom", roomIdToJoin, playerName);
+    socket.emit("joinRoom", roomIdToJoin, {
+      name: playerName,
+      uuid: playerUUID,
+    });
   };
 
   return (

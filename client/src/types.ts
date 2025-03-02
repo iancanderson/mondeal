@@ -25,6 +25,7 @@ export interface Card {
 export interface Player {
   id: string;
   name: string;
+  uuid: string;
   hand: Card[];
   properties: Record<string, Card[]>;
   moneyPile: Card[];
@@ -70,8 +71,11 @@ export interface ServerToClientEvents {
 }
 
 export interface ClientToServerEvents {
-  createRoom: (playerName: string) => void;
-  joinRoom: (roomId: string, playerName: string) => void;
+  createRoom: (playerInfo: { name: string; uuid: string }) => void;
+  joinRoom: (
+    roomId: string,
+    playerInfo: { name: string; uuid: string }
+  ) => void;
   toggleReady: (roomId: string, playerId: string) => void;
   playCard: (
     roomId: string,

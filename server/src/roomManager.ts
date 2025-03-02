@@ -9,6 +9,7 @@ import {
 } from "./gameLogic";
 
 const rooms: Room[] = [];
+const roomCreators = new Map<string, string>(); // uuid -> roomId
 
 /**
  * Get a list of available rooms that haven't started yet
@@ -27,10 +28,16 @@ export function getAvailableRooms(): RoomInfo[] {
 /**
  * Create a new room with a new GameState
  */
-export function createRoom(playerName: string): {
-  room: Room;
-  playerId: string;
+export function createRoom(playerInfo: { name: string; uuid: string }): {
+  room?: Room;
+  playerId?: string;
+  error?: string;
 } {
+  // Check if player already created a room
+  if (roomCreators.has(playerInfo.uuid)) {
+    return { error: "You already have an active room" };
+  }
+
   const roomId = uuidv4();
   const playerId = uuidv4();
 
@@ -41,7 +48,8 @@ export function createRoom(playerName: string): {
       players: [
         {
           id: playerId,
-          name: playerName,
+          name: playerInfo.name,
+          uuid: playerInfo.uuid,
           hand: [],
           properties: {},
           moneyPile: [],
@@ -57,8 +65,25 @@ export function createRoom(playerName: string): {
       pendingAction: { type: "NONE" },
     },
   };
+
   rooms.push(newRoom);
+  roomCreators.set(playerInfo.uuid, roomId);
   return { room: newRoom, playerId };
+}
+
+/**
+ * Remove a room and clean up associated data
+ */
+export function removeRoom(roomId: string) {
+  const roomIndex = rooms.findIndex((r) => r.roomId === roomId);
+  if (roomIndex !== -1) {
+    const room = rooms[roomIndex];
+    // Remove the creator's UUID from tracking
+    const creator = room.gameState.players[0];
+    roomCreators.delete(creator.uuid);
+    // Remove the room
+    rooms.splice(roomIndex, 1);
+  }
 }
 
 /**
@@ -66,7 +91,7 @@ export function createRoom(playerName: string): {
  */
 export function joinRoom(
   roomId: string,
-  playerName: string
+  playerInfo: { name: string; uuid: string }
 ): { room?: Room; playerId?: string } {
   const room = rooms.find((r) => r.roomId === roomId);
   if (!room) return {};
@@ -79,7 +104,8 @@ export function joinRoom(
   const playerId = uuidv4();
   room.gameState.players.push({
     id: playerId,
-    name: playerName,
+    name: playerInfo.name,
+    uuid: playerInfo.uuid,
     hand: [],
     properties: {},
     moneyPile: [],

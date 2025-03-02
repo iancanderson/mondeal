@@ -10,6 +10,7 @@ import {
   handleEndTurn,
   getRoom,
   getAvailableRooms,
+  removeRoom,
 } from "./roomManager";
 import { reassignWildcard, executePropertySteal } from "./gameLogic";
 import {
@@ -34,6 +35,9 @@ function broadcastRoomUpdate() {
   io.emit("availableRooms", getAvailableRooms());
 }
 
+// Track player socket connections to rooms
+const playerRooms = new Map<string, string>(); // socketId -> roomId
+
 // Socket.IO event handling
 io.on("connection", (socket) => {
   console.log("A user connected:", socket.id);
@@ -45,20 +49,27 @@ io.on("connection", (socket) => {
     socket.emit("availableRooms", getAvailableRooms());
   });
 
-  socket.on("createRoom", (playerName) => {
-    const { room, playerId } = createRoom(playerName);
-    socket.join(room.roomId);
+  socket.on("createRoom", (playerInfo) => {
+    const result = createRoom(playerInfo);
+    if (result.error) {
+      socket.emit("error", result.error);
+      return;
+    }
+    if (!result.room || !result.playerId) return;
+
+    socket.join(result.room.roomId);
+    playerRooms.set(socket.id, result.room.roomId);
     // Only send roomJoined to the creator
     socket.emit("roomJoined", {
-      gameState: room.gameState,
-      playerId,
+      gameState: result.room.gameState,
+      playerId: result.playerId,
     });
     // Broadcast updated room list to everyone
     broadcastRoomUpdate();
   });
 
-  socket.on("joinRoom", (roomId, playerName) => {
-    const { room, playerId } = joinRoom(roomId, playerName);
+  socket.on("joinRoom", (roomId, playerInfo) => {
+    const { room, playerId } = joinRoom(roomId, playerInfo);
     if (!room || !playerId) {
       socket.emit(
         "error",
@@ -67,6 +78,7 @@ io.on("connection", (socket) => {
       return;
     }
     socket.join(room.roomId);
+    playerRooms.set(socket.id, roomId);
     // Send roomJoined only to the joining player
     socket.emit("roomJoined", {
       gameState: room.gameState,
@@ -211,6 +223,23 @@ io.on("connection", (socket) => {
       }
     }
   );
+
+  // Handle disconnections
+  socket.on("disconnect", () => {
+    const roomId = playerRooms.get(socket.id);
+    if (roomId) {
+      const room = getRoom(roomId);
+      if (room && room.gameState.isStarted) {
+        // If game was in progress, notify other players and remove the room
+        socket
+          .to(roomId)
+          .emit("error", "A player has left the game. Game ended.");
+        removeRoom(roomId);
+        broadcastRoomUpdate();
+      }
+      playerRooms.delete(socket.id);
+    }
+  });
 });
 
 const PORT = process.env.PORT || 4000;

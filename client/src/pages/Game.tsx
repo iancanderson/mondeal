@@ -1,5 +1,5 @@
 import React from "react";
-import { useParams, useLocation, Link } from "react-router-dom";
+import { useParams, useLocation, Link, useNavigate } from "react-router-dom";
 import ReactConfetti from "react-confetti";
 import { socket } from "../services/socket";
 import CardView from "../components/CardView";
@@ -15,6 +15,7 @@ function Game() {
   const { state } = useLocation() as {
     state: { gameState: GameState; playerId: string } | null;
   };
+  const navigate = useNavigate();
   const [gameState, setGameState] = React.useState<GameState | null>(
     state?.gameState || null
   );
@@ -80,6 +81,10 @@ function Game() {
 
     socket.on("error", (msg: string) => {
       alert(msg);
+      // If error indicates game ended, navigate back to lobby
+      if (msg.includes("Game ended")) {
+        navigate("/");
+      }
     });
 
     socket.on("gameNotification", (message: string) => {
@@ -92,7 +97,7 @@ function Game() {
       socket.off("error");
       socket.off("gameNotification");
     };
-  }, []);
+  }, [navigate]);
 
   // Update myPlayer whenever gameState changes, but maintain playerId
   React.useEffect(() => {
