@@ -33,7 +33,10 @@ function Game() {
     );
 
     socket.on("updateGameState", (gs: GameState) => {
-      console.log("updateGameState received, current playerId:", playerIdRef.current);
+      console.log(
+        "updateGameState received, current playerId:",
+        playerIdRef.current
+      );
       setGameState((prevState) => {
         // Preserve the same gameState reference if nothing changed
         if (JSON.stringify(prevState) === JSON.stringify(gs)) {
