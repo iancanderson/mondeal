@@ -29,9 +29,15 @@ export interface Player {
   name: string;
   uuid: string;
   hand: Card[];
-  properties: Record<string, Card[]>;
+  properties: Record<string, PropertySet>;
   moneyPile: Card[];
   isReady: boolean;
+}
+
+export interface PropertySet {
+  cards: Card[];
+  houses: number;
+  hotels: number;
 }
 
 export type ActionState =

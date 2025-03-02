@@ -52,12 +52,18 @@ export interface Card {
   isWildcard?: boolean; // For property wild cards
 }
 
+export interface PropertySet {
+  cards: Card[];
+  houses: number;
+  hotels: number;
+}
+
 export interface Player {
   id: string;
   name: string;
   uuid: string; // Add persistent UUID
   hand: Card[];
-  properties: Record<string, Card[]>; // color -> array of property cards
+  properties: Record<string, PropertySet>; // color -> array of property cards
   moneyPile: Card[];
   isReady: boolean;
 }

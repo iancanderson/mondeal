@@ -30,7 +30,9 @@ function RentModal({
 
   // Get all cards that could be used for payment (money pile + property cards)
   const moneyPileCards = targetPlayer.moneyPile;
-  const propertyCards = Object.values(targetPlayer.properties).flat();
+  const propertyCards = Object.values(targetPlayer.properties).flatMap(
+    (set) => set.cards
+  );
   const availableCards = [...moneyPileCards, ...propertyCards];
 
   // Calculate total possible payment from all available cards
@@ -118,11 +120,11 @@ function RentModal({
             )}
 
             {/* Properties section */}
-            {Object.entries(targetPlayer.properties).map(([color, cards]) => (
+            {Object.entries(targetPlayer.properties).map(([color, set]) => (
               <div key={color} className="border-b pb-3">
                 <p className="font-medium mb-2">{color} Properties:</p>
                 <div className="flex flex-wrap gap-2">
-                  {cards.map((card) => (
+                  {set.cards.map((card) => (
                     <div
                       key={card.id}
                       onClick={() => !isBankrupt && handleCardClick(card)}

@@ -1,4 +1,4 @@
-import { Card, Player, GameState, ActionCardName } from "./types";
+import { Card, Player, GameState, ActionCardName, PropertySet } from "./types";
 import { v4 as uuidv4 } from "uuid";
 
 /**
@@ -131,6 +131,11 @@ export function dealInitialCards(gameState: GameState) {
       }
     }
   }
+
+  // Initialize empty property sets with houses and hotels set to 0
+  for (const player of gameState.players) {
+    player.properties = {};
+  }
 }
 
 /**
@@ -154,7 +159,7 @@ export function getCompletedSetCount(player: Player): number {
   let completedSets = 0;
   for (const color in player.properties) {
     const requiredSize = getRequiredSetSize(color);
-    if (player.properties[color].length >= requiredSize) {
+    if (player.properties[color].cards.length >= requiredSize) {
       completedSets++;
     }
   }
@@ -184,8 +189,8 @@ export function startTurn(gameState: GameState) {
 /**
  * Calculate rent for a property color
  */
-function calculateRent(properties: Card[], color: string): number {
-  const count = properties.length;
+function calculateRent(propertySet: PropertySet, color: string): number {
+  const count = propertySet.cards.length;
   const requiredSize = getRequiredSetSize(color);
   const isComplete = count >= requiredSize;
 
@@ -203,12 +208,16 @@ function calculateRent(properties: Card[], color: string): number {
     Utility: [1, 2],
   };
 
-  // Get the base rent based on property count, capped at the required set size
+  // Get the base rent based on property count
   const rentIndex = Math.min(count, requiredSize) - 1;
   const baseRent = baseRents[color][rentIndex];
 
-  // Double the rent if it's a complete set
-  return isComplete ? baseRent * 2 : baseRent;
+  // Calculate total rent including houses and hotels
+  let totalRent = isComplete ? baseRent * 2 : baseRent;
+  totalRent += propertySet.houses * 3;
+  totalRent += propertySet.hotels * 4;
+
+  return totalRent;
 }
 
 /**
@@ -248,28 +257,99 @@ export function playCard(
     }
 
     // Check if player owns any properties of the chosen color
-    const playerProperties = player.properties[chosenColor] || [];
-    if (playerProperties.length === 0) {
+    const playerProperties = player.properties[chosenColor];
+    if (!playerProperties || playerProperties.cards.length === 0) {
       return { success: false };
     }
+
+    // When played as an action, add to the discard pile
+    player.hand.splice(cardIndex, 1);
+    gameState.discardPile.push(card);
+
+    // Calculate rent amount for the chosen color
+    const rentAmount = calculateRent(playerProperties, chosenColor);
+
+    // Check if any other player has Just Say No
+    const otherPlayers = gameState.players.filter((p) => p.id !== playerId);
+    const playerWithJustSayNo = otherPlayers.find((p) => getJustSayNoCard(p));
+
+    if (playerWithJustSayNo) {
+      gameState.pendingAction = {
+        type: "JUST_SAY_NO_OPPORTUNITY",
+        playerId: playerWithJustSayNo.id,
+        actionType: "RENT",
+        sourcePlayerId: playerId,
+        color: chosenColor,
+        amount: rentAmount,
+      };
+    } else {
+      // Set up normal rent action
+      gameState.pendingAction = {
+        type: "RENT",
+        playerId,
+        color: chosenColor,
+        amount: rentAmount,
+      };
+    }
+
+    gameState.cardsPlayedThisTurn++;
+    return { success: true, notificationType: "Rent", player: player.name };
+  }
+
+  // For House/Hotel cards, validate that they are played as action and target color is valid
+  if ((card.name === "House" || card.name === "Hotel") && playAsAction) {
+    if (!chosenColor) return { success: false };
+
+    const propertySet = player.properties[chosenColor];
+    if (!propertySet) return { success: false };
+
+    // Ensure property set is complete
+    const requiredSize = getRequiredSetSize(chosenColor);
+    if (propertySet.cards.length < requiredSize) return { success: false };
+
+    // Remove card from hand and add to discard pile
+    player.hand.splice(cardIndex, 1);
+    gameState.discardPile.push(card);
+
+    // Update the property set's house/hotel count
+    if (card.name === "House") {
+      propertySet.houses++;
+    } else {
+      propertySet.hotels++;
+    }
+
+    gameState.cardsPlayedThisTurn++;
+
+    // Send notification about the upgrade
+    const newRent = calculateRent(propertySet, chosenColor);
+    const notification = `${player.name} added a ${card.name.toLowerCase()} to their ${chosenColor} set (Rent is now $${newRent}M)`;
+    return { success: true, notificationType: card.name, player: notification };
   }
 
   // Remove from player's hand
   player.hand.splice(cardIndex, 1);
 
+  // For property cards being played to a color set
   if (card.type === "PROPERTY") {
     const propertyColor = card.isWildcard ? chosenColor! : card.color!;
+    // Initialize property set if it doesn't exist
     if (!player.properties[propertyColor]) {
-      player.properties[propertyColor] = [];
+      player.properties[propertyColor] = {
+        cards: [],
+        houses: 0,
+        hotels: 0
+      };
     }
-    player.properties[propertyColor].push(card);
+    player.properties[propertyColor].cards.push(card);
   } else if (card.type === "RENT" && playAsAction && chosenColor) {
     // When played as an action, add to the discard pile
     gameState.discardPile.push(card);
 
     // Calculate rent amount for the chosen color
-    const playerProperties = player.properties[chosenColor] || [];
-    const rentAmount = calculateRent(playerProperties, chosenColor);
+    const propertySet = player.properties[chosenColor];
+    if (!propertySet || propertySet.cards.length === 0) return { success: false };
+
+    const rentAmount = calculateRent(propertySet, chosenColor);
 
     // Check if any other player has Just Say No before setting up rent action
     const otherPlayers = gameState.players.filter((p) => p.id !== playerId);
@@ -389,13 +469,16 @@ export function reassignWildcard(
   let foundCard: Card | undefined;
   let oldColor: string | undefined;
 
-  for (const [color, cards] of Object.entries(player.properties)) {
-    const cardIndex = cards.findIndex((c) => c.id === cardId);
+  for (const [color, propertySet] of Object.entries(player.properties)) {
+    const cardIndex = propertySet.cards.findIndex((c) => c.id === cardId);
     if (cardIndex !== -1) {
-      foundCard = cards[cardIndex];
+      foundCard = propertySet.cards[cardIndex];
       oldColor = color;
       // Remove from old color pile
-      cards.splice(cardIndex, 1);
+      propertySet.cards.splice(cardIndex, 1);
+      if (propertySet.cards.length === 0) {
+        delete player.properties[color];
+      }
       break;
     }
   }
@@ -406,9 +489,13 @@ export function reassignWildcard(
 
   // Add to new color pile
   if (!player.properties[newColor]) {
-    player.properties[newColor] = [];
+    player.properties[newColor] = {
+      cards: [],
+      houses: 0,
+      hotels: 0,
+    };
   }
-  player.properties[newColor].push(foundCard);
+  player.properties[newColor].cards.push(foundCard);
 
   // Mark that we've reassigned a wild card this turn
   gameState.wildCardReassignedThisTurn = true;
@@ -481,23 +568,21 @@ export function executePropertySteal(
   let stolenCard: Card | undefined;
   let cardColor: string | undefined;
 
-  for (const [color, cards] of Object.entries(target.properties)) {
-    const cardIndex = cards.findIndex((c) => c.id === targetCardId);
+  for (const [color, propertySet] of Object.entries(target.properties)) {
+    const cardIndex = propertySet.cards.findIndex((c) => c.id === targetCardId);
     if (cardIndex !== -1) {
-      stolenCard = cards[cardIndex];
+      stolenCard = propertySet.cards[cardIndex];
       cardColor = color;
 
       // Don't allow stealing if it would break a complete set
       const requiredSize = getRequiredSetSize(color);
-      if (cards.length === requiredSize) {
+      if (propertySet.cards.length === requiredSize) {
         return false;
       }
 
       // Remove from target player's properties
-      cards.splice(cardIndex, 1);
-
-      // Clean up empty arrays
-      if (cards.length === 0) {
+      propertySet.cards.splice(cardIndex, 1);
+      if (propertySet.cards.length === 0) {
         delete target.properties[color];
       }
 
@@ -511,9 +596,13 @@ export function executePropertySteal(
 
   // Add to source player's properties
   if (!sourcePlayer.properties[cardColor]) {
-    sourcePlayer.properties[cardColor] = [];
+    sourcePlayer.properties[cardColor] = {
+      cards: [],
+      houses: 0,
+      hotels: 0,
+    };
   }
-  sourcePlayer.properties[cardColor].push(stolenCard);
+  sourcePlayer.properties[cardColor].cards.push(stolenCard);
 
   // Reset the pending action
   gameState.pendingAction = { type: "NONE" };
@@ -564,15 +653,21 @@ export function executeDealBreaker(
 
   // Check if it's a complete set
   const requiredSize = getRequiredSetSize(color);
-  if (propertySet.length < requiredSize) {
+  if (propertySet.cards.length < requiredSize) {
     return false;
   }
 
   // Move all properties from target to source
   if (!sourcePlayer.properties[color]) {
-    sourcePlayer.properties[color] = [];
+    sourcePlayer.properties[color] = {
+      cards: [],
+      houses: 0,
+      hotels: 0,
+    };
   }
-  sourcePlayer.properties[color].push(...propertySet);
+  sourcePlayer.properties[color].cards.push(...propertySet.cards);
+  sourcePlayer.properties[color].houses = propertySet.houses;
+  sourcePlayer.properties[color].hotels = propertySet.hotels;
 
   // Remove properties from target player
   delete target.properties[color];
@@ -609,14 +704,11 @@ export function collectRent(
 
   // Get all possible payment sources
   const moneyPileCards = target.moneyPile;
-  const propertyCards = Object.values(target.properties).flat();
+  const propertyCards = Object.values(target.properties).flatMap(set => set.cards);
   const availableCards = [...moneyPileCards, ...propertyCards];
 
   // Calculate total possible payment
-  const totalPossible = availableCards.reduce(
-    (sum, card) => sum + card.value,
-    0
-  );
+  const totalPossible = availableCards.reduce((sum, card) => sum + card.value, 0);
 
   // Check if this is a bankruptcy case (insufficient total funds)
   const isBankruptcy = totalPossible < totalRequired;
@@ -643,8 +735,8 @@ export function collectRent(
 
     if (!card) {
       // Look in properties
-      for (const [color, cards] of Object.entries(target.properties)) {
-        const foundCard = cards.find((c) => c.id === cardId);
+      for (const [color, propertySet] of Object.entries(target.properties)) {
+        const foundCard = propertySet.cards.find((c) => c.id === cardId);
         if (foundCard) {
           card = foundCard;
           location = "property";
@@ -666,12 +758,12 @@ export function collectRent(
         break;
       case "property":
         // Remove from the appropriate property color set
-        for (const [color, cards] of Object.entries(target.properties)) {
-          const cardIndex = cards.findIndex((c) => c.id === cardId);
+        for (const [color, propertySet] of Object.entries(target.properties)) {
+          const cardIndex = propertySet.cards.findIndex((c) => c.id === cardId);
           if (cardIndex !== -1) {
-            cards.splice(cardIndex, 1);
+            propertySet.cards.splice(cardIndex, 1);
             // Clean up empty property arrays
-            if (cards.length === 0) {
+            if (propertySet.cards.length === 0) {
               delete target.properties[color];
             }
             break;
@@ -697,9 +789,13 @@ export function collectRent(
         ? Object.keys(collector.properties)[0] || "Brown"
         : card.color!;
       if (!collector.properties[color]) {
-        collector.properties[color] = [];
+        collector.properties[color] = {
+          cards: [],
+          houses: 0,
+          hotels: 0
+        };
       }
-      collector.properties[color].push(card);
+      collector.properties[color].cards.push(card);
     } else {
       // Add to collector's money pile
       collector.moneyPile.push(card);

@@ -11,6 +11,7 @@ import PropertyStealModal from "../components/PropertyStealModal";
 import DealBreakerModal from "../components/DealBreakerModal";
 import RentModal from "../components/RentModal";
 import JustSayNoModal from "../components/JustSayNoModal";
+import PropertyUpgradeModal from "../components/PropertyUpgradeModal";
 import { GameState, Player, Card } from "../types";
 
 function Game() {
@@ -42,6 +43,11 @@ function Game() {
   const [showDealBreakerModal, setShowDealBreakerModal] = React.useState(false);
   const [showRentModal, setShowRentModal] = React.useState(false);
   const [showJustSayNoModal, setShowJustSayNoModal] = React.useState(false);
+  const [showPropertyUpgradeModal, setShowPropertyUpgradeModal] =
+    React.useState<{
+      cardId: string;
+      type: "House" | "Hotel";
+    } | null>(null);
 
   // Handle window resize for confetti
   React.useEffect(() => {
@@ -177,7 +183,17 @@ function Game() {
       return;
     }
 
-    if (card.type === "ACTION" || card.type === "RENT") {
+    if (card.type === "ACTION") {
+      if (card.name === "House" || card.name === "Hotel") {
+        // Show property upgrade modal for House/Hotel cards
+        setShowPropertyUpgradeModal({ cardId: card.id, type: card.name });
+        return;
+      }
+      setSelectedActionCard(card);
+      return;
+    }
+
+    if (card.type === "RENT") {
       setSelectedActionCard(card);
       return;
     }
@@ -292,6 +308,20 @@ function Game() {
     setShowJustSayNoModal(false);
   };
 
+  const handlePropertyUpgrade = (color: string) => {
+    if (!showPropertyUpgradeModal) return;
+
+    socket.emit(
+      "playCard",
+      roomId,
+      playerId,
+      showPropertyUpgradeModal.cardId,
+      color,
+      true
+    );
+    setShowPropertyUpgradeModal(null);
+  };
+
   const isMyTurn =
     gameState?.players[gameState.currentPlayerIndex]?.id === playerId;
   const winner = gameState?.winnerId
@@ -400,6 +430,15 @@ function Game() {
             />
           );
         })()}
+
+      {showPropertyUpgradeModal && myPlayer && (
+        <PropertyUpgradeModal
+          cardName={showPropertyUpgradeModal.type}
+          player={myPlayer}
+          onSelectPropertySet={handlePropertyUpgrade}
+          onCancel={() => setShowPropertyUpgradeModal(null)}
+        />
+      )}
 
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">Game Room: {roomId}</h1>
