@@ -79,11 +79,16 @@ export function toggleReady(roomId: string, playerId: string) {
   const player = room.gameState.players.find((p) => p.id === playerId);
   if (!player) return;
 
+  // Only toggle the ready state for the player who clicked
   player.isReady = !player.isReady;
 
-  // Check if all players are ready
+  // Check if all players are ready and at least 2 players are in the game
   const allReady = room.gameState.players.every((p) => p.isReady);
-  if (allReady && !room.gameState.isStarted) {
+  if (
+    allReady &&
+    room.gameState.players.length >= 2 &&
+    !room.gameState.isStarted
+  ) {
     // Start the game
     room.gameState.isStarted = true;
     room.gameState.deck = createDeck();
