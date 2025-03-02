@@ -33,7 +33,7 @@ export interface Room {
 }
 
 export interface ServerToClientEvents {
-  roomJoined: (gameState: GameState) => void;
+  roomJoined: (data: { gameState: GameState; playerId: string }) => void;
   updateGameState: (gameState: GameState) => void;
   error: (msg: string) => void;
 }

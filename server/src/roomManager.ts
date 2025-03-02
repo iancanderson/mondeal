@@ -13,7 +13,10 @@ const rooms: Room[] = [];
 /**
  * Create a new room with a new GameState
  */
-export function createRoom(playerName: string): Room {
+export function createRoom(playerName: string): {
+  room: Room;
+  playerId: string;
+} {
   const roomId = uuidv4();
   const playerId = uuidv4();
 
@@ -38,7 +41,7 @@ export function createRoom(playerName: string): Room {
     },
   };
   rooms.push(newRoom);
-  return newRoom;
+  return { room: newRoom, playerId };
 }
 
 /**

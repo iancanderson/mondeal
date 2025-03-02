@@ -28,10 +28,13 @@ io.on("connection", (socket) => {
   console.log("A user connected:", socket.id);
 
   socket.on("createRoom", (playerName) => {
-    const room = createRoom(playerName);
+    const { room, playerId } = createRoom(playerName);
     socket.join(room.roomId);
-    // Send the room info back
-    io.to(room.roomId).emit("roomJoined", room.gameState);
+    // Send both room info and playerId back
+    io.to(room.roomId).emit("roomJoined", {
+      gameState: room.gameState,
+      playerId,
+    });
   });
 
   socket.on("joinRoom", (roomId, playerName) => {
@@ -44,7 +47,10 @@ io.on("connection", (socket) => {
       return;
     }
     socket.join(room.roomId);
-    io.to(room.roomId).emit("roomJoined", room.gameState);
+    io.to(room.roomId).emit("roomJoined", {
+      gameState: room.gameState,
+      playerId,
+    });
   });
 
   socket.on("toggleReady", (roomId, playerId) => {

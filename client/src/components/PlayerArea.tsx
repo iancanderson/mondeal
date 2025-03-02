@@ -8,22 +8,29 @@ interface PlayerAreaProps {
 
 function PlayerArea({ player }: PlayerAreaProps) {
   const propertyOrder = [
-    "Brown", "LightBlue", "Purple", "Orange", 
-    "Red", "Yellow", "Green", "Blue",
-    "Railroad", "Utility"
+    "Brown",
+    "LightBlue",
+    "Purple",
+    "Orange",
+    "Red",
+    "Yellow",
+    "Green",
+    "Blue",
+    "Railroad",
+    "Utility",
   ];
 
   return (
     <div className="border rounded-lg p-4 flex-1 bg-white shadow-sm">
       <h3 className="font-bold text-lg border-b pb-2">{player.name}</h3>
-      
+
       <div className="mt-4">
         <div className="text-sm font-semibold mb-2">Properties:</div>
         <div className="space-y-4">
           {propertyOrder.map((color) => {
             const cards = player.properties[color] || [];
             if (cards.length === 0) return null;
-            
+
             return (
               <div key={color} className="border-b pb-2 last:border-b-0">
                 <div className="text-xs text-gray-600 mb-1">{color}</div>

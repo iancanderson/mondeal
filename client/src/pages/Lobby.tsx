@@ -9,9 +9,12 @@ function Lobby() {
   const navigate = useNavigate();
 
   React.useEffect(() => {
-    socket.on("roomJoined", (gameState: GameState) => {
-      navigate(`/game/${gameState.roomId}`, { state: { gameState } });
-    });
+    socket.on(
+      "roomJoined",
+      (data: { gameState: GameState; playerId: string }) => {
+        navigate(`/game/${data.gameState.roomId}`, { state: data });
+      }
+    );
 
     socket.on("error", (msg: string) => {
       alert(msg);

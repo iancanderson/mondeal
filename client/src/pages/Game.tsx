@@ -7,20 +7,28 @@ import { GameState, Player } from "../types";
 
 function Game() {
   const { roomId } = useParams();
-  const { state } = useLocation() as { state: { gameState: GameState } | null };
+  const { state } = useLocation() as {
+    state: { gameState: GameState; playerId: string } | null;
+  };
   const [gameState, setGameState] = React.useState<GameState | null>(
     state?.gameState || null
   );
-  const [playerId, setPlayerId] = React.useState<string>("");
+  const [playerId, setPlayerId] = React.useState<string>(state?.playerId || "");
   const [myPlayer, setMyPlayer] = React.useState<Player | null>(null);
 
   React.useEffect(() => {
-    socket.on("roomJoined", (gs: GameState) => {
-      setGameState(gs);
-    });
+    socket.on(
+      "roomJoined",
+      (data: { gameState: GameState; playerId: string }) => {
+        setGameState(data.gameState);
+        setPlayerId(data.playerId);
+      }
+    );
+
     socket.on("updateGameState", (gs: GameState) => {
       setGameState(gs);
     });
+
     socket.on("error", (msg: string) => {
       alert(msg);
     });
@@ -33,11 +41,7 @@ function Game() {
   }, []);
 
   React.useEffect(() => {
-    if (!gameState) return;
-    if (!playerId) {
-      const firstPlayer = gameState.players[0]?.id || "";
-      setPlayerId(firstPlayer);
-    }
+    if (!gameState || !playerId) return;
     const me = gameState.players.find((p) => p.id === playerId);
     if (me) {
       setMyPlayer(me);

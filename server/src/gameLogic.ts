@@ -18,31 +18,36 @@ export function createDeck(): Card[] {
     Orange: ["St. James Place", "Tennessee Avenue", "New York Avenue"],
     Purple: ["St. Charles Place", "Virginia Avenue", "States Avenue"],
     LightBlue: ["Connecticut Avenue", "Vermont Avenue", "Oriental Avenue"],
-    Railroad: ["Reading Railroad", "Pennsylvania Railroad", "B&O Railroad", "Short Line"],
-    Utility: ["Electric Company", "Water Works"]
+    Railroad: [
+      "Reading Railroad",
+      "Pennsylvania Railroad",
+      "B&O Railroad",
+      "Short Line",
+    ],
+    Utility: ["Electric Company", "Water Works"],
   };
 
   // Add property cards
   Object.entries(properties).forEach(([color, propertyNames]) => {
-    propertyNames.forEach(name => {
+    propertyNames.forEach((name) => {
       deck.push({
         id: uuidv4(),
         name,
         type: "PROPERTY",
         value: color === "Railroad" || color === "Utility" ? 2 : 3,
-        color
+        color,
       });
     });
   });
 
   // Add money cards with real values
   const moneyValues = [1, 1, 1, 1, 2, 2, 2, 3, 3, 4, 4, 5, 5];
-  moneyValues.forEach(value => {
+  moneyValues.forEach((value) => {
     deck.push({
       id: uuidv4(),
       name: `$${value}M`,
       type: "MONEY",
-      value
+      value,
     });
   });
 
@@ -57,15 +62,15 @@ export function createDeck(): Card[] {
     "Double The Rent",
     "House",
     "Hotel",
-    "Pass Go"
+    "Pass Go",
   ];
 
-  actionCards.forEach(name => {
+  actionCards.forEach((name) => {
     deck.push({
       id: uuidv4(),
       name,
       type: "ACTION",
-      value: 1
+      value: 1,
     });
   });
 
