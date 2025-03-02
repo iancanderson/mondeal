@@ -26,17 +26,19 @@ function PlayerArea({ player }: PlayerAreaProps) {
 
       <div className="mt-4">
         <div className="text-sm font-semibold mb-2">Properties:</div>
-        <div className="space-y-4">
+        <div className="flex flex-wrap gap-4">
           {propertyOrder.map((color) => {
             const cards = player.properties[color] || [];
             if (cards.length === 0) return null;
 
             return (
-              <div key={color} className="border-b pb-2 last:border-b-0">
+              <div key={color} className="flex-shrink-0">
                 <div className="text-xs text-gray-600 mb-1">{color}</div>
-                <div className="flex gap-2 overflow-x-auto pb-2">
+                <div className="flex gap-1">
                   {cards.map((card: Card) => (
-                    <CardView key={card.id} card={card} />
+                    <div className="transform scale-90 origin-top-left">
+                      <CardView key={card.id} card={card} />
+                    </div>
                   ))}
                 </div>
               </div>
