@@ -85,6 +85,7 @@ function Game() {
   const winner = gameState.winnerId
     ? gameState.players.find((p) => p.id === gameState.winnerId)
     : null;
+  const canPlayMoreCards = gameState.cardsPlayedThisTurn < 3;
 
   return (
     <div className="p-4">
@@ -96,6 +97,11 @@ function Game() {
               Current Turn:{" "}
               {gameState.players[gameState.currentPlayerIndex].name}
             </h2>
+            {isMyTurn && (
+              <div className="text-sm text-gray-600">
+                Cards played this turn: {gameState.cardsPlayedThisTurn}/3
+              </div>
+            )}
             {winner && (
               <div className="text-green-600 text-xl font-bold">
                 Winner: {winner.name}
@@ -114,19 +120,26 @@ function Game() {
                 <CardView
                   key={card.id}
                   card={card}
-                  clickable={isMyTurn && !winner}
+                  clickable={isMyTurn && !winner && canPlayMoreCards}
                   onClick={() => handlePlayCard(card.id)}
                 />
               ))}
             </div>
           </div>
           {isMyTurn && !winner && (
-            <button
-              className="bg-blue-500 text-white px-4 py-2 mt-4"
-              onClick={handleEndTurn}
-            >
-              End Turn
-            </button>
+            <div className="mt-4">
+              {!canPlayMoreCards && (
+                <div className="text-amber-600 mb-2">
+                  You've played the maximum of 3 cards this turn
+                </div>
+              )}
+              <button
+                className="bg-blue-500 text-white px-4 py-2"
+                onClick={handleEndTurn}
+              >
+                End Turn
+              </button>
+            </div>
           )}
         </>
       ) : (

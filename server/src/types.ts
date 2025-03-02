@@ -25,6 +25,7 @@ export interface GameState {
   currentPlayerIndex: number;
   isStarted: boolean;
   winnerId?: string;
+  cardsPlayedThisTurn: number; // Track number of cards played this turn
 }
 
 export interface Room {

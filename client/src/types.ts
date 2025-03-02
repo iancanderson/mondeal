@@ -26,6 +26,7 @@ export interface GameState {
   currentPlayerIndex: number;
   isStarted: boolean;
   winnerId?: string;
+  cardsPlayedThisTurn: number;
 }
 
 export interface RoomInfo {

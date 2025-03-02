@@ -134,6 +134,8 @@ export function startTurn(gameState: GameState) {
       currentPlayer.hand.push(card);
     }
   }
+  // Reset cards played counter at start of turn
+  gameState.cardsPlayedThisTurn = 0;
 }
 
 /**
@@ -146,12 +148,17 @@ export function playCard(
   gameState: GameState,
   playerId: string,
   cardId: string
-) {
+): boolean {
+  // Check if player has already played 3 cards
+  if (gameState.cardsPlayedThisTurn >= 3) {
+    return false;
+  }
+
   const player = gameState.players.find((p) => p.id === playerId);
-  if (!player) return;
+  if (!player) return false;
 
   const cardIndex = player.hand.findIndex((c) => c.id === cardId);
-  if (cardIndex === -1) return;
+  if (cardIndex === -1) return false;
 
   const card = player.hand[cardIndex];
   // Remove from player's hand
@@ -166,6 +173,10 @@ export function playCard(
     // For MONEY or ACTION, just put it in money pile
     player.moneyPile.push(card);
   }
+
+  // Increment cards played counter
+  gameState.cardsPlayedThisTurn++;
+  return true;
 }
 
 /**

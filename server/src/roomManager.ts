@@ -52,6 +52,7 @@ export function createRoom(playerName: string): {
       discardPile: [],
       currentPlayerIndex: 0,
       isStarted: false,
+      cardsPlayedThisTurn: 0
     },
   };
   rooms.push(newRoom);
