@@ -17,6 +17,7 @@ import {
   reassignWildcard,
   executePropertySteal,
   executeDealBreaker,
+  collectRent,
 } from "./gameLogic";
 import {
   ClientToServerEvents,
@@ -153,6 +154,12 @@ io.on("connection", (socket) => {
           case "Deal Breaker":
             notificationMessage = `${result.player} played Deal Breaker. They can steal a complete property set!`;
             break;
+          case "Rent":
+            if (room.gameState.pendingAction.type === "RENT") {
+              const { color, amount } = room.gameState.pendingAction;
+              notificationMessage = `${result.player} played Rent for ${color} properties. All other players owe $${amount}M!`;
+            }
+            break;
           // Add cases for other action cards as they are implemented
         }
 
@@ -173,6 +180,28 @@ io.on("connection", (socket) => {
         io.to(roomId).emit(
           "gameNotification",
           `${currentPlayerName} played their 3rd card. Turn passed to ${newPlayerName}.`
+        );
+      }
+    }
+  );
+
+  // Handle rent payment
+  socket.on(
+    "payRent",
+    (roomId: string, payerId: string, paymentCardIds: string[]) => {
+      const room = getRoom(roomId);
+      if (!room) return;
+
+      const payer = room.gameState.players.find((p) => p.id === payerId);
+      if (!payer) return;
+
+      const success = collectRent(room.gameState, payerId, paymentCardIds);
+
+      if (success) {
+        io.to(roomId).emit("updateGameState", room.gameState);
+        io.to(roomId).emit(
+          "gameNotification",
+          `${payer.name} paid their rent.`
         );
       }
     }

@@ -1,4 +1,4 @@
-export type CardType = "PROPERTY" | "MONEY" | "ACTION";
+export type CardType = "PROPERTY" | "MONEY" | "ACTION" | "RENT";
 
 export type ActionCardName =
   | "Deal Breaker"
@@ -10,7 +10,8 @@ export type ActionCardName =
   | "Double The Rent"
   | "House"
   | "Hotel"
-  | "Pass Go";
+  | "Pass Go"
+  | "Rent";
 
 // Add a type for different action states
 export type ActionState =
@@ -24,6 +25,12 @@ export type ActionState =
   | {
       type: "DEAL_BREAKER";
       playerId: string;
+    }
+  | {
+      type: "RENT";
+      playerId: string;
+      color: string;
+      amount: number;
     };
 
 export interface Card {
@@ -32,6 +39,7 @@ export interface Card {
   type: CardType;
   value: number;
   color?: string; // For property cards
+  rentColors?: string[]; // For rent cards
   isWildcard?: boolean; // For property wild cards
 }
 
@@ -109,6 +117,11 @@ export interface ClientToServerEvents {
     sourcePlayerId: string,
     targetPlayerId: string,
     color: string
+  ) => void;
+  payRent: (
+    roomId: string,
+    payerId: string,
+    paymentCardIds: string[]
   ) => void;
   endTurn: (roomId: string, playerId: string) => void;
   updatePlayerName: (playerId: string, newName: string, uuid: string) => void;

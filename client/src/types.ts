@@ -1,5 +1,5 @@
 // Mirror minimal shared types on client side
-export type CardType = "PROPERTY" | "MONEY" | "ACTION";
+export type CardType = "PROPERTY" | "MONEY" | "ACTION" | "RENT";
 
 export type ActionCardName =
   | "Deal Breaker"
@@ -11,7 +11,8 @@ export type ActionCardName =
   | "Double The Rent"
   | "House"
   | "Hotel"
-  | "Pass Go";
+  | "Pass Go"
+  | "Rent";
 
 export interface Card {
   id: string;
@@ -19,6 +20,7 @@ export interface Card {
   type: CardType;
   value: number;
   color?: string;
+  rentColors?: string[];
   isWildcard?: boolean;
 }
 
@@ -43,6 +45,12 @@ export type ActionState =
   | {
       type: "DEAL_BREAKER";
       playerId: string;
+    }
+  | {
+      type: "RENT";
+      playerId: string;
+      color: string;
+      amount: number;
     };
 
 export interface GameState {
@@ -100,6 +108,13 @@ export interface ClientToServerEvents {
     targetPlayerId: string,
     targetCardId: string
   ) => void;
+  executeDealBreaker: (
+    roomId: string,
+    sourcePlayerId: string,
+    targetPlayerId: string,
+    color: string
+  ) => void;
+  payRent: (roomId: string, payerId: string, paymentCardIds: string[]) => void;
   endTurn: (roomId: string, playerId: string) => void;
   updatePlayerName: (playerId: string, newName: string, uuid: string) => void;
   requestRooms: () => void;

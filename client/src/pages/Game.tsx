@@ -9,6 +9,7 @@ import ActionCardModal from "../components/ActionCardModal";
 import GameToast from "../components/GameToast";
 import PropertyStealModal from "../components/PropertyStealModal";
 import DealBreakerModal from "../components/DealBreakerModal";
+import RentModal from "../components/RentModal";
 import { GameState, Player, Card } from "../types";
 
 function Game() {
@@ -38,6 +39,7 @@ function Game() {
   const [showPropertyStealModal, setShowPropertyStealModal] =
     React.useState(false);
   const [showDealBreakerModal, setShowDealBreakerModal] = React.useState(false);
+  const [showRentModal, setShowRentModal] = React.useState(false);
 
   // Handle window resize for confetti
   React.useEffect(() => {
@@ -134,6 +136,18 @@ function Game() {
     }
   }, [gameState?.pendingAction, playerId]);
 
+  // Check if we should show rent payment modal
+  React.useEffect(() => {
+    if (
+      gameState?.pendingAction.type === "RENT" &&
+      gameState.pendingAction.playerId !== playerId
+    ) {
+      setShowRentModal(true);
+    } else {
+      setShowRentModal(false);
+    }
+  }, [gameState?.pendingAction, playerId]);
+
   if (!roomId || !gameState) {
     return <div className="p-4">No Game State found. Return to Lobby.</div>;
   }
@@ -149,7 +163,7 @@ function Game() {
       return;
     }
 
-    if (card.type === "ACTION") {
+    if (card.type === "ACTION" || card.type === "RENT") {
       setSelectedActionCard(card);
       return;
     }
@@ -236,6 +250,30 @@ function Game() {
     setShowDealBreakerModal(false);
   };
 
+  const handleRentPayment = (paymentCardIds: string[]) => {
+    if (!roomId || !playerId || !gameState) return;
+
+    socket.emit("payRent", roomId, playerId, paymentCardIds);
+    setShowRentModal(false);
+  };
+
+  const handleRentColorPick = (color: string) => {
+    if (selectedActionCard && selectedActionCard.type === "RENT") {
+      // Only allow selecting a color that this card can collect rent for
+      if (selectedActionCard.rentColors?.includes(color)) {
+        socket.emit(
+          "playCard",
+          roomId,
+          playerId,
+          selectedActionCard.id,
+          color,
+          true
+        );
+        setSelectedActionCard(null);
+      }
+    }
+  };
+
   const isMyTurn =
     gameState?.players[gameState.currentPlayerIndex]?.id === playerId;
   const winner = gameState?.winnerId
@@ -282,14 +320,20 @@ function Game() {
         />
       )}
 
-      {selectedActionCard && (
+      {selectedActionCard?.type === "RENT" ? (
+        <ColorPicker
+          onColorPick={handleRentColorPick}
+          onCancel={() => setSelectedActionCard(null)}
+          availableColors={selectedActionCard.rentColors}
+        />
+      ) : selectedActionCard ? (
         <ActionCardModal
           card={selectedActionCard}
           onPlayAsMoney={handlePlayAsMoney}
           onPlayAsAction={handlePlayAsAction}
           onCancel={() => setSelectedActionCard(null)}
         />
-      )}
+      ) : null}
 
       {/* Property Steal Modal */}
       {showPropertyStealModal && gameState && (
@@ -310,6 +354,19 @@ function Game() {
           onCancel={() => setShowDealBreakerModal(false)}
         />
       )}
+
+      {/* Rent Payment Modal */}
+      {showRentModal &&
+        gameState &&
+        gameState.pendingAction.type === "RENT" && (
+          <RentModal
+            pendingAction={gameState.pendingAction}
+            currentPlayer={gameState.players[gameState.currentPlayerIndex]}
+            targetPlayer={myPlayer!}
+            onPayRent={handleRentPayment}
+            onCancel={() => setShowRentModal(false)}
+          />
+        )}
 
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">Game Room: {roomId}</h1>

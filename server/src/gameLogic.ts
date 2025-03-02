@@ -40,6 +40,27 @@ export function createDeck(): Card[] {
     });
   });
 
+  // Add rent cards
+  const rentGroups = [
+    { colors: ["Brown", "LightBlue"], count: 2 },
+    { colors: ["Purple", "Orange"], count: 2 },
+    { colors: ["Red", "Yellow"], count: 2 },
+    { colors: ["Green", "Blue"], count: 2 },
+    { colors: ["Railroad", "Utility"], count: 2 },
+  ];
+
+  rentGroups.forEach(({ colors, count }) => {
+    for (let i = 0; i < count; i++) {
+      deck.push({
+        id: uuidv4(),
+        name: `${colors.join("/")} Rent`,
+        type: "RENT",
+        value: 1,
+        rentColors: colors,
+      });
+    }
+  });
+
   // Add wild card properties (2 of each)
   const wildcardNames = [
     "Multi-Color Property 1",
@@ -161,13 +182,43 @@ export function startTurn(gameState: GameState) {
 }
 
 /**
+ * Calculate rent for a property color
+ */
+function calculateRent(properties: Card[], color: string): number {
+  const count = properties.length;
+  const requiredSize = getRequiredSetSize(color);
+  const isComplete = count >= requiredSize;
+
+  // Base rent values for each color
+  const baseRents: Record<string, number[]> = {
+    Brown: [1, 2],
+    LightBlue: [1, 2, 3],
+    Purple: [1, 2, 4],
+    Orange: [1, 3, 5],
+    Red: [2, 3, 6],
+    Yellow: [2, 4, 6],
+    Green: [2, 4, 7],
+    Blue: [3, 8],
+    Railroad: [1, 2, 3, 4],
+    Utility: [1, 2],
+  };
+
+  // Get the base rent based on property count, capped at the required set size
+  const rentIndex = Math.min(count, requiredSize) - 1;
+  const baseRent = baseRents[color][rentIndex];
+
+  // Double the rent if it's a complete set
+  return isComplete ? baseRent * 2 : baseRent;
+}
+
+/**
  * Handle playing a card from hand to property/money pile.
  */
 export function playCard(
   gameState: GameState,
   playerId: string,
   cardId: string,
-  chosenColor?: string, // Optional parameter for wild cards
+  chosenColor?: string, // Optional parameter for wild cards or rent cards
   playAsAction: boolean = false // Optional parameter for action cards
 ): boolean {
   // Check if player has already played 3 cards
@@ -188,6 +239,15 @@ export function playCard(
     return false;
   }
 
+  // For rent cards played as action, we need a chosen color from their available colors
+  if (
+    card.type === "RENT" &&
+    playAsAction &&
+    (!chosenColor || !card.rentColors?.includes(chosenColor))
+  ) {
+    return false;
+  }
+
   // Remove from player's hand
   player.hand.splice(cardIndex, 1);
 
@@ -197,6 +257,21 @@ export function playCard(
       player.properties[propertyColor] = [];
     }
     player.properties[propertyColor].push(card);
+  } else if (card.type === "RENT" && playAsAction && chosenColor) {
+    // When played as an action, add to the discard pile
+    gameState.discardPile.push(card);
+
+    // Calculate rent amount for the chosen color
+    const playerProperties = player.properties[chosenColor] || [];
+    const rentAmount = calculateRent(playerProperties, chosenColor);
+
+    // Set up pending rent action
+    gameState.pendingAction = {
+      type: "RENT",
+      playerId,
+      color: chosenColor,
+      amount: rentAmount,
+    };
   } else if (card.type === "ACTION" && playAsAction) {
     // When played as an action, add to the discard pile
     gameState.discardPile.push(card);
@@ -442,6 +517,70 @@ export function executeDealBreaker(
   delete targetPlayer.properties[color];
 
   // Reset the pending action
+  gameState.pendingAction = { type: "NONE" };
+
+  return true;
+}
+
+/**
+ * Handle collecting rent from a player
+ */
+export function collectRent(
+  gameState: GameState,
+  targetPlayerId: string,
+  paymentCards: string[]
+): boolean {
+  // Verify that a rent action is pending
+  if (gameState.pendingAction.type !== "RENT") {
+    return false;
+  }
+
+  const { playerId: collectorId, amount } = gameState.pendingAction;
+  const collector = gameState.players.find((p) => p.id === collectorId);
+  const target = gameState.players.find((p) => p.id === targetPlayerId);
+
+  if (!collector || !target) {
+    return false;
+  }
+
+  // Calculate total payment value
+  let totalPayment = 0;
+  const paymentCardsToTransfer: Card[] = [];
+
+  for (const cardId of paymentCards) {
+    // Find card in player's hand and money pile
+    let card = target.hand.find((c) => c.id === cardId);
+    let inHand = true;
+    if (!card) {
+      card = target.moneyPile.find((c) => c.id === cardId);
+      inHand = false;
+    }
+
+    if (!card) {
+      return false;
+    }
+
+    totalPayment += card.value;
+    paymentCardsToTransfer.push(card);
+
+    // Remove card from source
+    if (inHand) {
+      target.hand = target.hand.filter((c) => c.id !== cardId);
+    } else {
+      target.moneyPile = target.moneyPile.filter((c) => c.id !== cardId);
+    }
+  }
+
+  // Verify payment amount
+  if (totalPayment < amount) {
+    // Payment insufficient
+    return false;
+  }
+
+  // Transfer cards to collector's money pile
+  collector.moneyPile.push(...paymentCardsToTransfer);
+
+  // Reset pending action
   gameState.pendingAction = { type: "NONE" };
 
   return true;

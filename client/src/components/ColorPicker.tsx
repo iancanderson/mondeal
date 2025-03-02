@@ -3,9 +3,14 @@ import React from "react";
 interface ColorPickerProps {
   onColorPick: (color: string) => void;
   onCancel: () => void;
+  availableColors?: string[];
 }
 
-export function ColorPicker({ onColorPick, onCancel }: ColorPickerProps) {
+export function ColorPicker({
+  onColorPick,
+  onCancel,
+  availableColors,
+}: ColorPickerProps) {
   const colors = [
     { name: "Brown", bgColor: "bg-amber-900" },
     { name: "LightBlue", bgColor: "bg-sky-400" },
@@ -17,7 +22,7 @@ export function ColorPicker({ onColorPick, onCancel }: ColorPickerProps) {
     { name: "Blue", bgColor: "bg-blue-600" },
     { name: "Railroad", bgColor: "bg-gray-800" },
     { name: "Utility", bgColor: "bg-gray-600" },
-  ];
+  ].filter((color) => !availableColors || availableColors.includes(color.name));
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">

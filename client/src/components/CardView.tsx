@@ -40,6 +40,9 @@ function CardView({ card, clickable, onClick }: CardViewProps) {
         }
       }
     }
+    if (card.type === "RENT") {
+      return "bg-gradient-to-br from-amber-100 to-amber-200";
+    }
     return card.type === "MONEY" ? "bg-emerald-100" : "bg-amber-50";
   };
 
@@ -85,6 +88,11 @@ function CardView({ card, clickable, onClick }: CardViewProps) {
         {card.type === "PROPERTY" && (
           <div className="text-xs italic mb-0.5">
             {card.isWildcard ? "Wild Card" : card.color}
+          </div>
+        )}
+        {card.type === "RENT" && card.rentColors && (
+          <div className="text-xs italic mb-0.5">
+            {card.rentColors.join("/")} Rent
           </div>
         )}
         {card.type === "ACTION" && (
