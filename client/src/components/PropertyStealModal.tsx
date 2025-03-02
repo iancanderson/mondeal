@@ -18,11 +18,33 @@ function PropertyStealModal({
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [selectedCard, setSelectedCard] = useState<Card | null>(null);
 
-  // Filter out the current player and players with no properties
+  // Helper function to get required set size
+  function getRequiredSetSize(color: string): number {
+    switch (color) {
+      case "Brown":
+      case "Blue":
+      case "Utility":
+        return 2;
+      case "Railroad":
+        return 4;
+      default:
+        return 3;
+    }
+  }
+
+  // Helper function to check if a player has any stealable properties
+  function hasStealableProperties(player: Player): boolean {
+    return Object.entries(player.properties).some(([color, propertySet]) => {
+      const requiredSize = getRequiredSetSize(color);
+      return (
+        propertySet.cards.length > 0 && propertySet.cards.length < requiredSize
+      );
+    });
+  }
+
+  // Filter out the current player and players with no stealable properties
   const eligiblePlayers = players.filter(
-    (player) =>
-      player.id !== currentPlayerId &&
-      Object.values(player.properties).some((cards) => cards.length > 0)
+    (player) => player.id !== currentPlayerId && hasStealableProperties(player)
   );
 
   // If no eligible players, show a message
@@ -32,7 +54,8 @@ function PropertyStealModal({
         <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
           <h3 className="text-lg font-semibold mb-4">Sly Deal</h3>
           <p className="text-gray-700 mb-4">
-            No players have properties that you can steal.
+            No players have properties that you can steal. (Complete sets cannot
+            be broken up)
           </p>
           <button
             onClick={onCancel}
@@ -53,27 +76,18 @@ function PropertyStealModal({
   const stealableProperties: { color: string; cards: Card[] }[] = [];
 
   if (selectedPlayer) {
-    Object.entries(selectedPlayer.properties).forEach(([color, cards]) => {
-      // Determine if we can steal from this color group (not a complete set)
-      const requiredSize = getRequiredSetSize(color);
-      if (cards.length !== requiredSize) {
-        stealableProperties.push({ color, cards });
+    Object.entries(selectedPlayer.properties).forEach(
+      ([color, propertySet]) => {
+        // Determine if we can steal from this color group (not a complete set)
+        const requiredSize = getRequiredSetSize(color);
+        if (
+          propertySet.cards.length > 0 &&
+          propertySet.cards.length < requiredSize
+        ) {
+          stealableProperties.push({ color, cards: propertySet.cards });
+        }
       }
-    });
-  }
-
-  // Helper function to get required set size
-  function getRequiredSetSize(color: string): number {
-    switch (color) {
-      case "Brown":
-      case "Blue":
-      case "Utility":
-        return 2;
-      case "Railroad":
-        return 4;
-      default:
-        return 3;
-    }
+    );
   }
 
   return (

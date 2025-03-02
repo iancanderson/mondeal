@@ -18,6 +18,7 @@
 - Hotel
 - Forced Deal
 - Debt Collector
+- Sly Deal said "no one has properties to steal" when they did.
 
 ## TODO
 
