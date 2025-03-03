@@ -1,4 +1,13 @@
-import { Card, Player, GameState, ActionCardName, PropertySet } from "./types";
+import {
+  Card,
+  Player,
+  GameState,
+  ActionCardName,
+  PropertySet,
+  PropertyColor,
+  CardType,
+  PropertyCard,
+} from "./types";
 import { v4 as uuidv4 } from "uuid";
 
 /**
@@ -10,21 +19,45 @@ export function createDeck(): Card[] {
 
   // Property cards with real Monopoly colors and names
   const properties = {
-    Brown: ["Mediterranean Avenue", "Baltic Avenue"],
-    Blue: ["Boardwalk", "Park Place"],
-    Green: ["Pacific Avenue", "North Carolina Avenue", "Pennsylvania Avenue"],
-    Yellow: ["Atlantic Avenue", "Ventnor Avenue", "Marvin Gardens"],
-    Red: ["Kentucky Avenue", "Indiana Avenue", "Illinois Avenue"],
-    Orange: ["St. James Place", "Tennessee Avenue", "New York Avenue"],
-    Purple: ["St. Charles Place", "Virginia Avenue", "States Avenue"],
-    LightBlue: ["Connecticut Avenue", "Vermont Avenue", "Oriental Avenue"],
-    Railroad: [
+    [PropertyColor.BROWN]: ["Mediterranean Avenue", "Baltic Avenue"],
+    [PropertyColor.BLUE]: ["Boardwalk", "Park Place"],
+    [PropertyColor.GREEN]: [
+      "Pacific Avenue",
+      "North Carolina Avenue",
+      "Pennsylvania Avenue",
+    ],
+    [PropertyColor.YELLOW]: [
+      "Atlantic Avenue",
+      "Ventnor Avenue",
+      "Marvin Gardens",
+    ],
+    [PropertyColor.RED]: [
+      "Kentucky Avenue",
+      "Indiana Avenue",
+      "Illinois Avenue",
+    ],
+    [PropertyColor.ORANGE]: [
+      "St. James Place",
+      "Tennessee Avenue",
+      "New York Avenue",
+    ],
+    [PropertyColor.PURPLE]: [
+      "St. Charles Place",
+      "Virginia Avenue",
+      "States Avenue",
+    ],
+    [PropertyColor.LIGHT_BLUE]: [
+      "Connecticut Avenue",
+      "Vermont Avenue",
+      "Oriental Avenue",
+    ],
+    [PropertyColor.RAILROAD]: [
       "Reading Railroad",
       "Pennsylvania Railroad",
       "B&O Railroad",
       "Short Line",
     ],
-    Utility: ["Electric Company", "Water Works"],
+    [PropertyColor.UTILITY]: ["Electric Company", "Water Works"],
   };
 
   // Add property cards
@@ -33,20 +66,23 @@ export function createDeck(): Card[] {
       deck.push({
         id: uuidv4(),
         name,
-        type: "PROPERTY",
-        value: color === "Railroad" || color === "Utility" ? 2 : 3,
-        color,
+        type: CardType.PROPERTY,
+        value:
+          color === PropertyColor.RAILROAD || color === PropertyColor.UTILITY
+            ? 2
+            : 3,
+        color: color as PropertyColor,
       });
     });
   });
 
-  // Add rent cards
+  // Add rent cards with proper PropertyColor enum values
   const rentGroups = [
-    { colors: ["Brown", "LightBlue"], count: 2 },
-    { colors: ["Purple", "Orange"], count: 2 },
-    { colors: ["Red", "Yellow"], count: 2 },
-    { colors: ["Green", "Blue"], count: 2 },
-    { colors: ["Railroad", "Utility"], count: 2 },
+    { colors: [PropertyColor.BROWN, PropertyColor.LIGHT_BLUE], count: 2 },
+    { colors: [PropertyColor.PURPLE, PropertyColor.ORANGE], count: 2 },
+    { colors: [PropertyColor.RED, PropertyColor.YELLOW], count: 2 },
+    { colors: [PropertyColor.GREEN, PropertyColor.BLUE], count: 2 },
+    { colors: [PropertyColor.RAILROAD, PropertyColor.UTILITY], count: 2 },
   ];
 
   rentGroups.forEach(({ colors, count }) => {
@@ -54,7 +90,7 @@ export function createDeck(): Card[] {
       deck.push({
         id: uuidv4(),
         name: `${colors.join("/")} Rent`,
-        type: "RENT",
+        type: CardType.RENT,
         value: 1,
         rentColors: colors,
       });
@@ -72,8 +108,9 @@ export function createDeck(): Card[] {
     deck.push({
       id: uuidv4(),
       name,
-      type: "PROPERTY",
+      type: CardType.PROPERTY,
       value: 4,
+      color: PropertyColor.BROWN, // Default color, will be changed when played
       isWildcard: true,
     });
   });
@@ -84,30 +121,30 @@ export function createDeck(): Card[] {
     deck.push({
       id: uuidv4(),
       name: `$${value}M`,
-      type: "MONEY",
+      type: CardType.MONEY,
       value,
     });
   });
 
   // Add action cards with real names
   const actionCards: ActionCardName[] = [
-    "Deal Breaker",
-    "Just Say No",
-    "Sly Deal",
-    "Forced Deal",
-    "Debt Collector",
-    "It's My Birthday",
-    "Double The Rent",
-    "House",
-    "Hotel",
-    "Pass Go",
+    ActionCardName.DEAL_BREAKER,
+    ActionCardName.JUST_SAY_NO,
+    ActionCardName.SLY_DEAL,
+    ActionCardName.FORCED_DEAL,
+    ActionCardName.DEBT_COLLECTOR,
+    ActionCardName.ITS_MY_BIRTHDAY,
+    ActionCardName.DOUBLE_THE_RENT,
+    ActionCardName.HOUSE,
+    ActionCardName.HOTEL,
+    ActionCardName.PASS_GO,
   ];
 
   actionCards.forEach((name) => {
     deck.push({
       id: uuidv4(),
       name,
-      type: "ACTION",
+      type: CardType.ACTION,
       value: 1,
     });
   });
@@ -254,15 +291,18 @@ export function playCard(
   const card = player.hand[cardIndex];
 
   // For wild card properties, we need a chosen color
-  if (card.type === "PROPERTY" && card.isWildcard && !chosenColor) {
+  if (card.type === CardType.PROPERTY && card.isWildcard && !chosenColor) {
     return { success: false };
   }
 
   // For rent cards played as action, validate:
   // 1. We need a chosen color from their available colors
   // 2. Player must own at least one property of that color
-  if (card.type === "RENT" && playAsAction) {
-    if (!chosenColor || !card.rentColors?.includes(chosenColor)) {
+  if (card.type === CardType.RENT && playAsAction) {
+    if (
+      !chosenColor ||
+      !card.rentColors?.includes(chosenColor as PropertyColor)
+    ) {
       return { success: false };
     }
 
@@ -309,11 +349,19 @@ export function playCard(
     const notification = `${player.name} charges ${
       isDoubleRent ? "DOUBLE " : ""
     }rent for ${chosenColor} properties ($${rentAmount}M)`;
-    return { success: true, notificationType: "Rent", player: notification };
+    return {
+      success: true,
+      notificationType: ActionCardName.RENT,
+      player: notification,
+    };
   }
 
   // For House/Hotel cards, validate that they are played as action and target color is valid
-  if ((card.name === "House" || card.name === "Hotel") && playAsAction) {
+  if (
+    (card.name === ActionCardName.HOUSE ||
+      card.name === ActionCardName.HOTEL) &&
+    playAsAction
+  ) {
     if (!chosenColor) return { success: false };
 
     const propertySet = player.properties[chosenColor];
@@ -328,7 +376,7 @@ export function playCard(
     gameState.discardPile.push(card);
 
     // Update the property set's house/hotel count
-    if (card.name === "House") {
+    if (card.name === ActionCardName.HOUSE) {
       propertySet.houses++;
     } else {
       propertySet.hotels++;
@@ -353,7 +401,7 @@ export function playCard(
   }
 
   // Handle Double The Rent action
-  if (card.name === "Double The Rent" && playAsAction) {
+  if (card.name === ActionCardName.DOUBLE_THE_RENT && playAsAction) {
     // Remove from player's hand and add to discard pile
     player.hand.splice(cardIndex, 1);
     gameState.discardPile.push(card);
@@ -367,7 +415,7 @@ export function playCard(
     gameState.cardsPlayedThisTurn++;
     return {
       success: true,
-      notificationType: "Double The Rent",
+      notificationType: ActionCardName.DOUBLE_THE_RENT,
       player: player.name,
     };
   }
@@ -376,7 +424,7 @@ export function playCard(
   player.hand.splice(cardIndex, 1);
 
   // For property cards being played to a color set
-  if (card.type === "PROPERTY") {
+  if (card.type === CardType.PROPERTY) {
     const propertyColor = card.isWildcard ? chosenColor! : card.color!;
     // Initialize property set if it doesn't exist
     if (!player.properties[propertyColor]) {
@@ -387,37 +435,37 @@ export function playCard(
       };
     }
     player.properties[propertyColor].cards.push(card);
-  } else if (card.type === "ACTION" && playAsAction) {
+  } else if (card.type === CardType.ACTION && playAsAction) {
     // When played as an action, add to the discard pile
     gameState.discardPile.push(card);
 
     // Handle specific action card effects using the typed name
     switch (card.name as ActionCardName) {
-      case "Pass Go":
+      case ActionCardName.PASS_GO:
         handlePassGoAction(gameState, player);
         break;
-      case "Sly Deal":
+      case ActionCardName.SLY_DEAL:
         // Set up pending action for Sly Deal
         gameState.pendingAction = {
           type: "SLY_DEAL",
           playerId: playerId,
         };
         break;
-      case "Deal Breaker":
+      case ActionCardName.DEAL_BREAKER:
         // Set up pending action for Deal Breaker
         gameState.pendingAction = {
           type: "DEAL_BREAKER",
           playerId: playerId,
         };
         break;
-      case "Forced Deal":
+      case ActionCardName.FORCED_DEAL:
         // Set up pending action for Forced Deal
         gameState.pendingAction = {
           type: "FORCED_DEAL",
           playerId: playerId,
         };
         break;
-      case "Debt Collector":
+      case ActionCardName.DEBT_COLLECTOR:
         // Set up pending action for Debt Collector - fixed $5M fee
         gameState.pendingAction = {
           type: "DEBT_COLLECTOR",
@@ -425,7 +473,7 @@ export function playCard(
           amount: 5, // $5M is the standard debt collection fee
         };
         break;
-      case "It's My Birthday":
+      case ActionCardName.ITS_MY_BIRTHDAY:
         // Set up pending action for It's My Birthday - each player pays $2M
         gameState.pendingAction = {
           type: "BIRTHDAY",
@@ -454,7 +502,7 @@ export function playCard(
   }
 
   // Return notification info for action cards
-  if (card.type === "ACTION" && playAsAction) {
+  if (card.type === CardType.ACTION && playAsAction) {
     return {
       success: true,
       notificationType: card.name as ActionCardName,
@@ -498,24 +546,27 @@ export function reassignWildcard(
   if (!player) return false;
 
   // Find the card in any property pile
-  let foundCard: Card | undefined;
-  let oldColor: string | undefined;
+  let foundPropertyCard: PropertyCard | undefined;
+  let oldColor: PropertyColor | undefined;
 
   for (const [color, propertySet] of Object.entries(player.properties)) {
     const cardIndex = propertySet.cards.findIndex((c) => c.id === cardId);
     if (cardIndex !== -1) {
-      foundCard = propertySet.cards[cardIndex];
-      oldColor = color;
-      // Remove from old color pile
-      propertySet.cards.splice(cardIndex, 1);
-      if (propertySet.cards.length === 0) {
-        delete player.properties[color];
+      const card = propertySet.cards[cardIndex];
+      if (card.type === CardType.PROPERTY && card.isWildcard) {
+        foundPropertyCard = card;
+        oldColor = color as PropertyColor;
+        // Remove from old color pile
+        propertySet.cards.splice(cardIndex, 1);
+        if (propertySet.cards.length === 0) {
+          delete player.properties[color];
+        }
+        break;
       }
-      break;
     }
   }
 
-  if (!foundCard || !oldColor || !foundCard.isWildcard) {
+  if (!foundPropertyCard || !oldColor) {
     return false;
   }
 
@@ -527,7 +578,7 @@ export function reassignWildcard(
       hotels: 0,
     };
   }
-  player.properties[newColor].cards.push(foundCard);
+  player.properties[newColor].cards.push(foundPropertyCard);
 
   // Mark that we've reassigned a wild card this turn
   gameState.wildCardReassignedThisTurn = true;
@@ -836,7 +887,7 @@ export function collectRent(
 
   // Sort cards: properties go to collector's properties, others to money pile
   for (const card of paymentCardsToTransfer) {
-    if (card.type === "PROPERTY") {
+    if (card.type === CardType.PROPERTY) {
       // Add to collector's properties
       const color = card.isWildcard
         ? Object.keys(collector.properties)[0] || "Brown"
@@ -875,7 +926,7 @@ export function collectRent(
 }
 
 export function getJustSayNoCard(player: Player): Card | undefined {
-  return player.hand.find((card) => card.name === "Just Say No");
+  return player.hand.find((card) => card.name === ActionCardName.JUST_SAY_NO);
 }
 
 function removeFromHand(player: Player, cardId: string) {
@@ -1229,7 +1280,7 @@ export function collectDebt(
 
   // Sort cards: properties go to collector's properties, others to money pile
   for (const card of paymentCardsToTransfer) {
-    if (card.type === "PROPERTY") {
+    if (card.type === CardType.PROPERTY) {
       // Add to collector's properties
       const color = card.isWildcard
         ? Object.keys(collector.properties)[0] || "Brown"
@@ -1391,7 +1442,7 @@ export function collectBirthdayPayment(
 
   // Sort cards: properties go to birthday person's properties, others to money pile
   for (const card of paymentCardsToTransfer) {
-    if (card.type === "PROPERTY") {
+    if (card.type === CardType.PROPERTY) {
       // Add to birthday person's properties
       const color = card.isWildcard
         ? Object.keys(birthdayPerson.properties)[0] || "Brown"
