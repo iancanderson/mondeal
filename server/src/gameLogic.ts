@@ -1117,6 +1117,19 @@ export function collectDebt(
     return false;
   }
 
+  // First check if target has Just Say No
+  if (getJustSayNoCard(target)) {
+    // Give target player opportunity to use Just Say No
+    gameState.pendingAction = {
+      type: "JUST_SAY_NO_OPPORTUNITY",
+      playerId: targetPlayerId,
+      actionType: "DEBT_COLLECTOR",
+      sourcePlayerId,
+      amount: amount,
+    };
+    return true;
+  }
+
   // Get all possible payment sources
   const moneyPileCards = target.moneyPile;
   const propertyCards = Object.values(target.properties).flatMap(

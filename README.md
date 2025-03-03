@@ -21,10 +21,10 @@
 - Sly Deal said "no one has properties to steal" when they did.
 - Remove ability to cancel out of a forced deal. Game gets stuck otherwise
 - When 1 player pays the rent, it doesn't let anyone else pay rent, but the game cant continue because it's waiting for everyone to pay rent.
+- Debt collector didn't give an opportunity to use Just Say No
 
 ## TODO
 
-- Debt collector didn't give an opportunity to use Just Say No
 - Deal Breaker said there was no set to steal when there was.
 - It's My Birthday
 - Double The Rent
