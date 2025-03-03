@@ -23,12 +23,12 @@
 - When 1 player pays the rent, it doesn't let anyone else pay rent, but the game cant continue because it's waiting for everyone to pay rent.
 - Debt collector didn't give an opportunity to use Just Say No
 - It's My Birthday
+- Double The Rent
 
 ## TODO
 
 - Deal Breaker said there was no set to steal when there was.
 - Debt Collector should let the person with the debt select how to pay, not the collector.
-- Double The Rent
 - If a player has more cards for a color than the set limit, start a new set for that color
 - Player has to discard down to 7 cards at end of turn
 - Disallow playing Just Say No as an action on your own turn, not in response to anything

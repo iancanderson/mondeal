@@ -192,9 +192,9 @@ export function startTurn(gameState: GameState) {
 }
 
 /**
- * Calculate rent for a property color
+ * Calculate rent for a property color, with optional doubling
  */
-function calculateRent(propertySet: PropertySet, color: string): number {
+function calculateRent(propertySet: PropertySet, color: string, isDoubled: boolean = false): number {
   const count = propertySet.cards.length;
   const requiredSize = getRequiredSetSize(color);
   const isComplete = count >= requiredSize;
@@ -217,12 +217,13 @@ function calculateRent(propertySet: PropertySet, color: string): number {
   const rentIndex = Math.min(count, requiredSize) - 1;
   const baseRent = baseRents[color][rentIndex];
 
-  // Calculate total rent including houses and hotels, but don't double for complete sets
+  // Calculate total rent including houses and hotels
   let totalRent = baseRent;
   totalRent += propertySet.houses * 3;
   totalRent += propertySet.hotels * 4;
 
-  return totalRent;
+  // Double the rent if specified
+  return isDoubled ? totalRent * 2 : totalRent;
 }
 
 /**
@@ -262,17 +263,18 @@ export function playCard(
     }
 
     // Check if player owns any properties of the chosen color
-    const playerProperties = player.properties[chosenColor];
-    if (!playerProperties || playerProperties.cards.length === 0) {
+    const propertySet = player.properties[chosenColor];
+    if (!propertySet || propertySet.cards.length === 0) {
       return { success: false };
     }
 
-    // When played as an action, add to the discard pile
+    // Remove card from hand and add to discard
     player.hand.splice(cardIndex, 1);
     gameState.discardPile.push(card);
 
-    // Calculate rent amount for the chosen color
-    const rentAmount = calculateRent(playerProperties, chosenColor);
+    // Check if this is following a Double The Rent action
+    const isDoubleRent = gameState.pendingAction.type === "DOUBLE_RENT_PENDING";
+    const rentAmount = calculateRent(propertySet, chosenColor, isDoubleRent);
 
     // Check if any other player has Just Say No
     const otherPlayers = gameState.players.filter((p) => p.id !== playerId);
@@ -288,18 +290,20 @@ export function playCard(
         amount: rentAmount,
       };
     } else {
-      // Set up normal rent action with all other players needing to pay
+      // Set up normal rent action
       gameState.pendingAction = {
         type: "RENT",
         playerId,
         color: chosenColor,
         amount: rentAmount,
         remainingPayers: otherPlayers.map((p) => p.id),
+        isDoubled: isDoubleRent
       };
     }
 
     gameState.cardsPlayedThisTurn++;
-    return { success: true, notificationType: "Rent", player: player.name };
+    const notification = `${player.name} charges ${isDoubleRent ? "DOUBLE " : ""}rent for ${chosenColor} properties ($${rentAmount}M)`;
+    return { success: true, notificationType: "Rent", player: notification };
   }
 
   // For House/Hotel cards, validate that they are played as action and target color is valid
@@ -342,6 +346,22 @@ export function playCard(
     return { success: true, notificationType: card.name, player: notification };
   }
 
+  // Handle Double The Rent action
+  if (card.name === "Double The Rent" && playAsAction) {
+    // Remove from player's hand and add to discard pile
+    player.hand.splice(cardIndex, 1);
+    gameState.discardPile.push(card);
+
+    // Set up pending action for Double Rent
+    gameState.pendingAction = {
+      type: "DOUBLE_RENT_PENDING",
+      playerId: playerId,
+    };
+
+    gameState.cardsPlayedThisTurn++;
+    return { success: true, notificationType: "Double The Rent", player: player.name };
+  }
+
   // Remove from player's hand
   player.hand.splice(cardIndex, 1);
 
@@ -357,40 +377,6 @@ export function playCard(
       };
     }
     player.properties[propertyColor].cards.push(card);
-  } else if (card.type === "RENT" && playAsAction && chosenColor) {
-    // When played as an action, add to the discard pile
-    gameState.discardPile.push(card);
-
-    // Calculate rent amount for the chosen color
-    const propertySet = player.properties[chosenColor];
-    if (!propertySet || propertySet.cards.length === 0)
-      return { success: false };
-
-    const rentAmount = calculateRent(propertySet, chosenColor);
-
-    // Check if any other player has Just Say No before setting up rent action
-    const otherPlayers = gameState.players.filter((p) => p.id !== playerId);
-    const playerWithJustSayNo = otherPlayers.find((p) => getJustSayNoCard(p));
-
-    if (playerWithJustSayNo) {
-      gameState.pendingAction = {
-        type: "JUST_SAY_NO_OPPORTUNITY",
-        playerId: playerWithJustSayNo.id,
-        actionType: "RENT",
-        sourcePlayerId: playerId,
-        color: chosenColor,
-        amount: rentAmount,
-      };
-    } else {
-      // Set up normal rent action
-      gameState.pendingAction = {
-        type: "RENT",
-        playerId,
-        color: chosenColor,
-        amount: rentAmount,
-        remainingPayers: otherPlayers.map((p) => p.id),
-      };
-    }
   } else if (card.type === "ACTION" && playAsAction) {
     // When played as an action, add to the discard pile
     gameState.discardPile.push(card);
@@ -462,14 +448,6 @@ export function playCard(
     return {
       success: true,
       notificationType: card.name as ActionCardName,
-      player: player.name,
-    };
-  }
-
-  if (card.type === "RENT" && playAsAction) {
-    return {
-      success: true,
-      notificationType: "Rent",
       player: player.name,
     };
   }

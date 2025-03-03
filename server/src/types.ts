@@ -41,6 +41,11 @@ export type ActionState =
       color: string;
       amount: number;
       remainingPayers: string[];
+      isDoubled?: boolean;
+    }
+  | {
+      type: "DOUBLE_RENT_PENDING";
+      playerId: string;
     }
   | {
       type: "BIRTHDAY";

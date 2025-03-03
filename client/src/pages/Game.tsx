@@ -15,6 +15,7 @@ import PropertyUpgradeModal from "../components/PropertyUpgradeModal";
 import ForcedDealModal from "../components/ForcedDealModal";
 import DebtCollectorModal from "../components/DebtCollectorModal";
 import BirthdayModal from "../components/BirthdayModal";
+import DoubleRentModal from "../components/DoubleRentModal";
 import { GameState, Player, Card } from "../types";
 
 function Game() {
@@ -55,6 +56,7 @@ function Game() {
   const [showDebtCollectorModal, setShowDebtCollectorModal] =
     React.useState(false);
   const [showBirthdayModal, setShowBirthdayModal] = useState(false);
+  const [showDoubleRentModal, setShowDoubleRentModal] = useState(false);
 
   // Handle window resize for confetti
   React.useEffect(() => {
@@ -96,6 +98,13 @@ function Game() {
         }
         return gs;
       });
+
+      if (
+        gs.pendingAction.type === "DOUBLE_RENT_PENDING" &&
+        gs.players[gs.currentPlayerIndex].id === playerId
+      ) {
+        setShowDoubleRentModal(true);
+      }
     });
 
     socket.on("error", (msg: string) => {
@@ -226,6 +235,12 @@ function Game() {
 
     if (card.type === "RENT") {
       setSelectedActionCard(card);
+      return;
+    }
+
+    if (card.name === "Double The Rent") {
+      socket.emit("playCard", roomId, playerId, card.id, undefined, true);
+      setSelectedActionCard(null);
       return;
     }
 
@@ -423,6 +438,27 @@ function Game() {
     socket.emit("payBirthdayGift", roomId, playerId, paymentCardIds);
   };
 
+  const handleDoubleRentCardSelect = (rentCardId: string) => {
+    if (!roomId || !playerId || !gameState) return;
+
+    const rentCard = myPlayer?.hand.find((c) => c.id === rentCardId);
+    if (!rentCard || rentCard.type !== "RENT") return;
+
+    socket.emit(
+      "playCard",
+      roomId,
+      playerId,
+      rentCardId,
+      rentCard.rentColors?.[0],
+      true
+    );
+    setShowDoubleRentModal(false);
+  };
+
+  const getRentCards = () => {
+    return myPlayer?.hand.filter((card) => card.type === "RENT") || [];
+  };
+
   const isMyTurn =
     gameState?.players[gameState.currentPlayerIndex]?.id === playerId;
   const winner = gameState?.winnerId
@@ -574,6 +610,14 @@ function Game() {
           }
           targetPlayer={gameState.players.find((p) => p.id === playerId)!}
           onPayBirthdayGift={handlePayBirthdayGift}
+        />
+      )}
+
+      {showDoubleRentModal && (
+        <DoubleRentModal
+          rentCards={getRentCards()}
+          onSelectRentCard={handleDoubleRentCardSelect}
+          onCancel={() => setShowDoubleRentModal(false)}
         />
       )}
 
