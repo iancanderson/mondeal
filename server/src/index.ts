@@ -21,6 +21,7 @@ import {
   collectRent,
   collectDebt,
   handleJustSayNoResponse,
+  collectBirthdayPayment
 } from "./gameLogic";
 import {
   ClientToServerEvents,
@@ -460,6 +461,48 @@ io.on("connection", (socket) => {
           io.to(roomId).emit(
             "gameNotification",
             `${targetPlayer.name} paid $5M debt to ${sourcePlayer.name}.`
+          );
+        }
+      }
+    }
+  );
+
+  // Add socket handler for birthday payments
+  socket.on(
+    "payBirthdayGift",
+    (roomId: string, payerId: string, paymentCardIds: string[]) => {
+      const room = getRoom(roomId);
+      if (!room) return;
+
+      const payer = room.gameState.players.find((p) => p.id === payerId);
+      const birthdayPerson = room.gameState.players.find(
+        (p) => room.gameState.pendingAction.type === "BIRTHDAY" && p.id === room.gameState.pendingAction.playerId
+      );
+      
+      if (!payer || !birthdayPerson) return;
+
+      // Calculate if this is a bankruptcy case (giving up all cards)
+      const totalCards = [
+        ...payer.moneyPile,
+        ...Object.values(payer.properties).flatMap((set) => set.cards),
+      ];
+      const isBankruptcy = paymentCardIds.length === totalCards.length;
+
+      const success = collectBirthdayPayment(room.gameState, payerId, paymentCardIds);
+
+      if (success) {
+        io.to(roomId).emit("updateGameState", room.gameState);
+
+        // Send appropriate notification based on bankruptcy status
+        if (isBankruptcy) {
+          io.to(roomId).emit(
+            "gameNotification",
+            `${payer.name} went bankrupt and surrendered all cards to ${birthdayPerson.name}!`
+          );
+        } else {
+          io.to(roomId).emit(
+            "gameNotification",
+            `${payer.name} paid ${birthdayPerson.name} a birthday gift.`
           );
         }
       }

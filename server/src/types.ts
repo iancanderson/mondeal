@@ -43,6 +43,12 @@ export type ActionState =
       remainingPayers: string[];
     }
   | {
+      type: "BIRTHDAY";
+      playerId: string;
+      amount: number;
+      remainingPayers: string[];
+    }
+  | {
       type: "JUST_SAY_NO_OPPORTUNITY";
       playerId: string;
       actionType:
@@ -50,7 +56,8 @@ export type ActionState =
         | "SLY_DEAL"
         | "RENT"
         | "FORCED_DEAL"
-        | "DEBT_COLLECTOR";
+        | "DEBT_COLLECTOR"
+        | "BIRTHDAY";
       sourcePlayerId: string;
       targetCardId?: string;
       myCardId?: string;
@@ -157,6 +164,7 @@ export interface ClientToServerEvents {
     myCardId: string
   ) => void;
   payRent: (roomId: string, payerId: string, paymentCardIds: string[]) => void;
+  payBirthdayGift: (roomId: string, payerId: string, paymentCardIds: string[]) => void;
   endTurn: (roomId: string, playerId: string) => void;
   updatePlayerName: (playerId: string, newName: string, uuid: string) => void;
   requestRooms: () => void;

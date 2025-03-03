@@ -424,6 +424,17 @@ export function playCard(
           amount: 5, // $5M is the standard debt collection fee
         };
         break;
+      case "It's My Birthday":
+        // Set up pending action for It's My Birthday - each player pays $2M
+        gameState.pendingAction = {
+          type: "BIRTHDAY",
+          playerId: playerId,
+          amount: 2, // $2M is the standard birthday gift amount
+          remainingPayers: gameState.players
+            .filter(p => p.id !== playerId) // Everyone except the birthday person
+            .map(p => p.id)
+        };
+        break;
       // Other action cards can be added here
     }
   } else {
@@ -1241,6 +1252,174 @@ export function collectDebt(
   // Check if this was the 3rd card played and end turn if so
   if (gameState.cardsPlayedThisTurn >= 3) {
     endTurn(gameState);
+  }
+
+  return true;
+}
+
+/**
+ * Handle collecting birthday payment from a player
+ */
+export function collectBirthdayPayment(
+  gameState: GameState,
+  targetPlayerId: string,
+  paymentCards: string[]
+): boolean {
+  // Verify that a birthday action is pending
+  if (gameState.pendingAction.type !== "BIRTHDAY") {
+    return false;
+  }
+
+  const {
+    playerId: birthdayPersonId,
+    amount,
+    remainingPayers,
+  } = gameState.pendingAction;
+
+  // Verify this player needs to pay
+  if (!remainingPayers.includes(targetPlayerId)) {
+    return false;
+  }
+
+  const birthdayPerson = gameState.players.find((p) => p.id === birthdayPersonId);
+  const target = gameState.players.find((p) => p.id === targetPlayerId);
+
+  if (!birthdayPerson || !target) {
+    return false;
+  }
+
+  // First check if target has Just Say No
+  if (getJustSayNoCard(target)) {
+    // Give target player opportunity to use Just Say No
+    gameState.pendingAction = {
+      type: "JUST_SAY_NO_OPPORTUNITY",
+      playerId: targetPlayerId,
+      actionType: "BIRTHDAY",
+      sourcePlayerId: birthdayPersonId,
+      amount: amount,
+    };
+    return true;
+  }
+
+  // Get all possible payment sources
+  const moneyPileCards = target.moneyPile;
+  const propertyCards = Object.values(target.properties).flatMap(
+    (set) => set.cards
+  );
+  const availableCards = [...moneyPileCards, ...propertyCards];
+
+  // Calculate total possible payment
+  const totalPossible = availableCards.reduce(
+    (sum, card) => sum + card.value,
+    0
+  );
+
+  // Check if this is a bankruptcy case (insufficient total funds)
+  const isBankruptcy = totalPossible < amount;
+
+  // In bankruptcy case, validate that ALL cards are being surrendered
+  if (isBankruptcy && paymentCards.length !== availableCards.length) {
+    return false;
+  }
+
+  // Validate all payment cards exist in allowed sources
+  for (const cardId of paymentCards) {
+    const cardExists = availableCards.some((c) => c.id === cardId);
+    if (!cardExists) {
+      return false;
+    }
+  }
+
+  // Transfer the selected cards
+  const paymentCardsToTransfer: Card[] = [];
+  for (const cardId of paymentCards) {
+    // Look for the card in money pile first
+    let card = target.moneyPile.find((c) => c.id === cardId);
+    let location: "money" | "property" = "money";
+
+    if (!card) {
+      // Look in properties
+      for (const [color, propertySet] of Object.entries(target.properties)) {
+        const foundCard = propertySet.cards.find((c) => c.id === cardId);
+        if (foundCard) {
+          card = foundCard;
+          location = "property";
+          break;
+        }
+      }
+    }
+
+    if (!card) {
+      return false;
+    }
+
+    paymentCardsToTransfer.push(card);
+
+    // Remove card from its source
+    switch (location) {
+      case "money":
+        target.moneyPile = target.moneyPile.filter((c) => c.id !== cardId);
+        break;
+      case "property":
+        // Remove from the appropriate property color set
+        for (const [color, propertySet] of Object.entries(target.properties)) {
+          const cardIndex = propertySet.cards.findIndex((c) => c.id === cardId);
+          if (cardIndex !== -1) {
+            propertySet.cards.splice(cardIndex, 1);
+            // Clean up empty property arrays
+            if (propertySet.cards.length === 0) {
+              delete target.properties[color];
+            }
+            break;
+          }
+        }
+        break;
+    }
+  }
+
+  // For non-bankruptcy case, verify payment amount
+  if (
+    !isBankruptcy &&
+    paymentCardsToTransfer.reduce((sum, card) => sum + card.value, 0) < amount
+  ) {
+    return false;
+  }
+
+  // Sort cards: properties go to birthday person's properties, others to money pile
+  for (const card of paymentCardsToTransfer) {
+    if (card.type === "PROPERTY") {
+      // Add to birthday person's properties
+      const color = card.isWildcard
+        ? Object.keys(birthdayPerson.properties)[0] || "Brown"
+        : card.color!;
+      if (!birthdayPerson.properties[color]) {
+        birthdayPerson.properties[color] = {
+          cards: [],
+          houses: 0,
+          hotels: 0,
+        };
+      }
+      birthdayPerson.properties[color].cards.push(card);
+    } else {
+      // Add to birthday person's money pile
+      birthdayPerson.moneyPile.push(card);
+    }
+  }
+
+  // Remove this player from the remaining payers list
+  gameState.pendingAction = {
+    ...gameState.pendingAction,
+    remainingPayers: remainingPayers.filter((id) => id !== targetPlayerId),
+  };
+
+  // Only reset the pending action when all players have paid
+  if (gameState.pendingAction.remainingPayers.length === 0) {
+    gameState.pendingAction = { type: "NONE" };
+
+    // Check if this was the 3rd card played and end turn if so
+    if (gameState.cardsPlayedThisTurn >= 3) {
+      endTurn(gameState);
+    }
   }
 
   return true;

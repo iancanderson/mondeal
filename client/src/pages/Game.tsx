@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useParams, useLocation, Link, useNavigate } from "react-router-dom";
 import ReactConfetti from "react-confetti";
 import { socket } from "../services/socket";
@@ -14,6 +14,7 @@ import JustSayNoModal from "../components/JustSayNoModal";
 import PropertyUpgradeModal from "../components/PropertyUpgradeModal";
 import ForcedDealModal from "../components/ForcedDealModal";
 import DebtCollectorModal from "../components/DebtCollectorModal";
+import BirthdayModal from "../components/BirthdayModal";
 import { GameState, Player, Card } from "../types";
 
 function Game() {
@@ -53,6 +54,7 @@ function Game() {
   const [showForcedDealModal, setShowForcedDealModal] = React.useState(false);
   const [showDebtCollectorModal, setShowDebtCollectorModal] =
     React.useState(false);
+  const [showBirthdayModal, setShowBirthdayModal] = useState(false);
 
   // Handle window resize for confetti
   React.useEffect(() => {
@@ -182,6 +184,18 @@ function Game() {
       setShowDebtCollectorModal(true);
     } else {
       setShowDebtCollectorModal(false);
+    }
+  }, [gameState?.pendingAction, playerId]);
+
+  // Add effect to show Birthday modal
+  React.useEffect(() => {
+    if (
+      gameState?.pendingAction.type === "BIRTHDAY" &&
+      gameState.pendingAction.remainingPayers.includes(playerId || '')
+    ) {
+      setShowBirthdayModal(true);
+    } else {
+      setShowBirthdayModal(false);
     }
   }, [gameState?.pendingAction, playerId]);
 
@@ -403,6 +417,12 @@ function Game() {
     setShowDebtCollectorModal(false);
   };
 
+  // Handle paying a birthday gift
+  const handlePayBirthdayGift = (paymentCardIds: string[]) => {
+    if (!roomId || !playerId) return;
+    socket.emit("payBirthdayGift", roomId, playerId, paymentCardIds);
+  };
+
   const isMyTurn =
     gameState?.players[gameState.currentPlayerIndex]?.id === playerId;
   const winner = gameState?.winnerId
@@ -537,6 +557,17 @@ function Game() {
           amount={5} // Fixed $5M for Debt Collector
           onCollectDebt={handleCollectDebt}
           onCancel={() => setShowDebtCollectorModal(false)}
+        />
+      )}
+
+      {showBirthdayModal && gameState && (
+        <BirthdayModal
+          pendingAction={gameState.pendingAction}
+          birthdayPlayer={gameState.players.find(
+            (p) => p.id === (gameState.pendingAction.type === "BIRTHDAY" ? gameState.pendingAction.playerId : undefined)
+          )!}
+          targetPlayer={gameState.players.find((p) => p.id === playerId)!}
+          onPayBirthdayGift={handlePayBirthdayGift}
         />
       )}
 

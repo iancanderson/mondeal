@@ -28,6 +28,12 @@ function JustSayNoModal({
         return "steal a property card";
       case "RENT":
         return `charge you $${pendingAction.amount}M rent`;
+      case "FORCED_DEAL":
+        return "force a property trade with you";
+      case "DEBT_COLLECTOR":
+        return `collect a $${pendingAction.amount}M debt from you`;
+      case "BIRTHDAY":
+        return `collect a $${pendingAction.amount}M birthday gift from you`;
       default:
         return "perform their action";
     }
@@ -44,7 +50,9 @@ function JustSayNoModal({
       case "FORCED_DEAL":
         return `${actionPlayer.name} is trying to force a property trade with you!`;
       case "DEBT_COLLECTOR":
-        return `${actionPlayer.name} is trying to collect a $5M debt from you!`;
+        return `${actionPlayer.name} is trying to collect a $${pendingAction.amount}M debt from you!`;
+      case "BIRTHDAY":
+        return `${actionPlayer.name} says it's their birthday and wants $${pendingAction.amount}M from you!`;
       default:
         return "An action is being played against you!";
     }
