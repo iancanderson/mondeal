@@ -21,7 +21,7 @@ import {
   collectRent,
   collectDebt,
   handleJustSayNoResponse,
-  collectBirthdayPayment
+  collectBirthdayPayment,
 } from "./gameLogic";
 import {
   ClientToServerEvents,
@@ -476,9 +476,11 @@ io.on("connection", (socket) => {
 
       const payer = room.gameState.players.find((p) => p.id === payerId);
       const birthdayPerson = room.gameState.players.find(
-        (p) => room.gameState.pendingAction.type === "BIRTHDAY" && p.id === room.gameState.pendingAction.playerId
+        (p) =>
+          room.gameState.pendingAction.type === "BIRTHDAY" &&
+          p.id === room.gameState.pendingAction.playerId
       );
-      
+
       if (!payer || !birthdayPerson) return;
 
       // Calculate if this is a bankruptcy case (giving up all cards)
@@ -488,7 +490,11 @@ io.on("connection", (socket) => {
       ];
       const isBankruptcy = paymentCardIds.length === totalCards.length;
 
-      const success = collectBirthdayPayment(room.gameState, payerId, paymentCardIds);
+      const success = collectBirthdayPayment(
+        room.gameState,
+        payerId,
+        paymentCardIds
+      );
 
       if (success) {
         io.to(roomId).emit("updateGameState", room.gameState);

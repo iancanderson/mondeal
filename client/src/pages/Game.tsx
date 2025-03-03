@@ -191,7 +191,7 @@ function Game() {
   React.useEffect(() => {
     if (
       gameState?.pendingAction.type === "BIRTHDAY" &&
-      gameState.pendingAction.remainingPayers.includes(playerId || '')
+      gameState.pendingAction.remainingPayers.includes(playerId || "")
     ) {
       setShowBirthdayModal(true);
     } else {
@@ -563,9 +563,15 @@ function Game() {
       {showBirthdayModal && gameState && (
         <BirthdayModal
           pendingAction={gameState.pendingAction}
-          birthdayPlayer={gameState.players.find(
-            (p) => p.id === (gameState.pendingAction.type === "BIRTHDAY" ? gameState.pendingAction.playerId : undefined)
-          )!}
+          birthdayPlayer={
+            gameState.players.find(
+              (p) =>
+                p.id ===
+                (gameState.pendingAction.type === "BIRTHDAY"
+                  ? gameState.pendingAction.playerId
+                  : undefined)
+            )!
+          }
           targetPlayer={gameState.players.find((p) => p.id === playerId)!}
           onPayBirthdayGift={handlePayBirthdayGift}
         />

@@ -71,7 +71,8 @@ function BirthdayModal({
 
         <div className="mb-4">
           <p className="text-gray-700">
-            {birthdayPlayer.name} says it's their birthday! You owe them ${amount}M.
+            {birthdayPlayer.name} says it's their birthday! You owe them $
+            {amount}M.
           </p>
           {totalPossible < amount && !isBankrupt && (
             <div className="mt-2">

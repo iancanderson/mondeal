@@ -431,8 +431,8 @@ export function playCard(
           playerId: playerId,
           amount: 2, // $2M is the standard birthday gift amount
           remainingPayers: gameState.players
-            .filter(p => p.id !== playerId) // Everyone except the birthday person
-            .map(p => p.id)
+            .filter((p) => p.id !== playerId) // Everyone except the birthday person
+            .map((p) => p.id),
         };
         break;
       // Other action cards can be added here
@@ -1281,7 +1281,9 @@ export function collectBirthdayPayment(
     return false;
   }
 
-  const birthdayPerson = gameState.players.find((p) => p.id === birthdayPersonId);
+  const birthdayPerson = gameState.players.find(
+    (p) => p.id === birthdayPersonId
+  );
   const target = gameState.players.find((p) => p.id === targetPlayerId);
 
   if (!birthdayPerson || !target) {

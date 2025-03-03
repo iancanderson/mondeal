@@ -164,7 +164,11 @@ export interface ClientToServerEvents {
     myCardId: string
   ) => void;
   payRent: (roomId: string, payerId: string, paymentCardIds: string[]) => void;
-  payBirthdayGift: (roomId: string, payerId: string, paymentCardIds: string[]) => void;
+  payBirthdayGift: (
+    roomId: string,
+    payerId: string,
+    paymentCardIds: string[]
+  ) => void;
   endTurn: (roomId: string, playerId: string) => void;
   updatePlayerName: (playerId: string, newName: string, uuid: string) => void;
   requestRooms: () => void;
