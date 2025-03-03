@@ -16,6 +16,7 @@ import ForcedDealModal from "../components/ForcedDealModal";
 import DebtCollectorModal from "../components/DebtCollectorModal";
 import BirthdayModal from "../components/BirthdayModal";
 import DoubleRentModal from "../components/DoubleRentModal";
+import DiscardModal from "../components/DiscardModal";
 import { GameState, Player, Card } from "../types";
 
 function Game() {
@@ -57,6 +58,7 @@ function Game() {
     React.useState(false);
   const [showBirthdayModal, setShowBirthdayModal] = useState(false);
   const [showDoubleRentModal, setShowDoubleRentModal] = useState(false);
+  const [showDiscardModal, setShowDiscardModal] = useState(false);
 
   // Handle window resize for confetti
   React.useEffect(() => {
@@ -104,6 +106,14 @@ function Game() {
         gs.players[gs.currentPlayerIndex].id === playerId
       ) {
         setShowDoubleRentModal(true);
+      }
+
+      // Show discard modal if it's our turn and we need to discard
+      if (
+        gs.pendingAction.type === "DISCARD_NEEDED" &&
+        gs.pendingAction.playerId === playerId
+      ) {
+        setShowDiscardModal(true);
       }
     });
 
@@ -455,6 +465,12 @@ function Game() {
     setShowDoubleRentModal(false);
   };
 
+  const handleDiscard = (cardIds: string[]) => {
+    if (!roomId || !playerId || !gameState) return;
+    socket.emit("discardCards", roomId, playerId, cardIds);
+    setShowDiscardModal(false);
+  };
+
   const getRentCards = () => {
     return myPlayer?.hand.filter((card) => card.type === "RENT") || [];
   };
@@ -619,6 +635,10 @@ function Game() {
           onSelectRentCard={handleDoubleRentCardSelect}
           onCancel={() => setShowDoubleRentModal(false)}
         />
+      )}
+
+      {showDiscardModal && myPlayer && (
+        <DiscardModal cards={myPlayer.hand} onDiscard={handleDiscard} />
       )}
 
       <div className="flex justify-between items-center mb-4">

@@ -54,6 +54,10 @@ export type ActionState =
       remainingPayers: string[];
     }
   | {
+      type: "DISCARD_NEEDED";
+      playerId: string;
+    }
+  | {
       type: "JUST_SAY_NO_OPPORTUNITY";
       playerId: string;
       actionType:
@@ -188,4 +192,5 @@ export interface ClientToServerEvents {
     targetPlayerId: string,
     paymentCardIds: string[]
   ) => void;
+  discardCards: (roomId: string, playerId: string, cardIds: string[]) => void;
 }

@@ -546,6 +546,15 @@ export function endTurn(gameState: GameState) {
     return; // game ends
   }
 
+  // Check if current player needs to discard
+  if (currentPlayer.hand.length > 7) {
+    gameState.pendingAction = {
+      type: "DISCARD_NEEDED",
+      playerId: currentPlayer.id,
+    };
+    return;
+  }
+
   // Move to next player
   gameState.currentPlayerIndex =
     (gameState.currentPlayerIndex + 1) % gameState.players.length;

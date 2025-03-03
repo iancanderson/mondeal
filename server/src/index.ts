@@ -22,6 +22,7 @@ import {
   collectDebt,
   handleJustSayNoResponse,
   collectBirthdayPayment,
+  startTurn,
 } from "./gameLogic";
 import {
   ClientToServerEvents,
@@ -512,6 +513,41 @@ io.on("connection", (socket) => {
           );
         }
       }
+    }
+  );
+
+  // Add after other socket.on handlers
+  socket.on(
+    "discardCards",
+    (roomId: string, playerId: string, cardIds: string[]) => {
+      const room = getRoom(roomId);
+      if (!room) return;
+
+      const player = room.gameState.players.find((p) => p.id === playerId);
+      if (!player) return;
+
+      // Remove cards from player's hand
+      for (const cardId of cardIds) {
+        const cardIndex = player.hand.findIndex((c) => c.id === cardId);
+        if (cardIndex !== -1) {
+          const card = player.hand.splice(cardIndex, 1)[0];
+          room.gameState.discardPile.push(card);
+        }
+      }
+
+      // Only advance turn if we're down to 7 cards
+      if (player.hand.length <= 7) {
+        room.gameState.pendingAction = { type: "NONE" };
+        room.gameState.currentPlayerIndex = 
+          (room.gameState.currentPlayerIndex + 1) % room.gameState.players.length;
+        startTurn(room.gameState);
+      }
+
+      io.to(roomId).emit("updateGameState", room.gameState);
+      io.to(roomId).emit(
+        "gameNotification",
+        `${player.name} discarded ${cardIds.length} card${cardIds.length !== 1 ? 's' : ''}.`
+      );
     }
   );
 
