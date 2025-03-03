@@ -176,10 +176,10 @@ export function checkWinCondition(player: Player): boolean {
 export function startTurn(gameState: GameState) {
   const currentPlayer = gameState.players[gameState.currentPlayerIndex];
   const cardsInHand = currentPlayer.hand.length;
-  
+
   // Draw 5 cards if player has none, otherwise draw 2
   const cardsToDraw = cardsInHand === 0 ? 5 : 2;
-  
+
   for (let i = 0; i < cardsToDraw; i++) {
     if (gameState.deck.length > 0) {
       const card = gameState.deck.pop()!;
@@ -194,7 +194,11 @@ export function startTurn(gameState: GameState) {
 /**
  * Calculate rent for a property color, with optional doubling
  */
-function calculateRent(propertySet: PropertySet, color: string, isDoubled: boolean = false): number {
+function calculateRent(
+  propertySet: PropertySet,
+  color: string,
+  isDoubled: boolean = false
+): number {
   const count = propertySet.cards.length;
   const requiredSize = getRequiredSetSize(color);
   const isComplete = count >= requiredSize;
@@ -297,12 +301,14 @@ export function playCard(
         color: chosenColor,
         amount: rentAmount,
         remainingPayers: otherPlayers.map((p) => p.id),
-        isDoubled: isDoubleRent
+        isDoubled: isDoubleRent,
       };
     }
 
     gameState.cardsPlayedThisTurn++;
-    const notification = `${player.name} charges ${isDoubleRent ? "DOUBLE " : ""}rent for ${chosenColor} properties ($${rentAmount}M)`;
+    const notification = `${player.name} charges ${
+      isDoubleRent ? "DOUBLE " : ""
+    }rent for ${chosenColor} properties ($${rentAmount}M)`;
     return { success: true, notificationType: "Rent", player: notification };
   }
 
@@ -359,7 +365,11 @@ export function playCard(
     };
 
     gameState.cardsPlayedThisTurn++;
-    return { success: true, notificationType: "Double The Rent", player: player.name };
+    return {
+      success: true,
+      notificationType: "Double The Rent",
+      player: player.name,
+    };
   }
 
   // Remove from player's hand
