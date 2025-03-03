@@ -175,7 +175,12 @@ export function checkWinCondition(player: Player): boolean {
  */
 export function startTurn(gameState: GameState) {
   const currentPlayer = gameState.players[gameState.currentPlayerIndex];
-  for (let i = 0; i < 2; i++) {
+  const cardsInHand = currentPlayer.hand.length;
+  
+  // Draw 5 cards if player has none, otherwise draw 2
+  const cardsToDraw = cardsInHand === 0 ? 5 : 2;
+  
+  for (let i = 0; i < cardsToDraw; i++) {
     if (gameState.deck.length > 0) {
       const card = gameState.deck.pop()!;
       currentPlayer.hand.push(card);

@@ -30,6 +30,5 @@
 - Debt Collector should let the person with the debt select how to pay, not the collector.
 - Double The Rent
 - If a player has more cards for a color than the set limit, start a new set for that color
-- When you have 0 cards, you draw 5 cards instead of 2
 - Player has to discard down to 7 cards at end of turn
 - Disallow playing Just Say No as an action on your own turn, not in response to anything
