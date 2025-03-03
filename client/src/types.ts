@@ -1,28 +1,72 @@
-// Mirror minimal shared types on client side
-export type CardType = "PROPERTY" | "MONEY" | "ACTION" | "RENT";
+// Mirror types from server
+export enum CardType {
+  PROPERTY = "PROPERTY",
+  MONEY = "MONEY",
+  ACTION = "ACTION",
+  RENT = "RENT",
+}
 
-export type ActionCardName =
-  | "Deal Breaker"
-  | "Just Say No"
-  | "Sly Deal"
-  | "Forced Deal"
-  | "Debt Collector"
-  | "It's My Birthday"
-  | "Double The Rent"
-  | "House"
-  | "Hotel"
-  | "Pass Go"
-  | "Rent";
+export enum PropertyColor {
+  BROWN = "Brown",
+  BLUE = "Blue",
+  GREEN = "Green",
+  YELLOW = "Yellow",
+  RED = "Red",
+  ORANGE = "Orange",
+  PURPLE = "Purple",
+  LIGHT_BLUE = "LightBlue",
+  RAILROAD = "Railroad",
+  UTILITY = "Utility",
+}
 
-export interface Card {
+export enum ActionCardName {
+  DEAL_BREAKER = "Deal Breaker",
+  JUST_SAY_NO = "Just Say No",
+  SLY_DEAL = "Sly Deal",
+  FORCED_DEAL = "Forced Deal",
+  DEBT_COLLECTOR = "Debt Collector",
+  ITS_MY_BIRTHDAY = "It's My Birthday",
+  DOUBLE_THE_RENT = "Double The Rent",
+  HOUSE = "House",
+  HOTEL = "Hotel",
+  PASS_GO = "Pass Go",
+  RENT = "Rent",
+}
+
+interface BaseCard {
   id: string;
-  name: string;
-  type: CardType;
   value: number;
-  color?: string;
-  rentColors?: string[];
+}
+
+/** Property Cards */
+export interface PropertyCard extends BaseCard {
+  type: CardType.PROPERTY;
+  name: string;
+  color: PropertyColor;
   isWildcard?: boolean;
 }
+
+/** Money Cards */
+export interface MoneyCard extends BaseCard {
+  type: CardType.MONEY;
+  name: string; // e.g., "$1M", "$2M", etc.
+}
+
+/** Action Cards */
+export interface ActionCard extends BaseCard {
+  type: CardType.ACTION;
+  name: ActionCardName;
+}
+
+/** Rent Cards */
+export interface RentCard extends BaseCard {
+  type: CardType.RENT;
+  name: string;
+  rentColors: PropertyColor[];
+}
+
+/** Discriminated union for all cards */
+export type Card = PropertyCard | MoneyCard | ActionCard | RentCard;
 
 export interface Player {
   id: string;
