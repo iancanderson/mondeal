@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Player, Card } from "../types";
+import { Player, Card, PropertySet } from "../types";
 import CardView from "./CardView";
 
 interface ForcedDealModalProps {
@@ -33,7 +33,9 @@ function ForcedDealModal({
   const eligiblePlayers = players.filter(
     (player) =>
       player.id !== currentPlayerId &&
-      Object.values(player.properties).some((set) => set.cards.length > 0)
+      Object.values(player.properties).some((propertySets) =>
+        propertySets.some((set) => set.cards.length > 0)
+      )
   );
 
   // If no eligible players, show an informative message but no close button
@@ -70,15 +72,27 @@ function ForcedDealModal({
   // Get all stealable properties from the selected player (not in complete sets)
   const getStealableProperties = (player: Player | undefined) => {
     if (!player) return [];
+    const stealableProperties: {
+      color: string;
+      cards: Card[];
+      propertySet: PropertySet;
+    }[] = [];
 
-    const stealableProperties: { color: string; cards: Card[] }[] = [];
+    Object.entries(player.properties).forEach(([color, propertySets]) => {
+      if (!propertySets || propertySets.length === 0) return;
 
-    Object.entries(player.properties).forEach(([color, propertySet]) => {
-      // Determine if we can steal from this color group (not a complete set)
       const requiredSize = getRequiredSetSize(color);
-      if (propertySet.cards.length !== requiredSize) {
-        stealableProperties.push({ color, cards: propertySet.cards });
-      }
+      // Check each set for this color
+      propertySets.forEach((propertySet) => {
+        // Only include sets that aren't complete
+        if (propertySet.cards.length < requiredSize) {
+          stealableProperties.push({
+            color,
+            cards: propertySet.cards,
+            propertySet,
+          });
+        }
+      });
     });
 
     return stealableProperties;
@@ -87,14 +101,27 @@ function ForcedDealModal({
   // Get all properties from current player
   const getMyProperties = () => {
     if (!currentPlayer) return [];
+    const myProperties: {
+      color: string;
+      cards: Card[];
+      propertySet: PropertySet;
+    }[] = [];
 
-    const myProperties: { color: string; cards: Card[] }[] = [];
+    Object.entries(currentPlayer.properties).forEach(
+      ([color, propertySets]) => {
+        if (!propertySets || propertySets.length === 0) return;
 
-    Object.entries(currentPlayer.properties).forEach(([color, propertySet]) => {
-      if (propertySet.cards.length > 0) {
-        myProperties.push({ color, cards: propertySet.cards });
+        propertySets.forEach((propertySet) => {
+          if (propertySet.cards.length > 0) {
+            myProperties.push({
+              color,
+              cards: propertySet.cards,
+              propertySet,
+            });
+          }
+        });
       }
-    });
+    );
 
     return myProperties;
   };
@@ -180,32 +207,51 @@ function ForcedDealModal({
                 ← Back
               </button>
             </div>
-
             <p className="text-gray-700 mb-2">
               Select a property to take (complete sets cannot be broken up):
             </p>
-
             {stealableProperties.length > 0 ? (
               <div className="space-y-4 max-h-60 overflow-y-auto">
-                {stealableProperties.map(({ color, cards }) => (
-                  <div key={color} className="border-b pb-3">
-                    <p className="font-medium mb-2">{color}</p>
-                    <div className="flex flex-wrap gap-2">
-                      {cards.map((card) => (
-                        <div
-                          key={card.id}
-                          onClick={() => {
-                            setSelectedTargetCard(card);
-                            setStep("selectMyProperty");
-                          }}
-                          className={`cursor-pointer transform transition hover:scale-105`}
-                        >
-                          <CardView card={card} />
-                        </div>
-                      ))}
+                {stealableProperties.map(
+                  ({ color, cards, propertySet }, index) => (
+                    <div key={`${color}-${index}`} className="border-b pb-3">
+                      <div className="flex justify-between items-center mb-2">
+                        <p className="font-medium">
+                          {color} (Set {index + 1})
+                        </p>
+                        {(propertySet.houses > 0 || propertySet.hotels > 0) && (
+                          <span className="text-sm text-gray-600">
+                            {propertySet.houses > 0 &&
+                              `${propertySet.houses} House${
+                                propertySet.houses > 1 ? "s" : ""
+                              }`}
+                            {propertySet.houses > 0 &&
+                              propertySet.hotels > 0 &&
+                              ", "}
+                            {propertySet.hotels > 0 &&
+                              `${propertySet.hotels} Hotel${
+                                propertySet.hotels > 1 ? "s" : ""
+                              }`}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {cards.map((card) => (
+                          <div
+                            key={card.id}
+                            onClick={() => {
+                              setSelectedTargetCard(card);
+                              setStep("selectMyProperty");
+                            }}
+                            className={`cursor-pointer transform transition hover:scale-105`}
+                          >
+                            <CardView card={card} />
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                )}
               </div>
             ) : (
               <p className="text-center text-gray-500 my-4">
@@ -234,15 +280,32 @@ function ForcedDealModal({
                 ← Back
               </button>
             </div>
-
             <p className="text-gray-700 mb-2">
               Now select one of your properties to trade:
             </p>
-
             <div className="space-y-4 max-h-60 overflow-y-auto">
-              {myProperties.map(({ color, cards }) => (
-                <div key={color} className="border-b pb-3">
-                  <p className="font-medium mb-2">{color}</p>
+              {myProperties.map(({ color, cards, propertySet }, index) => (
+                <div key={`${color}-${index}`} className="border-b pb-3">
+                  <div className="flex justify-between items-center mb-2">
+                    <p className="font-medium">
+                      {color} (Set {index + 1})
+                    </p>
+                    {(propertySet.houses > 0 || propertySet.hotels > 0) && (
+                      <span className="text-sm text-gray-600">
+                        {propertySet.houses > 0 &&
+                          `${propertySet.houses} House${
+                            propertySet.houses > 1 ? "s" : ""
+                          }`}
+                        {propertySet.houses > 0 &&
+                          propertySet.hotels > 0 &&
+                          ", "}
+                        {propertySet.hotels > 0 &&
+                          `${propertySet.hotels} Hotel${
+                            propertySet.hotels > 1 ? "s" : ""
+                          }`}
+                      </span>
+                    )}
+                  </div>
                   <div className="flex flex-wrap gap-2">
                     {cards.map((card) => (
                       <div
@@ -261,7 +324,6 @@ function ForcedDealModal({
                 </div>
               ))}
             </div>
-
             <div className="mt-4 flex justify-end">
               <button
                 onClick={handleExecuteDeal}

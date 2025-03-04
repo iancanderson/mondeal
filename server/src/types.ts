@@ -138,7 +138,7 @@ export interface Player {
   name: string;
   uuid: string; // Add persistent UUID
   hand: Card[];
-  properties: Record<string, PropertySet>; // color -> array of property cards
+  properties: Record<string, PropertySet[]>; // color -> array of property sets
   moneyPile: Card[];
   isReady: boolean;
 }

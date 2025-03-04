@@ -34,10 +34,13 @@ function PropertyStealModal({
 
   // Helper function to check if a player has any stealable properties
   function hasStealableProperties(player: Player): boolean {
-    return Object.entries(player.properties).some(([color, propertySet]) => {
+    return Object.entries(player.properties).some(([color, propertySets]) => {
+      if (!propertySets || propertySets.length === 0) return false;
+
       const requiredSize = getRequiredSetSize(color);
-      return (
-        propertySet.cards.length > 0 && propertySet.cards.length < requiredSize
+      // Check if any set has cards but is not complete
+      return propertySets.some(
+        (set) => set.cards.length > 0 && set.cards.length < requiredSize
       );
     });
   }
@@ -77,15 +80,21 @@ function PropertyStealModal({
 
   if (selectedPlayer) {
     Object.entries(selectedPlayer.properties).forEach(
-      ([color, propertySet]) => {
-        // Determine if we can steal from this color group (not a complete set)
+      ([color, propertySets]) => {
+        if (!propertySets || propertySets.length === 0) return;
+
         const requiredSize = getRequiredSetSize(color);
-        if (
-          propertySet.cards.length > 0 &&
-          propertySet.cards.length < requiredSize
-        ) {
-          stealableProperties.push({ color, cards: propertySet.cards });
-        }
+
+        // For each property set of this color
+        propertySets.forEach((propertySet) => {
+          // Determine if we can steal from this set (not a complete set)
+          if (
+            propertySet.cards.length > 0 &&
+            propertySet.cards.length < requiredSize
+          ) {
+            stealableProperties.push({ color, cards: propertySet.cards });
+          }
+        });
       }
     );
   }
@@ -96,7 +105,6 @@ function PropertyStealModal({
         <h3 className="text-lg font-semibold mb-4">
           Select a property to steal
         </h3>
-
         {/* Step 1: Select a player */}
         {!selectedPlayerId && (
           <>
@@ -132,15 +140,15 @@ function PropertyStealModal({
                 ← Back
               </button>
             </div>
-
             <p className="text-gray-700 mb-2">
               Select a property to steal (complete sets cannot be stolen):
             </p>
-
             <div className="space-y-4 max-h-60 overflow-y-auto">
-              {stealableProperties.map(({ color, cards }) => (
-                <div key={color} className="border-b pb-3">
-                  <p className="font-medium mb-2">{color}</p>
+              {stealableProperties.map(({ color, cards }, index) => (
+                <div key={`${color}-${index}`} className="border-b pb-3">
+                  <p className="font-medium mb-2">
+                    {color} (Set {index + 1})
+                  </p>
                   <div className="flex flex-wrap gap-2">
                     {cards.map((card) => (
                       <div
@@ -159,7 +167,6 @@ function PropertyStealModal({
                 </div>
               ))}
             </div>
-
             <div className="mt-4 flex justify-end">
               <button
                 onClick={() =>

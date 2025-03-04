@@ -206,7 +206,10 @@ io.on("connection", (socket) => {
       const totalCards = [
         ...payer.hand,
         ...payer.moneyPile,
-        ...Object.values(payer.properties).flat(),
+        // Flatten arrays of property cards from all property sets
+        ...Object.values(payer.properties).flatMap((propertySets) =>
+          propertySets.flatMap((set) => set.cards)
+        ),
       ];
       const isBankruptcy = paymentCardIds.length === totalCards.length;
 
@@ -438,7 +441,10 @@ io.on("connection", (socket) => {
       // Calculate if this is a bankruptcy case (giving up all cards)
       const totalCards = [
         ...targetPlayer.moneyPile,
-        ...Object.values(targetPlayer.properties).flatMap((set) => set.cards),
+        // Flatten arrays of property cards from all property sets
+        ...Object.values(targetPlayer.properties).flatMap((propertySets) =>
+          propertySets.flatMap((set) => set.cards)
+        ),
       ];
       const isBankruptcy = paymentCardIds.length === totalCards.length;
 
@@ -487,7 +493,10 @@ io.on("connection", (socket) => {
       // Calculate if this is a bankruptcy case (giving up all cards)
       const totalCards = [
         ...payer.moneyPile,
-        ...Object.values(payer.properties).flatMap((set) => set.cards),
+        // Flatten arrays of property cards from all property sets
+        ...Object.values(payer.properties).flatMap((propertySets) =>
+          propertySets.flatMap((set) => set.cards)
+        ),
       ];
       const isBankruptcy = paymentCardIds.length === totalCards.length;
 
@@ -538,15 +547,18 @@ io.on("connection", (socket) => {
       // Only advance turn if we're down to 7 cards
       if (player.hand.length <= 7) {
         room.gameState.pendingAction = { type: "NONE" };
-        room.gameState.currentPlayerIndex = 
-          (room.gameState.currentPlayerIndex + 1) % room.gameState.players.length;
+        room.gameState.currentPlayerIndex =
+          (room.gameState.currentPlayerIndex + 1) %
+          room.gameState.players.length;
         startTurn(room.gameState);
       }
 
       io.to(roomId).emit("updateGameState", room.gameState);
       io.to(roomId).emit(
         "gameNotification",
-        `${player.name} discarded ${cardIds.length} card${cardIds.length !== 1 ? 's' : ''}.`
+        `${player.name} discarded ${cardIds.length} card${
+          cardIds.length !== 1 ? "s" : ""
+        }.`
       );
     }
   );

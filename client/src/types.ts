@@ -73,7 +73,7 @@ export interface Player {
   name: string;
   uuid: string;
   hand: Card[];
-  properties: Record<string, PropertySet>;
+  properties: Record<string, PropertySet[]>; // color -> array of property sets
   moneyPile: Card[];
   isReady: boolean;
 }

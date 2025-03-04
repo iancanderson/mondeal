@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Player, Card } from "../types";
+import { Player, Card, PropertySet } from "../types";
 import CardView from "./CardView";
 
 interface DealBreakerModalProps {
@@ -34,11 +34,12 @@ function DealBreakerModal({
   // Filter out the current player and players with no complete property sets
   const eligiblePlayers = players.filter((player) => {
     if (player.id === currentPlayerId) return false;
-
     // Check if player has any complete sets
-    return Object.entries(player.properties).some(([color, propertySet]) => {
+    return Object.entries(player.properties).some(([color, propertySets]) => {
+      if (!propertySets || propertySets.length === 0) return false;
       const requiredSize = getRequiredSetSize(color);
-      return propertySet.cards.length >= requiredSize;
+      // Check if any set for this color is complete
+      return propertySets.some(set => set.cards.length >= requiredSize);
     });
   });
 
@@ -67,17 +68,24 @@ function DealBreakerModal({
     : null;
 
   // Get all complete property sets from the selected player
-  const completePropertySets: { color: string; cards: Card[] }[] = [];
+  const completePropertySets: { color: string; cards: Card[]; propertySet: PropertySet }[] = [];
 
   if (selectedPlayer) {
-    Object.entries(selectedPlayer.properties).forEach(
-      ([color, propertySet]) => {
-        const requiredSize = getRequiredSetSize(color);
+    Object.entries(selectedPlayer.properties).forEach(([color, propertySets]) => {
+      if (!propertySets || propertySets.length === 0) return;
+      
+      const requiredSize = getRequiredSetSize(color);
+      // Check each set for this color
+      propertySets.forEach(propertySet => {
         if (propertySet.cards.length >= requiredSize) {
-          completePropertySets.push({ color, cards: propertySet.cards });
+          completePropertySets.push({ 
+            color, 
+            cards: propertySet.cards,
+            propertySet, // Keep reference to the full property set for displaying houses/hotels
+          });
         }
-      }
-    );
+      });
+    });
   }
 
   return (
@@ -119,19 +127,26 @@ function DealBreakerModal({
                 ← Back
               </button>
             </div>
-
             <p className="text-gray-700 mb-2">
               Select a complete property set to steal:
             </p>
-
             <div className="space-y-4 max-h-60 overflow-y-auto">
-              {completePropertySets.map(({ color, cards }) => (
-                <div key={color} className="border-b pb-3">
+              {completePropertySets.map(({ color, cards, propertySet }, index) => (
+                <div key={`${color}-${index}`} className="border-b pb-3">
                   <button
                     className="w-full text-left p-2 hover:bg-gray-100 rounded"
                     onClick={() => onSelectPropertySet(selectedPlayerId, color)}
                   >
-                    <p className="font-medium mb-2">{color}</p>
+                    <div className="flex justify-between items-center mb-2">
+                      <p className="font-medium">{color}</p>
+                      {(propertySet.houses > 0 || propertySet.hotels > 0) && (
+                        <p className="text-sm text-gray-600">
+                          {propertySet.houses > 0 && `${propertySet.houses} House${propertySet.houses > 1 ? 's' : ''}`}
+                          {propertySet.houses > 0 && propertySet.hotels > 0 && ', '}
+                          {propertySet.hotels > 0 && `${propertySet.hotels} Hotel${propertySet.hotels > 1 ? 's' : ''}`}
+                        </p>
+                      )}
+                    </div>
                     <div className="flex flex-wrap gap-2">
                       {cards.map((card) => (
                         <div key={card.id}>

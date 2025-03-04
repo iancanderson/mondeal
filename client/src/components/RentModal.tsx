@@ -33,9 +33,12 @@ function RentModal({
 
   // Get all cards that could be used for payment (money pile + property cards)
   const moneyPileCards = targetPlayer.moneyPile;
+  
+  // Fix: Properly handle the nested property sets structure
   const propertyCards = Object.values(targetPlayer.properties).flatMap(
-    (set) => set.cards
+    propertySets => propertySets.flatMap(set => set.cards)
   );
+  
   const availableCards = [...moneyPileCards, ...propertyCards];
 
   // Calculate total possible payment from all available cards
@@ -122,31 +125,35 @@ function RentModal({
               </div>
             )}
 
-            {/* Properties section */}
-            {Object.entries(targetPlayer.properties).map(([color, set]) => (
-              <div key={color} className="border-b pb-3">
-                <p className="font-medium mb-2">{color} Properties:</p>
-                <div className="flex flex-wrap gap-2">
-                  {set.cards.map((card) => (
-                    <div
-                      key={card.id}
-                      onClick={() => !isBankrupt && handleCardClick(card)}
-                      className={`
-                        transform transition 
-                        ${
-                          isBankrupt
-                            ? "opacity-50"
-                            : selectedCards.find((c) => c.id === card.id)
-                            ? "scale-110 ring-2 ring-blue-500"
-                            : "hover:scale-105 cursor-pointer"
-                        }
-                      `}
-                    >
-                      <CardView card={card} />
+            {/* Properties section - updated for array of property sets */}
+            {Object.entries(targetPlayer.properties).map(([color, propertySets]) => (
+              <React.Fragment key={color}>
+                {propertySets.map((propertySet, setIndex) => (
+                  <div key={`${color}-set-${setIndex}`} className="border-b pb-3">
+                    <p className="font-medium mb-2">{color} Properties (Set {setIndex + 1}):</p>
+                    <div className="flex flex-wrap gap-2">
+                      {propertySet.cards.map((card) => (
+                        <div
+                          key={card.id}
+                          onClick={() => !isBankrupt && handleCardClick(card)}
+                          className={`
+                            transform transition 
+                            ${
+                              isBankrupt
+                                ? "opacity-50"
+                                : selectedCards.find((c) => c.id === card.id)
+                                ? "scale-110 ring-2 ring-blue-500"
+                                : "hover:scale-105 cursor-pointer"
+                            }
+                          `}
+                        >
+                          <CardView card={card} />
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              </div>
+                  </div>
+                ))}
+              </React.Fragment>
             ))}
           </div>
         </div>

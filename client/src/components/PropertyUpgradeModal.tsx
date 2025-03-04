@@ -5,9 +5,9 @@ import CardView from "./CardView";
 interface PropertyUpgradeModalProps {
   cardName: "House" | "Hotel";
   player: Player;
-  onSelectPropertySet: (color: string) => void;
+  onSelectPropertySet: (color: string, setIndex: number) => void;
   onCancel: () => void;
-  cardsPlayedThisTurn: number; // Add cards played counter to show warning
+  cardsPlayedThisTurn: number;
 }
 
 function PropertyUpgradeModal({
@@ -45,7 +45,6 @@ function PropertyUpgradeModal({
       Railroad: [1, 2, 3, 4],
       Utility: [1, 2],
     };
-
     const rentIndex = Math.min(count, getRequiredSetSize(color)) - 1;
     const baseRent = baseRents[color][rentIndex];
     return baseRent;
@@ -65,12 +64,25 @@ function PropertyUpgradeModal({
   };
 
   // Get all complete property sets
-  const completePropertySets = Object.entries(player.properties).filter(
-    ([color, propertySet]) => {
-      const requiredSize = getRequiredSetSize(color);
-      return propertySet.cards.length >= requiredSize;
-    }
-  );
+  type CompleteSet = {
+    color: string;
+    propertySet: PropertySet;
+    setIndex: number;
+  };
+  const completePropertySets: CompleteSet[] = [];
+
+  Object.entries(player.properties).forEach(([color, propertySets]) => {
+    const requiredSize = getRequiredSetSize(color);
+    propertySets.forEach((propertySet, index) => {
+      if (propertySet.cards.length >= requiredSize) {
+        completePropertySets.push({
+          color,
+          propertySet,
+          setIndex: index,
+        });
+      }
+    });
+  });
 
   // If no complete sets, show a message
   if (completePropertySets.length === 0) {
@@ -111,14 +123,16 @@ function PropertyUpgradeModal({
         )}
 
         <div className="space-y-4 max-h-60 overflow-y-auto">
-          {completePropertySets.map(([color, propertySet]) => (
-            <div key={color} className="border-b pb-3">
+          {completePropertySets.map(({ color, propertySet, setIndex }) => (
+            <div key={`${color}-${setIndex}`} className="border-b pb-3">
               <button
                 className="w-full text-left p-2 hover:bg-gray-100 rounded"
-                onClick={() => onSelectPropertySet(color)}
+                onClick={() => onSelectPropertySet(color, setIndex)}
               >
                 <div className="flex justify-between mb-2">
-                  <p className="font-medium">{color}</p>
+                  <p className="font-medium">
+                    {color} (Set {setIndex + 1})
+                  </p>
                   <p className="text-sm">
                     Current Rent: ${calculateTotalRent(color, propertySet)}M
                     {cardName === "House" &&
@@ -133,6 +147,7 @@ function PropertyUpgradeModal({
                       })}M`}
                   </p>
                 </div>
+
                 <div className="flex flex-wrap gap-2">
                   {propertySet.cards.map((card) => (
                     <div key={card.id}>
@@ -140,6 +155,7 @@ function PropertyUpgradeModal({
                     </div>
                   ))}
                 </div>
+
                 <div className="mt-2 text-sm text-gray-600">
                   {propertySet.houses > 0 &&
                     `${propertySet.houses} House${

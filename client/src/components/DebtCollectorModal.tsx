@@ -70,10 +70,12 @@ function DebtCollectorModal({
   // Get available payment sources if a player is selected
   const getAvailableCards = () => {
     if (!selectedPlayer) return [];
-
     return [
       ...selectedPlayer.moneyPile,
-      ...Object.values(selectedPlayer.properties).flatMap((set) => set.cards),
+      // Properly handle nested property sets
+      ...Object.values(selectedPlayer.properties).flatMap((propertySets) =>
+        propertySets.flatMap((set) => set.cards)
+      ),
     ];
   };
 
@@ -200,33 +202,60 @@ function DebtCollectorModal({
               </div>
             )}
 
-            {/* Properties section */}
+            {/* Properties section - updated for array of property sets */}
             {selectedPlayer &&
               Object.entries(selectedPlayer.properties).map(
-                ([color, propertySet]) => (
-                  <div key={color} className="border-b pb-3">
-                    <p className="font-medium mb-2">{color} Properties:</p>
-                    <div className="flex flex-wrap gap-2">
-                      {propertySet.cards.map((card) => (
-                        <div
-                          key={card.id}
-                          onClick={() => !isBankrupt && handleCardClick(card)}
-                          className={`
-                        transform transition 
-                        ${
-                          isBankrupt
-                            ? "opacity-50"
-                            : selectedCards.find((c) => c.id === card.id)
-                            ? "scale-110 ring-2 ring-blue-500"
-                            : "hover:scale-105 cursor-pointer"
-                        }
-                      `}
-                        >
-                          <CardView card={card} />
+                ([color, propertySets]) => (
+                  <React.Fragment key={color}>
+                    {propertySets.map((propertySet, setIndex) => (
+                      <div
+                        key={`${color}-${setIndex}`}
+                        className="border-b pb-3"
+                      >
+                        <p className="font-medium mb-2">
+                          {color} Properties (Set {setIndex + 1})
+                          {(propertySet.houses > 0 ||
+                            propertySet.hotels > 0) && (
+                            <span className="text-sm text-gray-600 ml-2">
+                              {propertySet.houses > 0 &&
+                                `${propertySet.houses} House${
+                                  propertySet.houses > 1 ? "s" : ""
+                                }`}
+                              {propertySet.houses > 0 &&
+                                propertySet.hotels > 0 &&
+                                ", "}
+                              {propertySet.hotels > 0 &&
+                                `${propertySet.hotels} Hotel${
+                                  propertySet.hotels > 1 ? "s" : ""
+                                }`}
+                            </span>
+                          )}
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {propertySet.cards.map((card) => (
+                            <div
+                              key={card.id}
+                              onClick={() =>
+                                !isBankrupt && handleCardClick(card)
+                              }
+                              className={`
+                              transform transition 
+                              ${
+                                isBankrupt
+                                  ? "opacity-50"
+                                  : selectedCards.find((c) => c.id === card.id)
+                                  ? "scale-110 ring-2 ring-blue-500"
+                                  : "hover:scale-105 cursor-pointer"
+                              }
+                            `}
+                            >
+                              <CardView card={card} />
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                  </div>
+                      </div>
+                    ))}
+                  </React.Fragment>
                 )
               )}
           </div>

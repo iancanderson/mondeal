@@ -1,5 +1,5 @@
 import React from "react";
-import { Player, Card, PropertySet } from "../types";
+import { Player, Card, PropertySet, CardType } from "../types";
 import CardView from "./CardView";
 
 interface PlayerAreaProps {
@@ -54,7 +54,6 @@ function PlayerArea({
       Railroad: [1, 2, 3, 4],
       Utility: [1, 2],
     };
-
     const rentIndex = Math.min(count, getRequiredSetSize(color)) - 1;
     const baseRent = baseRents[color][rentIndex];
     return baseRent;
@@ -74,20 +73,32 @@ function PlayerArea({
 
   const getCompletedSetCount = (): number => {
     let completedSets = 0;
+
     for (const color in player.properties) {
+      const propertySets = player.properties[color];
       const requiredSize = getRequiredSetSize(color);
-      if (player.properties[color].cards.length >= requiredSize) {
-        completedSets++;
+
+      // Count completed sets for this color
+      for (const set of propertySets) {
+        if (set.cards.length >= requiredSize) {
+          completedSets++;
+        }
       }
     }
+
     return completedSets;
+  };
+
+  // Helper function to check if a card is a wildcard property
+  const isWildcard = (card: Card): boolean => {
+    return card.type === CardType.PROPERTY && !!card.isWildcard;
   };
 
   const handleCardClick = (card: Card) => {
     if (
       isCurrentPlayer &&
       canReassignWildCard &&
-      card.isWildcard &&
+      isWildcard(card) &&
       onWildCardClick
     ) {
       onWildCardClick(card);
@@ -101,78 +112,87 @@ function PlayerArea({
       <h3 className="font-bold text-lg border-b pb-1">
         {player.name} ({completedSets}/3)
       </h3>
-
       <div className="mt-2">
         <div className="text-sm font-semibold mb-1">Properties:</div>
         <div className="flex flex-wrap gap-2">
           {propertyOrder.map((color) => {
-            const propertySet = player.properties[color];
-            if (!propertySet?.cards.length) return null;
-
+            const propertySets = player.properties[color];
+            if (!propertySets?.length) return null;
             const requiredSize = getRequiredSetSize(color);
-            const isComplete = propertySet.cards.length >= requiredSize;
-            const currentRent = calculateTotalRent(color, propertySet);
 
             return (
-              <div key={color} className="flex-shrink-0">
-                <div className="flex justify-between items-center mb-0.5">
-                  <span
-                    className={`text-xs ${
-                      isComplete
-                        ? "text-green-600 font-semibold"
-                        : "text-gray-600"
-                    }`}
-                  >
-                    {color} ({propertySet.cards.length}/{requiredSize})
-                  </span>
-                  <span className="text-xs text-blue-600 font-medium ml-2">
-                    ${currentRent}M
-                  </span>
+              <div key={color} className="flex-shrink-0 flex flex-col gap-2">
+                <div className="text-xs font-semibold text-gray-600">
+                  {color}
                 </div>
-                <div className="flex gap-0.5 relative">
-                  {propertySet.cards.map((card: Card) => (
-                    <div
-                      key={card.id}
-                      className={
-                        isCurrentPlayer &&
-                        canReassignWildCard &&
-                        card.isWildcard
-                          ? "cursor-pointer hover:scale-105 transition-transform"
-                          : ""
-                      }
-                    >
-                      <CardView
-                        card={card}
-                        clickable={
-                          isCurrentPlayer &&
-                          canReassignWildCard &&
-                          card.isWildcard
-                        }
-                        onClick={() => handleCardClick(card)}
-                      />
-                    </div>
-                  ))}
-                  {(propertySet.houses > 0 || propertySet.hotels > 0) && (
-                    <div className="absolute -top-2 -right-2 bg-white px-1 rounded-full shadow border text-xs flex items-center gap-0.5">
-                      {propertySet.houses > 0 && (
-                        <span className="text-green-600" title="Houses">
-                          🏠×{propertySet.houses}
+
+                {propertySets.map((propertySet, setIndex) => {
+                  const isComplete = propertySet.cards.length >= requiredSize;
+                  const currentRent = calculateTotalRent(color, propertySet);
+
+                  return (
+                    <div key={`${color}-set-${setIndex}`} className="mb-2">
+                      <div className="flex justify-between items-center mb-0.5">
+                        <span
+                          className={`text-xs ${
+                            isComplete
+                              ? "text-green-600 font-semibold"
+                              : "text-gray-600"
+                          }`}
+                        >
+                          Set {setIndex + 1} ({propertySet.cards.length}/
+                          {requiredSize})
                         </span>
-                      )}
-                      {propertySet.hotels > 0 && (
-                        <span className="text-red-600" title="Hotels">
-                          🏨×{propertySet.hotels}
+                        <span className="text-xs text-blue-600 font-medium ml-2">
+                          ${currentRent}M
                         </span>
-                      )}
+                      </div>
+                      <div className="flex gap-0.5 relative">
+                        {propertySet.cards.map((card: Card) => (
+                          <div
+                            key={card.id}
+                            className={
+                              isCurrentPlayer &&
+                              canReassignWildCard &&
+                              isWildcard(card)
+                                ? "cursor-pointer hover:scale-105 transition-transform"
+                                : ""
+                            }
+                          >
+                            <CardView
+                              card={card}
+                              clickable={
+                                isCurrentPlayer &&
+                                canReassignWildCard &&
+                                isWildcard(card)
+                              }
+                              onClick={() => handleCardClick(card)}
+                            />
+                          </div>
+                        ))}
+                        {(propertySet.houses > 0 || propertySet.hotels > 0) && (
+                          <div className="absolute -top-2 -right-2 bg-white px-1 rounded-full shadow border text-xs flex items-center gap-0.5">
+                            {propertySet.houses > 0 && (
+                              <span className="text-green-600" title="Houses">
+                                🏠×{propertySet.houses}
+                              </span>
+                            )}
+                            {propertySet.hotels > 0 && (
+                              <span className="text-red-600" title="Hotels">
+                                🏨×{propertySet.hotels}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  )}
-                </div>
+                  );
+                })}
               </div>
             );
           })}
         </div>
       </div>
-
       <div className="mt-2">
         <div className="text-sm font-semibold mb-1">Bank:</div>
         <div className="flex gap-1 overflow-x-auto pb-1">
