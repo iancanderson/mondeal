@@ -1,11 +1,11 @@
 import React from "react";
-import { Card } from "../types";
+import { Card, PropertyColor } from "../types";
 import { ColorPicker } from "./ColorPicker";
 
 interface ActionCardModalProps {
   card: Card;
   onPlayAsMoney: () => void;
-  onPlayAsAction: (color?: string) => void;
+  onPlayAsAction: (color?: PropertyColor) => void;
   onCancel: () => void;
 }
 

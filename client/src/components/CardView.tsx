@@ -1,5 +1,5 @@
 import React from "react";
-import { Card } from "../types";
+import { Card, PropertyColor } from "../types";
 
 interface CardViewProps {
   card: Card;
@@ -8,54 +8,54 @@ interface CardViewProps {
 }
 
 function CardView({ card, clickable, onClick }: CardViewProps) {
-  const getColorClass = (color: string) => {
+  const getColorClass = (color: PropertyColor) => {
     switch (color) {
-      case "Brown":
+      case PropertyColor.BROWN:
         return "from-amber-900";
-      case "Blue":
+      case PropertyColor.BLUE:
         return "from-blue-600";
-      case "Green":
+      case PropertyColor.GREEN:
         return "from-green-600";
-      case "Yellow":
+      case PropertyColor.YELLOW:
         return "from-yellow-400";
-      case "Red":
+      case PropertyColor.RED:
         return "from-red-600";
-      case "Orange":
+      case PropertyColor.ORANGE:
         return "from-orange-500";
-      case "Purple":
+      case PropertyColor.PURPLE:
         return "from-purple-600";
-      case "LightBlue":
+      case PropertyColor.LIGHT_BLUE:
         return "from-sky-400";
-      case "Railroad":
+      case PropertyColor.RAILROAD:
         return "from-gray-800";
-      case "Utility":
+      case PropertyColor.UTILITY:
         return "from-gray-600";
       default:
         return "from-gray-100";
     }
   };
 
-  const getSecondColorClass = (color: string) => {
+  const getSecondColorClass = (color: PropertyColor) => {
     switch (color) {
-      case "Brown":
+      case PropertyColor.BROWN:
         return "to-amber-900";
-      case "Blue":
+      case PropertyColor.BLUE:
         return "to-blue-600";
-      case "Green":
+      case PropertyColor.GREEN:
         return "to-green-600";
-      case "Yellow":
+      case PropertyColor.YELLOW:
         return "to-yellow-400";
-      case "Red":
+      case PropertyColor.RED:
         return "to-red-600";
-      case "Orange":
+      case PropertyColor.ORANGE:
         return "to-orange-500";
-      case "Purple":
+      case PropertyColor.PURPLE:
         return "to-purple-600";
-      case "LightBlue":
+      case PropertyColor.LIGHT_BLUE:
         return "to-sky-400";
-      case "Railroad":
+      case PropertyColor.RAILROAD:
         return "to-gray-800";
-      case "Utility":
+      case PropertyColor.UTILITY:
         return "to-gray-600";
       default:
         return "to-gray-100";
@@ -69,25 +69,25 @@ function CardView({ card, clickable, onClick }: CardViewProps) {
       }
       if (card.color) {
         switch (card.color) {
-          case "Brown":
+          case PropertyColor.BROWN:
             return "bg-amber-900";
-          case "Blue":
+          case PropertyColor.BLUE:
             return "bg-blue-600";
-          case "Green":
+          case PropertyColor.GREEN:
             return "bg-green-600";
-          case "Yellow":
+          case PropertyColor.YELLOW:
             return "bg-yellow-400";
-          case "Red":
+          case PropertyColor.RED:
             return "bg-red-600";
-          case "Orange":
+          case PropertyColor.ORANGE:
             return "bg-orange-500";
-          case "Purple":
+          case PropertyColor.PURPLE:
             return "bg-purple-600";
-          case "LightBlue":
+          case PropertyColor.LIGHT_BLUE:
             return "bg-sky-400";
-          case "Railroad":
+          case PropertyColor.RAILROAD:
             return "bg-gray-800";
-          case "Utility":
+          case PropertyColor.UTILITY:
             return "bg-gray-600";
           default:
             return "bg-gray-100";
@@ -113,7 +113,7 @@ function CardView({ card, clickable, onClick }: CardViewProps) {
       }
       if (card.color) {
         switch (card.color) {
-          case "Yellow":
+          case PropertyColor.YELLOW:
             return "text-black";
           default:
             return "text-white";

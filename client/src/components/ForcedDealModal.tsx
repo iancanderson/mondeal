@@ -89,7 +89,7 @@ function ForcedDealModal({
   const getMyProperties = () => {
     if (!currentPlayer) return [];
     const myProperties: {
-      color: string;
+      color: PropertyColor;
       cards: Card[];
       propertySet: PropertySet;
     }[] = [];
@@ -101,7 +101,7 @@ function ForcedDealModal({
         propertySets.forEach((propertySet) => {
           if (propertySet.cards.length > 0) {
             myProperties.push({
-              color,
+              color: color as PropertyColor,
               cards: propertySet.cards,
               propertySet,
             });

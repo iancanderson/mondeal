@@ -1,9 +1,10 @@
 import React from "react";
+import { PropertyColor } from "../types";
 
 interface ColorPickerProps {
-  onColorPick: (color: string) => void;
+  onColorPick: (color: PropertyColor) => void;
   onCancel: () => void;
-  availableColors?: string[];
+  availableColors?: PropertyColor[];
 }
 
 export function ColorPicker({
@@ -12,16 +13,16 @@ export function ColorPicker({
   availableColors,
 }: ColorPickerProps) {
   const colors = [
-    { name: "Brown", bgColor: "bg-amber-900" },
-    { name: "LightBlue", bgColor: "bg-sky-400" },
-    { name: "Purple", bgColor: "bg-purple-600" },
-    { name: "Orange", bgColor: "bg-orange-500" },
-    { name: "Red", bgColor: "bg-red-600" },
-    { name: "Yellow", bgColor: "bg-yellow-400" },
-    { name: "Green", bgColor: "bg-green-600" },
-    { name: "Blue", bgColor: "bg-blue-600" },
-    { name: "Railroad", bgColor: "bg-gray-800" },
-    { name: "Utility", bgColor: "bg-gray-600" },
+    { name: PropertyColor.BROWN, bgColor: "bg-amber-900" },
+    { name: PropertyColor.LIGHT_BLUE, bgColor: "bg-sky-400" },
+    { name: PropertyColor.PURPLE, bgColor: "bg-purple-600" },
+    { name: PropertyColor.ORANGE, bgColor: "bg-orange-500" },
+    { name: PropertyColor.RED, bgColor: "bg-red-600" },
+    { name: PropertyColor.YELLOW, bgColor: "bg-yellow-400" },
+    { name: PropertyColor.GREEN, bgColor: "bg-green-600" },
+    { name: PropertyColor.BLUE, bgColor: "bg-blue-600" },
+    { name: PropertyColor.RAILROAD, bgColor: "bg-gray-800" },
+    { name: PropertyColor.UTILITY, bgColor: "bg-gray-600" },
   ].filter((color) => !availableColors || availableColors.includes(color.name));
 
   return (

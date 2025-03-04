@@ -17,7 +17,7 @@ import DebtCollectorModal from "../components/DebtCollectorModal";
 import BirthdayModal from "../components/BirthdayModal";
 import DoubleRentModal from "../components/DoubleRentModal";
 import DiscardModal from "../components/DiscardModal";
-import { GameState, Player, Card } from "../types";
+import { GameState, Player, Card, PropertyColor } from "../types";
 
 function Game() {
   const { roomId } = useParams();
@@ -258,7 +258,7 @@ function Game() {
     socket.emit("playCard", roomId, playerId, card.id);
   };
 
-  const handleColorPick = (color: string) => {
+  const handleColorPick = (color: PropertyColor) => {
     if (selectedWildcard) {
       socket.emit("playCard", roomId, playerId, selectedWildcard.id, color);
       setSelectedWildcard(null);
@@ -271,7 +271,7 @@ function Game() {
     }
   };
 
-  const handleColorPickForReassign = (color: string) => {
+  const handleColorPickForReassign = (color: PropertyColor) => {
     if (selectedWildcardForReassign) {
       socket.emit(
         "reassignWildcard",
@@ -284,7 +284,7 @@ function Game() {
     }
   };
 
-  const handlePlayAsAction = (color?: string) => {
+  const handlePlayAsAction = (color?: PropertyColor) => {
     if (!selectedActionCard) return;
 
     // Special handling for Forced Deal
@@ -360,7 +360,7 @@ function Game() {
     setShowPropertyStealModal(false);
   };
 
-  const handleDealBreaker = (targetPlayerId: string, color: string) => {
+  const handleDealBreaker = (targetPlayerId: string, color: PropertyColor) => {
     if (!roomId || !playerId) return;
 
     socket.emit("executeDealBreaker", roomId, playerId, targetPlayerId, color);
@@ -374,7 +374,7 @@ function Game() {
     setShowRentModal(false);
   };
 
-  const handleRentColorPick = (color: string) => {
+  const handleRentColorPick = (color: PropertyColor) => {
     if (selectedActionCard && selectedActionCard.type === "RENT") {
       socket.emit(
         "playCard",
@@ -394,7 +394,7 @@ function Game() {
     setShowJustSayNoModal(false);
   };
 
-  const handlePropertyUpgrade = (color: string) => {
+  const handlePropertyUpgrade = (color: PropertyColor) => {
     if (!showPropertyUpgradeModal) return;
 
     socket.emit(
