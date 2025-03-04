@@ -153,7 +153,6 @@ export interface GameState {
   isStarted: boolean;
   winnerId?: string;
   cardsPlayedThisTurn: number;
-  wildCardReassignedThisTurn: boolean;
   pendingAction: ActionState;
 }
 

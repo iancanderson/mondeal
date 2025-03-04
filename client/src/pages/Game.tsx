@@ -266,7 +266,7 @@ function Game() {
   };
 
   const handleWildCardClick = (card: Card) => {
-    if (isMyTurn && !gameState.wildCardReassignedThisTurn) {
+    if (isMyTurn) {
       setSelectedWildcardForReassign(card);
     }
   };
@@ -660,11 +660,6 @@ function Game() {
                 <div>
                   Cards played this turn: {gameState.cardsPlayedThisTurn}/3
                 </div>
-                {!gameState.wildCardReassignedThisTurn && (
-                  <div className="text-blue-600">
-                    You can reassign one wild card's color this turn
-                  </div>
-                )}
               </div>
             )}
             {winner && (

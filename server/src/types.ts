@@ -152,7 +152,6 @@ export interface GameState {
   isStarted: boolean;
   winnerId?: string;
   cardsPlayedThisTurn: number; // Track number of cards played this turn
-  wildCardReassignedThisTurn: boolean; // Track if a wild card was reassigned this turn
   pendingAction: ActionState;
 }
 

@@ -95,12 +95,7 @@ function PlayerArea({
   };
 
   const handleCardClick = (card: Card) => {
-    if (
-      isCurrentPlayer &&
-      canReassignWildCard &&
-      isWildcard(card) &&
-      onWildCardClick
-    ) {
+    if (isCurrentPlayer && isWildcard(card) && onWildCardClick) {
       onWildCardClick(card);
     }
   };

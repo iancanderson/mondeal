@@ -235,7 +235,6 @@ export function startTurn(gameState: GameState) {
   }
   // Reset turn counters
   gameState.cardsPlayedThisTurn = 0;
-  gameState.wildCardReassignedThisTurn = false;
 }
 
 /**
@@ -584,16 +583,6 @@ export function reassignWildcard(
   cardId: string,
   newColor: string
 ): boolean {
-  // Only the current player can reassign
-  if (gameState.players[gameState.currentPlayerIndex].id !== playerId) {
-    return false;
-  }
-
-  // Only one wild card reassignment per turn
-  if (gameState.wildCardReassignedThisTurn) {
-    return false;
-  }
-
   const player = gameState.players.find((p) => p.id === playerId);
   if (!player) return false;
 
@@ -669,9 +658,6 @@ export function reassignWildcard(
   
   // Add the wildcard to the target set
   targetSet.cards.push(foundPropertyCard);
-
-  // Mark that we've reassigned a wild card this turn
-  gameState.wildCardReassignedThisTurn = true;
 
   return true;
 }
