@@ -59,6 +59,8 @@ function Game() {
   const [showBirthdayModal, setShowBirthdayModal] = useState(false);
   const [showDoubleRentModal, setShowDoubleRentModal] = useState(false);
   const [showDiscardModal, setShowDiscardModal] = useState(false);
+  const [selectedDoubleRentCard, setSelectedDoubleRentCard] =
+    useState<Card | null>(null);
 
   // Handle window resize for confetti
   React.useEffect(() => {
@@ -454,15 +456,23 @@ function Game() {
     const rentCard = myPlayer?.hand.find((c) => c.id === rentCardId);
     if (!rentCard || rentCard.type !== "RENT") return;
 
+    setSelectedDoubleRentCard(rentCard);
+    setShowDoubleRentModal(false);
+  };
+
+  const handleDoubleRentColorPick = (color: PropertyColor) => {
+    if (!selectedDoubleRentCard || selectedDoubleRentCard.type !== "RENT")
+      return;
+
     socket.emit(
       "playCard",
       roomId,
       playerId,
-      rentCardId,
-      rentCard.rentColors?.[0],
+      selectedDoubleRentCard.id,
+      color,
       true
     );
-    setShowDoubleRentModal(false);
+    setSelectedDoubleRentCard(null);
   };
 
   const handleDiscard = (cardIds: string[]) => {
@@ -634,6 +644,14 @@ function Game() {
           rentCards={getRentCards()}
           onSelectRentCard={handleDoubleRentCardSelect}
           onCancel={() => setShowDoubleRentModal(false)}
+        />
+      )}
+
+      {selectedDoubleRentCard?.type === "RENT" && (
+        <ColorPicker
+          onColorPick={handleDoubleRentColorPick}
+          onCancel={() => setSelectedDoubleRentCard(null)}
+          availableColors={selectedDoubleRentCard.rentColors}
         />
       )}
 
