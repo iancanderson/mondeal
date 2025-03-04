@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { Player, Card, PropertySet } from "../types";
+import { Player, Card, PropertySet, PropertyColor } from "../types";
 import CardView from "./CardView";
+import { getRequiredSetSize } from "../utils";
 
 interface ForcedDealModalProps {
   players: Player[];
@@ -55,25 +56,11 @@ function ForcedDealModal({
     );
   }
 
-  // Helper function to get required set size
-  function getRequiredSetSize(color: string): number {
-    switch (color) {
-      case "Brown":
-      case "Blue":
-      case "Utility":
-        return 2;
-      case "Railroad":
-        return 4;
-      default:
-        return 3;
-    }
-  }
-
   // Get all stealable properties from the selected player (not in complete sets)
   const getStealableProperties = (player: Player | undefined) => {
     if (!player) return [];
     const stealableProperties: {
-      color: string;
+      color: PropertyColor;
       cards: Card[];
       propertySet: PropertySet;
     }[] = [];
@@ -81,13 +68,13 @@ function ForcedDealModal({
     Object.entries(player.properties).forEach(([color, propertySets]) => {
       if (!propertySets || propertySets.length === 0) return;
 
-      const requiredSize = getRequiredSetSize(color);
+      const requiredSize = getRequiredSetSize(color as PropertyColor);
       // Check each set for this color
       propertySets.forEach((propertySet) => {
         // Only include sets that aren't complete
         if (propertySet.cards.length < requiredSize) {
           stealableProperties.push({
-            color,
+            color: color as PropertyColor,
             cards: propertySet.cards,
             propertySet,
           });

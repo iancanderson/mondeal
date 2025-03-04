@@ -1,6 +1,7 @@
 import React from "react";
-import { Player, Card, PropertySet, CardType } from "../types";
+import { Player, Card, PropertySet, CardType, PropertyColor } from "../types";
 import CardView from "./CardView";
+import { getRequiredSetSize } from "../utils";
 
 interface PlayerAreaProps {
   player: Player;
@@ -16,43 +17,30 @@ function PlayerArea({
   canReassignWildCard,
 }: PlayerAreaProps) {
   const propertyOrder = [
-    "Brown",
-    "LightBlue",
-    "Purple",
-    "Orange",
-    "Red",
-    "Yellow",
-    "Green",
-    "Blue",
-    "Railroad",
-    "Utility",
+    PropertyColor.BROWN,
+    PropertyColor.LIGHT_BLUE,
+    PropertyColor.PURPLE,
+    PropertyColor.ORANGE,
+    PropertyColor.RED,
+    PropertyColor.YELLOW,
+    PropertyColor.GREEN,
+    PropertyColor.BLUE,
+    PropertyColor.RAILROAD,
+    PropertyColor.UTILITY,
   ];
 
-  const getRequiredSetSize = (color: string): number => {
-    switch (color) {
-      case "Brown":
-      case "Blue":
-      case "Utility":
-        return 2;
-      case "Railroad":
-        return 4;
-      default:
-        return 3;
-    }
-  };
-
-  const calculateBaseRent = (color: string, count: number): number => {
-    const baseRents: Record<string, number[]> = {
-      Brown: [1, 2],
-      LightBlue: [1, 2, 3],
-      Purple: [1, 2, 4],
-      Orange: [1, 3, 5],
-      Red: [2, 3, 6],
-      Yellow: [2, 4, 6],
-      Green: [2, 4, 7],
-      Blue: [3, 8],
-      Railroad: [1, 2, 3, 4],
-      Utility: [1, 2],
+  const calculateBaseRent = (color: PropertyColor, count: number): number => {
+    const baseRents: Record<PropertyColor, number[]> = {
+      [PropertyColor.BROWN]: [1, 2],
+      [PropertyColor.LIGHT_BLUE]: [1, 2, 3],
+      [PropertyColor.PURPLE]: [1, 2, 4],
+      [PropertyColor.ORANGE]: [1, 3, 5],
+      [PropertyColor.RED]: [2, 3, 6],
+      [PropertyColor.YELLOW]: [2, 4, 6],
+      [PropertyColor.GREEN]: [2, 4, 7],
+      [PropertyColor.BLUE]: [3, 8],
+      [PropertyColor.RAILROAD]: [1, 2, 3, 4],
+      [PropertyColor.UTILITY]: [1, 2],
     };
     const rentIndex = Math.min(count, getRequiredSetSize(color)) - 1;
     const baseRent = baseRents[color][rentIndex];
@@ -60,7 +48,7 @@ function PlayerArea({
   };
 
   const calculateTotalRent = (
-    color: string,
+    color: PropertyColor,
     propertySet: PropertySet
   ): number => {
     const baseRent = calculateBaseRent(color, propertySet.cards.length);
@@ -75,8 +63,8 @@ function PlayerArea({
     let completedSets = 0;
 
     for (const color in player.properties) {
-      const propertySets = player.properties[color];
-      const requiredSize = getRequiredSetSize(color);
+      const propertySets = player.properties[color as PropertyColor];
+      const requiredSize = getRequiredSetSize(color as PropertyColor);
 
       // Count completed sets for this color
       for (const set of propertySets) {

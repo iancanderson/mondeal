@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { Player, Card } from "../types";
+import { Player, Card, PropertySet, PropertyColor } from "../types";
 import CardView from "./CardView";
+import { getRequiredSetSize } from "../utils";
 
 interface PropertyStealModalProps {
   players: Player[];
@@ -18,26 +19,12 @@ function PropertyStealModal({
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [selectedCard, setSelectedCard] = useState<Card | null>(null);
 
-  // Helper function to get required set size
-  function getRequiredSetSize(color: string): number {
-    switch (color) {
-      case "Brown":
-      case "Blue":
-      case "Utility":
-        return 2;
-      case "Railroad":
-        return 4;
-      default:
-        return 3;
-    }
-  }
-
   // Helper function to check if a player has any stealable properties
   function hasStealableProperties(player: Player): boolean {
     return Object.entries(player.properties).some(([color, propertySets]) => {
       if (!propertySets || propertySets.length === 0) return false;
 
-      const requiredSize = getRequiredSetSize(color);
+      const requiredSize = getRequiredSetSize(color as PropertyColor);
       // Check if any set has cards but is not complete
       return propertySets.some(
         (set) => set.cards.length > 0 && set.cards.length < requiredSize
@@ -76,14 +63,14 @@ function PropertyStealModal({
     : null;
 
   // Get all stealable properties from the selected player (not in complete sets)
-  const stealableProperties: { color: string; cards: Card[] }[] = [];
+  const stealableProperties: { color: PropertyColor; cards: Card[] }[] = [];
 
   if (selectedPlayer) {
     Object.entries(selectedPlayer.properties).forEach(
       ([color, propertySets]) => {
         if (!propertySets || propertySets.length === 0) return;
 
-        const requiredSize = getRequiredSetSize(color);
+        const requiredSize = getRequiredSetSize(color as PropertyColor);
 
         // For each property set of this color
         propertySets.forEach((propertySet) => {
@@ -92,7 +79,10 @@ function PropertyStealModal({
             propertySet.cards.length > 0 &&
             propertySet.cards.length < requiredSize
           ) {
-            stealableProperties.push({ color, cards: propertySet.cards });
+            stealableProperties.push({
+              color: color as PropertyColor,
+              cards: propertySet.cards,
+            });
           }
         });
       }

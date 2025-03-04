@@ -7,6 +7,7 @@ import {
   PropertyColor,
   CardType,
   PropertyCard,
+  getRequiredSetSize,
 } from "./types";
 import { v4 as uuidv4 } from "uuid";
 
@@ -175,23 +176,6 @@ export function dealInitialCards(gameState: GameState) {
   }
 }
 
-/**
- * Checks if a player has 3 full property sets.
- * For simplicity, we assume a full set is 3 properties of the same color.
- */
-function getRequiredSetSize(color: string): number {
-  switch (color) {
-    case PropertyColor.BROWN:
-    case PropertyColor.BLUE:
-    case PropertyColor.UTILITY:
-      return 2;
-    case PropertyColor.RAILROAD:
-      return 4;
-    default:
-      return 3;
-  }
-}
-
 export function getCompletedSetCount(player: Player): number {
   let completedSets = 0;
 
@@ -200,7 +184,7 @@ export function getCompletedSetCount(player: Player): number {
     const propertySets = player.properties[color];
     if (!propertySets) continue;
 
-    const requiredSize = getRequiredSetSize(color);
+    const requiredSize = getRequiredSetSize(color as PropertyColor);
 
     // Count how many complete sets this color has
     for (const set of propertySets) {
@@ -242,7 +226,7 @@ export function startTurn(gameState: GameState) {
  */
 function calculateRent(
   propertySet: PropertySet,
-  color: string,
+  color: PropertyColor,
   isDoubled: boolean = false
 ): number {
   const count = propertySet.cards.length;
@@ -250,17 +234,17 @@ function calculateRent(
   const isComplete = count >= requiredSize;
 
   // Base rent values for each color
-  const baseRents: Record<string, number[]> = {
-    Brown: [1, 2],
-    LightBlue: [1, 2, 3],
-    Purple: [1, 2, 4],
-    Orange: [1, 3, 5],
-    Red: [2, 3, 6],
-    Yellow: [2, 4, 6],
-    Green: [2, 4, 7],
-    Blue: [3, 8],
-    Railroad: [1, 2, 3, 4],
-    Utility: [1, 2],
+  const baseRents: Record<PropertyColor, number[]> = {
+    [PropertyColor.BROWN]: [1, 2],
+    [PropertyColor.LIGHT_BLUE]: [1, 2, 3],
+    [PropertyColor.PURPLE]: [1, 2, 4],
+    [PropertyColor.ORANGE]: [1, 3, 5],
+    [PropertyColor.RED]: [2, 3, 6],
+    [PropertyColor.YELLOW]: [2, 4, 6],
+    [PropertyColor.GREEN]: [2, 4, 7],
+    [PropertyColor.BLUE]: [3, 8],
+    [PropertyColor.RAILROAD]: [1, 2, 3, 4],
+    [PropertyColor.UTILITY]: [1, 2],
   };
 
   // Get the base rent based on property count
@@ -330,7 +314,7 @@ export function playCard(
 
     // Check if this is following a Double The Rent action
     const isDoubleRent = gameState.pendingAction.type === "DOUBLE_RENT_PENDING";
-    const rentAmount = calculateRent(propertySet, chosenColor, isDoubleRent);
+    const rentAmount = calculateRent(propertySet, chosenColor as PropertyColor, isDoubleRent);
 
     // Check if any other player has Just Say No
     const otherPlayers = gameState.players.filter((p) => p.id !== playerId);
@@ -380,7 +364,7 @@ export function playCard(
     if (!propertySets || propertySets.length === 0) return { success: false };
 
     // Find a complete set to add house/hotel to
-    const requiredSize = getRequiredSetSize(chosenColor);
+    const requiredSize = getRequiredSetSize(chosenColor as PropertyColor);
     let completeSetIndex = -1;
 
     for (let i = 0; i < propertySets.length; i++) {
@@ -416,7 +400,7 @@ export function playCard(
     }
 
     // Send notification about the upgrade
-    const newRent = calculateRent(propertySet, chosenColor);
+    const newRent = calculateRent(propertySet, chosenColor as PropertyColor);
     const notification = `${
       player.name
     } added a ${card.name.toLowerCase()} to their ${chosenColor} set (Rent is now $${newRent}M)`;
@@ -462,7 +446,7 @@ export function playCard(
     }
 
     // Get the required set size for this color
-    const requiredSetSize = getRequiredSetSize(propertyColor);
+    const requiredSetSize = getRequiredSetSize(propertyColor as PropertyColor);
 
     // Find an incomplete set or create a new one if all sets are complete
     let targetSet: PropertySet | undefined;
@@ -640,7 +624,7 @@ export function reassignWildcard(
   }
 
   // Find an incomplete set to add the wildcard to
-  const requiredSetSize = getRequiredSetSize(newColor);
+  const requiredSetSize = getRequiredSetSize(newColor as PropertyColor);
   let targetSet: PropertySet | undefined;
 
   // First try to find an incomplete set
@@ -757,7 +741,7 @@ export function executePropertySteal(
         setIndex = i;
 
         // Don't allow stealing if it would break a complete set
-        const requiredSize = getRequiredSetSize(color);
+        const requiredSize = getRequiredSetSize(color as PropertyColor);
         if (set.cards.length === requiredSize) {
           return false;
         }
@@ -795,7 +779,7 @@ export function executePropertySteal(
   }
 
   // Find an incomplete set to add the property to
-  const requiredSetSize = getRequiredSetSize(cardColor);
+  const requiredSetSize = getRequiredSetSize(cardColor as PropertyColor);
   let targetSet = sourcePlayer.properties[cardColor][0]; // Default to first set
 
   // Try to find an incomplete set
@@ -832,7 +816,7 @@ export function executeDealBreaker(
   gameState: GameState,
   sourcePlayerId: string,
   targetPlayerId: string,
-  color: string
+  color: PropertyColor
 ): boolean {
   const target = gameState.players.find((p) => p.id === targetPlayerId);
   if (!target) return false;
@@ -1052,7 +1036,7 @@ export function collectRent(
       }
 
       // Find an incomplete set to add the property to
-      const requiredSetSize = getRequiredSetSize(color);
+      const requiredSetSize = getRequiredSetSize(color as PropertyColor);
       let targetSet: PropertySet | undefined;
 
       // Try to find an incomplete set
@@ -1167,7 +1151,7 @@ export function handleJustSayNoResponse(
         type: "DEAL_BREAKER",
         playerId: sourcePlayerId,
       };
-      return executeDealBreaker(gameState, sourcePlayerId, playerId, color);
+      return executeDealBreaker(gameState, sourcePlayerId, playerId, color as PropertyColor);
 
     case "RENT":
       if (!color || amount === undefined) return false;
@@ -1266,7 +1250,7 @@ export function executeForcedDeal(
         theirSetIndex = setIndex;
 
         // Don't allow stealing if it would break a complete set
-        const requiredSize = getRequiredSetSize(color);
+        const requiredSize = getRequiredSetSize(color as PropertyColor);
         if (set.cards.length === requiredSize) {
           return false;
         }
@@ -1342,7 +1326,7 @@ export function executeForcedDeal(
   }
 
   // Find an incomplete set to add the property to
-  const theirRequiredSetSize = getRequiredSetSize(theirColor);
+  const theirRequiredSetSize = getRequiredSetSize(theirColor as PropertyColor);
   let sourceTargetSet: PropertySet | undefined;
 
   // Try to find an incomplete set
@@ -1379,7 +1363,7 @@ export function executeForcedDeal(
   }
 
   // Find an incomplete set to add the property to
-  const myRequiredSetSize = getRequiredSetSize(myColor);
+  const myRequiredSetSize = getRequiredSetSize(myColor as PropertyColor);
   let targetSet: PropertySet | undefined;
 
   // Try to find an incomplete set
@@ -1561,7 +1545,7 @@ export function collectDebt(
       }
 
       // Find an incomplete set to add the property to
-      const requiredSetSize = getRequiredSetSize(color);
+      const requiredSetSize = getRequiredSetSize(color as PropertyColor);
       let targetSet: PropertySet | undefined;
 
       // Try to find an incomplete set
@@ -1755,7 +1739,7 @@ export function collectBirthdayPayment(
       }
 
       // Find an incomplete set to add the property to
-      const requiredSetSize = getRequiredSetSize(color);
+      const requiredSetSize = getRequiredSetSize(color as PropertyColor);
       let targetSet: PropertySet | undefined;
 
       // Try to find an incomplete set
