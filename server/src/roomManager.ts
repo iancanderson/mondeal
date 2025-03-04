@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
-import { Room, GameState, Player, RoomInfo, ActionCardName } from "./types";
+import { Room, GameState, Player, RoomInfo, ActionCardName, PropertyColor, PropertySet } from "./types";
 import {
   createDeck,
   dealInitialCards,
@@ -10,6 +10,14 @@ import {
 
 const rooms: Room[] = [];
 const roomCreators = new Map<string, string>(); // uuid -> roomId
+
+// Helper function to create empty properties object
+function createEmptyProperties(): Record<PropertyColor, PropertySet[]> {
+  return Object.values(PropertyColor).reduce((acc, color) => {
+    acc[color] = [];
+    return acc;
+  }, {} as Record<PropertyColor, PropertySet[]>);
+}
 
 /**
  * Get a list of available rooms that haven't started yet
@@ -51,7 +59,7 @@ export function createRoom(playerInfo: { name: string; uuid: string }): {
           name: playerInfo.name,
           uuid: playerInfo.uuid,
           hand: [],
-          properties: {},
+          properties: createEmptyProperties(),
           moneyPile: [],
           isReady: false,
         },
@@ -61,7 +69,6 @@ export function createRoom(playerInfo: { name: string; uuid: string }): {
       currentPlayerIndex: 0,
       isStarted: false,
       cardsPlayedThisTurn: 0,
-      wildCardReassignedThisTurn: false,
       pendingAction: { type: "NONE" },
     },
   };
@@ -115,7 +122,7 @@ export function joinRoom(
     name: playerInfo.name,
     uuid: playerInfo.uuid,
     hand: [],
-    properties: {},
+    properties: createEmptyProperties(),
     moneyPile: [],
     isReady: false,
   });
@@ -153,7 +160,7 @@ export function handlePlayCard(
   roomId: string,
   playerId: string,
   cardId: string,
-  chosenColor?: string,
+  chosenColor?: PropertyColor,
   playAsAction: boolean = false
 ): {
   success: boolean;

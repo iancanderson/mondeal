@@ -73,7 +73,7 @@ export interface Player {
   name: string;
   uuid: string;
   hand: Card[];
-  properties: Record<string, PropertySet[]>; // color -> array of property sets
+  properties: Record<PropertyColor, PropertySet[]>; // color -> array of property sets
   moneyPile: Card[];
   isReady: boolean;
 }
@@ -85,48 +85,27 @@ export interface PropertySet {
 }
 
 export type ActionState =
-  | {
-      type: "NONE";
-    }
-  | {
-      type: "SLY_DEAL";
-      playerId: string;
-    }
-  | {
-      type: "DEAL_BREAKER";
-      playerId: string;
-    }
-  | {
-      type: "FORCED_DEAL";
-      playerId: string;
-    }
-  | {
-      type: "DEBT_COLLECTOR";
-      playerId: string;
-      amount: number;
-    }
+  | { type: "NONE" }
+  | { type: "SLY_DEAL"; playerId: string }
+  | { type: "DEAL_BREAKER"; playerId: string }
+  | { type: "FORCED_DEAL"; playerId: string }
+  | { type: "DEBT_COLLECTOR"; playerId: string; amount: number }
   | {
       type: "RENT";
       playerId: string;
-      color: string;
+      color: PropertyColor;
       amount: number;
       remainingPayers: string[];
       isDoubled?: boolean;
     }
-  | {
-      type: "DOUBLE_RENT_PENDING";
-      playerId: string;
-    }
+  | { type: "DOUBLE_RENT_PENDING"; playerId: string }
   | {
       type: "BIRTHDAY";
       playerId: string;
       amount: number;
       remainingPayers: string[];
     }
-  | {
-      type: "DISCARD_NEEDED";
-      playerId: string;
-    }
+  | { type: "DISCARD_NEEDED"; playerId: string }
   | {
       type: "JUST_SAY_NO_OPPORTUNITY";
       playerId: string;
@@ -140,7 +119,7 @@ export type ActionState =
       sourcePlayerId: string;
       targetCardId?: string;
       myCardId?: string;
-      color?: string;
+      color?: PropertyColor;
       amount?: number;
     };
 
@@ -183,14 +162,14 @@ export interface ClientToServerEvents {
     roomId: string,
     playerId: string,
     cardId: string,
-    chosenColor?: string,
+    chosenColor?: PropertyColor,
     playAsAction?: boolean
   ) => void;
   reassignWildcard: (
     roomId: string,
     playerId: string,
     cardId: string,
-    newColor: string
+    newColor: PropertyColor
   ) => void;
   executePropertySteal: (
     roomId: string,
@@ -202,14 +181,7 @@ export interface ClientToServerEvents {
     roomId: string,
     sourcePlayerId: string,
     targetPlayerId: string,
-    color: string
-  ) => void;
-  executeForcedDeal: (
-    roomId: string,
-    sourcePlayerId: string,
-    targetPlayerId: string,
-    targetCardId: string,
-    myCardId: string
+    color: PropertyColor
   ) => void;
   payRent: (roomId: string, payerId: string, paymentCardIds: string[]) => void;
   payBirthdayGift: (
