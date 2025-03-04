@@ -25,10 +25,10 @@
 - It's My Birthday
 - Double The Rent
 - Player has to discard down to 7 cards at end of turn
+- Debt Collector should let the person with the debt select how to pay, not the collector.
 
 ## TODO
 
 - Deal Breaker said there was no set to steal when there was.
-- Debt Collector should let the person with the debt select how to pay, not the collector.
 - If a player has more cards for a color than the set limit, start a new set for that color
 - Disallow playing Just Say No as an action on your own turn, not in response to anything

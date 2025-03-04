@@ -1284,45 +1284,7 @@ export function executeForcedDeal(
     return false;
   }
 
-  // Find the card in source player's properties
-  let myCard: Card | undefined;
-  let myColor: PropertyColor | undefined;
-
-  outer: for (const [color, propertySets] of Object.entries(
-    sourcePlayer.properties
-  )) {
-    if (!isPropertyColor(color)) continue;
-
-    for (let setIndex = 0; setIndex < propertySets.length; setIndex++) {
-      const set = propertySets[setIndex];
-      const cardIndex = set.cards.findIndex((c) => c.id === myCardId);
-
-      if (cardIndex !== -1) {
-        myCard = set.cards[cardIndex];
-        myColor = color;
-
-        // Remove from source player's properties
-        set.cards.splice(cardIndex, 1);
-
-        // If set is now empty, remove it
-        if (set.cards.length === 0) {
-          propertySets.splice(setIndex, 1);
-
-          // If no more sets for this color, remove the color entry
-          if (propertySets.length === 0) {
-            delete sourcePlayer.properties[color];
-          }
-        }
-        break outer;
-      }
-    }
-  }
-
-  if (!myCard || !myColor) {
-    return false;
-  }
-
-  // Add target's card to source player's properties
+  // Add to source player's properties
   if (!sourcePlayer.properties[theirColor]) {
     sourcePlayer.properties[theirColor] = [
       {
@@ -1359,6 +1321,50 @@ export function executeForcedDeal(
   // Add their card to source player's set
   sourceTargetSet.cards.push(theirCard);
 
+  // Find my card in source player's properties
+  let myCard: Card | undefined;
+  let myColor: PropertyColor | undefined;
+
+  outer: for (const [color, propertySets] of Object.entries(
+    sourcePlayer.properties
+  )) {
+    if (!isPropertyColor(color)) continue;
+
+    for (let setIndex = 0; setIndex < propertySets.length; setIndex++) {
+      const set = propertySets[setIndex];
+      const cardIndex = set.cards.findIndex((c) => c.id === myCardId);
+
+      if (cardIndex !== -1) {
+        myCard = set.cards[cardIndex];
+        myColor = color as PropertyColor;
+
+        // Don't allow trading if it would break a complete set
+        const requiredSize = getRequiredSetSize(color);
+        if (set.cards.length === requiredSize) {
+          return false;
+        }
+
+        // Remove from source player's properties
+        set.cards.splice(cardIndex, 1);
+
+        // If set is now empty, remove it
+        if (set.cards.length === 0) {
+          propertySets.splice(setIndex, 1);
+
+          // If no more sets for this color, remove the color
+          if (propertySets.length === 0) {
+            delete sourcePlayer.properties[color];
+          }
+        }
+        break outer;
+      }
+    }
+  }
+
+  if (!myCard || !myColor) {
+    return false;
+  }
+
   // Add source's card to target player's properties
   if (!target.properties[myColor]) {
     target.properties[myColor] = [
@@ -1371,7 +1377,7 @@ export function executeForcedDeal(
   }
 
   // Find an incomplete set to add the property to
-  const myRequiredSetSize = getRequiredSetSize(myColor as PropertyColor);
+  const myRequiredSetSize = getRequiredSetSize(myColor);
   let targetSet: PropertySet | undefined;
 
   // Try to find an incomplete set
@@ -1413,47 +1419,55 @@ export function executeForcedDeal(
 export function collectDebt(
   gameState: GameState,
   sourcePlayerId: string,
-  targetPlayerId: string,
-  paymentCards: string[]
+  targetPlayerId: string
 ): boolean {
   // Verify that a debt collector action is pending
+  if (
+    gameState.pendingAction.type !== "DEBT_COLLECTOR" ||
+    gameState.pendingAction.playerId !== sourcePlayerId
+  ) {
+    return false;
+  }
+
+  // Update the pending action with the target player
+  gameState.pendingAction = {
+    ...gameState.pendingAction,
+    targetPlayerId // This is now valid since we updated the type
+  };
+  
+  return true;
+}
+
+export function payDebt(
+  gameState: GameState,
+  playerId: string,
+  paymentCards: string[]
+): boolean {
+  // First verify this is a debt collector action
   if (gameState.pendingAction.type !== "DEBT_COLLECTOR") {
     return false;
   }
 
-  if (gameState.pendingAction.playerId !== sourcePlayerId) {
+  // Now TypeScript knows pendingAction is a DEBT_COLLECTOR action
+  const { playerId: collectorId, amount } = gameState.pendingAction;
+
+  if (gameState.pendingAction.targetPlayerId !== playerId) {
     return false;
   }
 
-  const { amount } = gameState.pendingAction;
-  const collector = gameState.players.find((p) => p.id === sourcePlayerId);
-  const target = gameState.players.find((p) => p.id === targetPlayerId);
-
-  if (!collector || !target) {
-    return false;
-  }
-
-  // First check if target has Just Say No
-  if (getJustSayNoCard(target)) {
-    // Give target player opportunity to use Just Say No
-    gameState.pendingAction = {
-      type: "JUST_SAY_NO_OPPORTUNITY",
-      playerId: targetPlayerId,
-      actionType: "DEBT_COLLECTOR",
-      sourcePlayerId,
-      amount: amount,
-    };
-    return true;
-  }
+  const collector = gameState.players.find((p) => p.id === collectorId);
+  const debtor = gameState.players.find((p) => p.id === playerId);
+  
+  if (!collector || !debtor) return false;
 
   // Get all possible payment sources
-  const moneyPileCards = target.moneyPile;
-
-  // Flatten all property cards from all sets of all colors
-  const propertyCards = Object.values(target.properties).flatMap(
-    (propertySets) => propertySets.flatMap((set) => set.cards)
+  const moneyPileCards = debtor.moneyPile;
+  const propertyCards = Object.entries(debtor.properties).flatMap(
+    ([colorStr, propertySets]) => {
+      const color = colorStr as PropertyColor;
+      return propertySets.flatMap((set) => set.cards);
+    }
   );
-
   const availableCards = [...moneyPileCards, ...propertyCards];
 
   // Calculate total possible payment
@@ -1462,7 +1476,7 @@ export function collectDebt(
     0
   );
 
-  // Check if this is a bankruptcy case (insufficient total funds)
+  // Check if this is a bankruptcy case
   const isBankruptcy = totalPossible < amount;
 
   // In bankruptcy case, validate that ALL cards are being surrendered
@@ -1470,118 +1484,73 @@ export function collectDebt(
     return false;
   }
 
-  // Validate all payment cards exist in allowed sources (money pile or properties)
-  for (const cardId of paymentCards) {
-    const cardExists = availableCards.some((c) => c.id === cardId);
-    if (!cardExists) {
-      return false;
-    }
-  }
-
-  // Transfer the selected cards
-  const paymentCardsToTransfer: Card[] = [];
-  for (const cardId of paymentCards) {
-    // Look for the card in money pile first
-    let card = target.moneyPile.find((c) => c.id === cardId);
-    let location: "money" | "property" = "money";
-
-    if (!card) {
-      // Look in properties
-      outer: for (const [color, propertySets] of Object.entries(
-        target.properties
-      )) {
-        if (!isPropertyColor(color)) continue;
-
-        for (let setIndex = 0; setIndex < propertySets.length; setIndex++) {
-          const set = propertySets[setIndex];
-          const cardIndex = set.cards.findIndex((c) => c.id === cardId);
-
-          if (cardIndex !== -1) {
-            card = set.cards[cardIndex];
-            location = "property";
-
-            // Remove from source player's properties
-            set.cards.splice(cardIndex, 1);
-
-            // If set is now empty, remove it
-            if (set.cards.length === 0) {
-              propertySets.splice(setIndex, 1);
-
-              // If no more sets for this color, remove the color entry
-              if (propertySets.length === 0) {
-                delete target.properties[color];
-              }
-            }
-            break outer;
-          }
-        }
-      }
-    } else {
-      // Remove from money pile
-      target.moneyPile = target.moneyPile.filter((c) => c.id !== cardId);
-    }
-
-    if (!card) {
-      return false;
-    }
-
-    paymentCardsToTransfer.push(card);
-  }
-
   // For non-bankruptcy case, verify payment amount
   if (
     !isBankruptcy &&
-    paymentCardsToTransfer.reduce((sum, card) => sum + card.value, 0) < amount
+    paymentCards.reduce((sum, cardId) => {
+      const card = availableCards.find((c) => c.id === cardId);
+      return sum + (card?.value || 0);
+    }, 0) < amount
   ) {
     return false;
   }
 
-  // Sort cards: properties go to collector's properties, others to money pile
-  for (const card of paymentCardsToTransfer) {
-    if (card.type === CardType.PROPERTY) {
-      // Add to collector's properties
-      const color = card.isWildcard
-        ? Object.values(PropertyColor)[0] || PropertyColor.BROWN
-        : card.color;
+  // Transfer the cards
+  for (const cardId of paymentCards) {
+    let card: Card | undefined;
 
-      if (!collector.properties[color]) {
-        collector.properties[color] = [
-          {
-            cards: [],
-            houses: 0,
-            hotels: 0,
-          },
-        ];
-      }
+    // Try to find in money pile first
+    const moneyCard = debtor.moneyPile.find((c) => c.id === cardId);
+    if (moneyCard) {
+      debtor.moneyPile = debtor.moneyPile.filter((c) => c.id !== cardId);
+      collector.moneyPile.push(moneyCard);
+      continue;
+    }
 
-      // Find an incomplete set to add the property to
-      const requiredSetSize = getRequiredSetSize(color);
-      let targetSet: PropertySet | undefined;
+    // Look in properties if not in money pile
+    outer: for (const [colorStr, propertySets] of Object.entries(debtor.properties)) {
+      if (!isPropertyColor(colorStr)) continue;
+      const color = colorStr as PropertyColor;
+      
+      for (let setIndex = 0; setIndex < propertySets.length; setIndex++) {
+        const set = propertySets[setIndex];
+        const cardIndex = set.cards.findIndex((c) => c.id === cardId);
 
-      // Try to find an incomplete set
-      for (const set of collector.properties[color]) {
-        if (set.cards.length < requiredSetSize) {
-          targetSet = set;
-          break;
+        if (cardIndex !== -1) {
+          card = set.cards[cardIndex];
+          
+          // Remove from debtor's properties
+          set.cards.splice(cardIndex, 1);
+
+          // If set is empty, remove it
+          if (set.cards.length === 0) {
+            propertySets.splice(setIndex, 1);
+
+            // If no more sets for this color, remove the color
+            if (propertySets.length === 0) {
+              delete debtor.properties[color];
+            }
+          }
+
+          // Add to collector's properties
+          if (!collector.properties[color]) {
+            collector.properties[color] = [];
+          }
+          
+          // Find or create a set to add the card to
+          let targetSet = collector.properties[color].find(
+            (set) => set.cards.length < getRequiredSetSize(color)
+          );
+          
+          if (!targetSet) {
+            targetSet = { cards: [], houses: 0, hotels: 0 };
+            collector.properties[color].push(targetSet);
+          }
+          
+          targetSet.cards.push(card);
+          break outer;
         }
       }
-
-      // If no incomplete set found, create a new one
-      if (!targetSet) {
-        const newSet: PropertySet = {
-          cards: [],
-          houses: 0,
-          hotels: 0,
-        };
-        collector.properties[color].push(newSet);
-        targetSet = newSet;
-      }
-
-      // Add the card to the target set
-      targetSet.cards.push(card);
-    } else {
-      // Add to collector's money pile
-      collector.moneyPile.push(card);
     }
   }
 
@@ -1803,4 +1772,33 @@ export function collectBirthdayPayment(
 // For Object.entries type safety, add this helper function at the top of the file
 function isPropertyColor(color: string): color is PropertyColor {
   return Object.values(PropertyColor).includes(color as PropertyColor);
+}
+
+export function playDebtCollector(
+  gameState: GameState,
+  playerId: string,
+  cardId: string
+): boolean {
+  const player = gameState.players.find((p) => p.id === playerId);
+  if (!player) return false;
+
+  // Find and remove the card from player's hand
+  const cardIndex = player.hand.findIndex((c) => c.id === cardId);
+  if (cardIndex === -1) return false;
+
+  const card = player.hand[cardIndex];
+  if (card.name !== "Debt Collector") return false;
+
+  player.hand.splice(cardIndex, 1);
+  gameState.discardPile.push(card);
+
+  // Set pending action for debt collection
+  gameState.pendingAction = {
+    type: "DEBT_COLLECTOR",
+    playerId: playerId,
+    amount: 5, // Standard amount for Debt Collector
+    targetPlayerId: "", // Will be set when target is selected
+  };
+
+  return true;
 }

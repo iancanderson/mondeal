@@ -72,7 +72,12 @@ export type ActionState =
   | { type: "SLY_DEAL"; playerId: string }
   | { type: "DEAL_BREAKER"; playerId: string }
   | { type: "FORCED_DEAL"; playerId: string }
-  | { type: "DEBT_COLLECTOR"; playerId: string; amount: number }
+  | {
+      type: "DEBT_COLLECTOR";
+      playerId: string;
+      amount: number;
+      targetPlayerId?: string;
+    }
   | {
       type: "RENT";
       playerId: string;
@@ -213,6 +218,7 @@ export interface ClientToServerEvents {
     targetPlayerId: string,
     paymentCardIds: string[]
   ) => void;
+  payDebt: (roomId: string, playerId: string, paymentCardIds: string[]) => void;
   discardCards: (roomId: string, playerId: string, cardIds: string[]) => void;
 }
 

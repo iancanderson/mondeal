@@ -23,6 +23,7 @@ import {
   handleJustSayNoResponse,
   collectBirthdayPayment,
   startTurn,
+  payDebt,
 } from "./gameLogic";
 import {
   ClientToServerEvents,
@@ -50,6 +51,14 @@ function broadcastRoomUpdate() {
 
 // Track player socket connections to rooms
 const playerRooms = new Map<string, string>(); // socketId -> roomId
+
+// Function to notify room of updates
+const notifyRoom = (roomId: string) => {
+  const room = getRoom(roomId);
+  if (room) {
+    io.to(roomId).emit("updateGameState", room.gameState);
+  }
+};
 
 // Socket.IO event handling
 io.on("connection", (socket) => {
@@ -420,56 +429,13 @@ io.on("connection", (socket) => {
   // Add a new socket handler for collecting debt
   socket.on(
     "collectDebt",
-    (
-      roomId: string,
-      sourcePlayerId: string,
-      targetPlayerId: string,
-      paymentCardIds: string[]
-    ) => {
+    (roomId: string, playerId: string, targetPlayerId: string) => {
       const room = getRoom(roomId);
       if (!room) return;
 
-      const sourcePlayer = room.gameState.players.find(
-        (p) => p.id === sourcePlayerId
-      );
-      const targetPlayer = room.gameState.players.find(
-        (p) => p.id === targetPlayerId
-      );
-
-      if (!sourcePlayer || !targetPlayer) return;
-
-      // Calculate if this is a bankruptcy case (giving up all cards)
-      const totalCards = [
-        ...targetPlayer.moneyPile,
-        // Flatten arrays of property cards from all property sets
-        ...Object.values(targetPlayer.properties).flatMap((propertySets) =>
-          propertySets.flatMap((set) => set.cards)
-        ),
-      ];
-      const isBankruptcy = paymentCardIds.length === totalCards.length;
-
-      const success = collectDebt(
-        room.gameState,
-        sourcePlayerId,
-        targetPlayerId,
-        paymentCardIds
-      );
-
+      const success = collectDebt(room.gameState, playerId, targetPlayerId);
       if (success) {
-        io.to(roomId).emit("updateGameState", room.gameState);
-
-        // Send appropriate notification based on bankruptcy status
-        if (isBankruptcy) {
-          io.to(roomId).emit(
-            "gameNotification",
-            `${targetPlayer.name} went bankrupt and surrendered all cards to pay ${sourcePlayer.name}'s $5M debt!`
-          );
-        } else {
-          io.to(roomId).emit(
-            "gameNotification",
-            `${targetPlayer.name} paid $5M debt to ${sourcePlayer.name}.`
-          );
-        }
+        notifyRoom(roomId);
       }
     }
   );
@@ -560,6 +526,49 @@ io.on("connection", (socket) => {
           cardIds.length !== 1 ? "s" : ""
         }.`
       );
+    }
+  );
+
+  // Update debt collector handler to not take payment cards
+  socket.on(
+    "collectDebt",
+    (roomId: string, playerId: string, targetPlayerId: string) => {
+      const room = getRoom(roomId);
+      if (!room) return;
+
+      const success = collectDebt(room.gameState, playerId, targetPlayerId);
+      if (success) {
+        notifyRoom(roomId);
+      }
+    }
+  );
+
+  socket.on(
+    "payDebt",
+    (roomId: string, playerId: string, paymentCardIds: string[]) => {
+      const room = getRoom(roomId);
+      if (!room) return;
+
+      const success = payDebt(room.gameState, playerId, paymentCardIds);
+      if (success) {
+        notifyRoom(roomId);
+
+        // Send notification about debt payment
+        const debtor = room.gameState.players.find((p) => p.id === playerId);
+        const collector = room.gameState.players.find((p) => {
+          const action = room.gameState.pendingAction;
+          return action.type === "DEBT_COLLECTOR"
+            ? p.id === action.playerId
+            : false;
+        });
+
+        if (debtor && collector) {
+          io.to(roomId).emit(
+            "gameNotification",
+            `${debtor.name} paid $5M debt to ${collector.name}.`
+          );
+        }
+      }
     }
   );
 

@@ -62,6 +62,9 @@ function Game() {
   const [selectedDoubleRentCard, setSelectedDoubleRentCard] =
     useState<Card | null>(null);
 
+  // Add UI state for debt payment modal
+  const [showDebtPaymentModal, setShowDebtPaymentModal] = useState(false);
+
   // Handle window resize for confetti
   React.useEffect(() => {
     const handleResize = () => {
@@ -220,6 +223,19 @@ function Game() {
     }
   }, [gameState?.pendingAction, playerId]);
 
+  // Add effect to show debt payment modal
+  React.useEffect(() => {
+    if (
+      gameState?.pendingAction.type === "DEBT_COLLECTOR" &&
+      "targetPlayerId" in gameState.pendingAction &&
+      gameState.pendingAction.targetPlayerId === playerId
+    ) {
+      setShowDebtPaymentModal(true);
+    } else {
+      setShowDebtPaymentModal(false);
+    }
+  }, [gameState?.pendingAction, playerId]);
+
   if (!roomId || !gameState) {
     return <div className="p-4">No Game State found. Return to Lobby.</div>;
   }
@@ -314,7 +330,7 @@ function Game() {
         undefined,
         true
       );
-      setSelectedActionCard(null);
+      // Don't clear selectedActionCard yet - we need it for the debt collection
       setShowDebtCollectorModal(true);
       return;
     }
@@ -428,20 +444,14 @@ function Game() {
     setShowForcedDealModal(false);
   };
 
-  const handleCollectDebt = (
-    targetPlayerId: string,
-    paymentCardIds: string[]
-  ) => {
-    if (!roomId || !playerId) return;
+  const handleCollectDebt = (targetPlayerId: string) => {
+    if (!roomId || !playerId || !selectedActionCard) return;
 
-    socket.emit(
-      "collectDebt",
-      roomId,
-      playerId,
-      targetPlayerId,
-      paymentCardIds
-    );
+    // Then emit the collect debt action
+    socket.emit("collectDebt", roomId, playerId, targetPlayerId);
     setShowDebtCollectorModal(false);
+    // Now we can clear the selected action card
+    setSelectedActionCard(null);
   };
 
   // Handle paying a birthday gift
@@ -479,6 +489,12 @@ function Game() {
     if (!roomId || !playerId || !gameState) return;
     socket.emit("discardCards", roomId, playerId, cardIds);
     setShowDiscardModal(false);
+  };
+
+  const handlePayDebt = (paymentCardIds: string[]) => {
+    if (!roomId || !playerId) return;
+    socket.emit("payDebt", roomId, playerId, paymentCardIds);
+    setShowDebtPaymentModal(false);
   };
 
   const getRentCards = () => {
@@ -616,7 +632,6 @@ function Game() {
         <DebtCollectorModal
           players={gameState.players}
           currentPlayerId={playerId}
-          amount={5} // Fixed $5M for Debt Collector
           onCollectDebt={handleCollectDebt}
           onCancel={() => setShowDebtCollectorModal(false)}
         />
@@ -657,6 +672,15 @@ function Game() {
 
       {showDiscardModal && myPlayer && (
         <DiscardModal cards={myPlayer.hand} onDiscard={handleDiscard} />
+      )}
+
+      {showDebtPaymentModal && gameState && (
+        <RentModal
+          pendingAction={gameState.pendingAction}
+          currentPlayer={gameState.players[gameState.currentPlayerIndex]}
+          targetPlayer={myPlayer!}
+          onPayRent={handlePayDebt}
+        />
       )}
 
       <div className="flex justify-between items-center mb-4">
