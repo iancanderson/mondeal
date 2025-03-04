@@ -691,9 +691,7 @@ function Game() {
                 player={player}
                 isCurrentPlayer={player.id === playerId}
                 onWildCardClick={handleWildCardClick}
-                canReassignWildCard={
-                  isMyTurn && !gameState.wildCardReassignedThisTurn
-                }
+                canReassignWildCard={isMyTurn}
               />
             ))}
           </div>
