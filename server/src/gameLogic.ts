@@ -1121,7 +1121,6 @@ export function handleJustSayNoResponse(
     gameState.pendingAction = { type: "NONE" };
 
     // Check if the current player's turn should end
-    const currentPlayer = gameState.players[gameState.currentPlayerIndex];
     if (gameState.cardsPlayedThisTurn >= 3) {
       endTurn(gameState);
     }
@@ -1163,24 +1162,21 @@ export function handleJustSayNoResponse(
 
     case "RENT":
       if (!color || amount === undefined) return false;
-      // When a player allows rent to be charged, set up the rent collection with remaining payers
       gameState.pendingAction = {
         type: "RENT",
         playerId: sourcePlayerId,
         color,
         amount,
         remainingPayers: gameState.players
-          .filter((p) => p.id !== sourcePlayerId) // Everyone except the rent collector
+          .filter((p) => p.id !== sourcePlayerId)
           .map((p) => p.id),
       };
       return true;
 
     case "FORCED_DEAL":
       if (!targetCardId || !myCardId) return false;
-      gameState.pendingAction = {
-        type: "FORCED_DEAL",
-        playerId: sourcePlayerId,
-      };
+
+      // Execute the Forced Deal immediately since they declined Just Say No
       return executeForcedDeal(
         gameState,
         sourcePlayerId,
@@ -1432,9 +1428,9 @@ export function collectDebt(
   // Update the pending action with the target player
   gameState.pendingAction = {
     ...gameState.pendingAction,
-    targetPlayerId // This is now valid since we updated the type
+    targetPlayerId, // This is now valid since we updated the type
   };
-  
+
   return true;
 }
 
@@ -1457,7 +1453,7 @@ export function payDebt(
 
   const collector = gameState.players.find((p) => p.id === collectorId);
   const debtor = gameState.players.find((p) => p.id === playerId);
-  
+
   if (!collector || !debtor) return false;
 
   // Get all possible payment sources
@@ -1508,17 +1504,19 @@ export function payDebt(
     }
 
     // Look in properties if not in money pile
-    outer: for (const [colorStr, propertySets] of Object.entries(debtor.properties)) {
+    outer: for (const [colorStr, propertySets] of Object.entries(
+      debtor.properties
+    )) {
       if (!isPropertyColor(colorStr)) continue;
       const color = colorStr as PropertyColor;
-      
+
       for (let setIndex = 0; setIndex < propertySets.length; setIndex++) {
         const set = propertySets[setIndex];
         const cardIndex = set.cards.findIndex((c) => c.id === cardId);
 
         if (cardIndex !== -1) {
           card = set.cards[cardIndex];
-          
+
           // Remove from debtor's properties
           set.cards.splice(cardIndex, 1);
 
@@ -1536,17 +1534,17 @@ export function payDebt(
           if (!collector.properties[color]) {
             collector.properties[color] = [];
           }
-          
+
           // Find or create a set to add the card to
           let targetSet = collector.properties[color].find(
             (set) => set.cards.length < getRequiredSetSize(color)
           );
-          
+
           if (!targetSet) {
             targetSet = { cards: [], houses: 0, hotels: 0 };
             collector.properties[color].push(targetSet);
           }
-          
+
           targetSet.cards.push(card);
           break outer;
         }
