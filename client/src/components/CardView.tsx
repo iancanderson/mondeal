@@ -135,7 +135,11 @@ function CardView({ card, clickable, onClick }: CardViewProps) {
       className={`
         relative border-2 rounded-xl w-20 h-28 flex flex-col overflow-hidden
         shadow-md transition-all duration-200 select-none text-center
-        ${clickable ? "hover:shadow-xl hover:scale-105 hover:-translate-y-1 cursor-pointer" : ""}
+        ${
+          clickable
+            ? "hover:shadow-xl hover:scale-105 hover:-translate-y-1 cursor-pointer"
+            : ""
+        }
         ${getCardBg()}
         ${getTextColor()}
         border-white/30
@@ -143,14 +147,20 @@ function CardView({ card, clickable, onClick }: CardViewProps) {
       onClick={clickable ? onClick : undefined}
     >
       {card.type === "PROPERTY" && (
-        <div className={`w-full h-7 ${getBgColor()} px-1 pt-1 flex items-center justify-center`}>
+        <div
+          className={`w-full h-7 ${getBgColor()} px-1 pt-1 flex items-center justify-center`}
+        >
           <div className="text-[10px] font-bold leading-tight text-white drop-shadow-sm">
             {card.name}
           </div>
         </div>
       )}
 
-      <div className={`flex flex-col flex-1 p-2 ${card.type !== "PROPERTY" ? "pt-2" : "pt-1"} items-center`}>
+      <div
+        className={`flex flex-col flex-1 p-2 ${
+          card.type !== "PROPERTY" ? "pt-2" : "pt-1"
+        } items-center`}
+      >
         {card.type !== "PROPERTY" && (
           <div className="text-xs font-bold mb-1 leading-tight drop-shadow-sm text-center">
             {card.name}
@@ -159,10 +169,14 @@ function CardView({ card, clickable, onClick }: CardViewProps) {
 
         <div className="mt-auto flex flex-col items-center">
           {card.type === "MONEY" && (
-            <div className="text-base font-bold text-green-700 drop-shadow-sm">${card.value}M</div>
+            <div className="text-base font-bold text-green-700 drop-shadow-sm">
+              ${card.value}M
+            </div>
           )}
           {card.type !== "MONEY" && (
-            <div className="text-[10px] font-medium opacity-75">Value: ${card.value}M</div>
+            <div className="text-[10px] font-medium opacity-75">
+              Value: ${card.value}M
+            </div>
           )}
         </div>
       </div>
