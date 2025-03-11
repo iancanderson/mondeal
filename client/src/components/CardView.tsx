@@ -264,30 +264,35 @@ function CardView({ card, clickable, onClick, numCards }: CardViewProps) {
             </div>
           </div>
 
-          <div className="flex flex-col flex-1 p-2 justify-between bg-white text-black">
-            {!card.isWildcard && card.color && (
-              <div className="text-[9px] space-y-0.5">
-                {getRentValues(card.color).map((value, index) => {
-                  const isCurrentCount = index + 1 === numCards || index === 0;
-                  return (
-                    <div
-                      key={index}
-                      className={`
-                        flex justify-between items-center px-1 py-0.5 rounded
-                        ${isCurrentCount ? "bg-blue-100 font-semibold" : ""}
-                      `}
-                    >
-                      <span>
-                        {index + 1} Card{index === 0 ? "" : "s"}
-                      </span>
-                      <span className="font-bold">${value}M</span>
-                    </div>
-                  );
-                })}
+          <div className="flex flex-col flex-1 bg-white text-black">
+            <div className="flex-1 p-2">
+              {!card.isWildcard && card.color && (
+                <div className="text-[9px] space-y-0.5">
+                  {getRentValues(card.color).map((value, index) => {
+                    const isCurrentCount =
+                      index + 1 === numCards || (!numCards && index === 0);
+                    return (
+                      <div
+                        key={index}
+                        className={`
+                          flex justify-between items-center px-1 py-0.5 rounded
+                          ${isCurrentCount ? "bg-blue-100 font-semibold" : ""}
+                        `}
+                      >
+                        <span>
+                          {index + 1} Card{index === 0 ? "" : "s"}
+                        </span>
+                        <span className="font-bold">${value}M</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+            <div className="bg-emerald-100 py-1.5 text-center">
+              <div className="text-base font-bold text-green-700">
+                ${card.value}M
               </div>
-            )}
-            <div className="text-xs font-medium opacity-75 text-center">
-              Value: ${card.value}M
             </div>
           </div>
         </>
