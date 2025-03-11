@@ -5,9 +5,10 @@ interface CardViewProps {
   card: Card;
   clickable?: boolean;
   onClick?: () => void;
+  numCards?: number; // Add this prop to track cards in set
 }
 
-function CardView({ card, clickable, onClick }: CardViewProps) {
+function CardView({ card, clickable, onClick, numCards }: CardViewProps) {
   const getColorClass = (color: PropertyColor) => {
     switch (color) {
       case PropertyColor.BROWN:
@@ -266,17 +267,23 @@ function CardView({ card, clickable, onClick }: CardViewProps) {
           <div className="flex flex-col flex-1 p-2 justify-between bg-white text-black">
             {!card.isWildcard && card.color && (
               <div className="text-[9px] space-y-0.5">
-                {getRentValues(card.color).map((value, index) => (
-                  <div
-                    key={index}
-                    className="flex justify-between items-center"
-                  >
-                    <span>
-                      {index + 1} Card{index === 0 ? "" : "s"}
-                    </span>
-                    <span className="font-bold">${value}M</span>
-                  </div>
-                ))}
+                {getRentValues(card.color).map((value, index) => {
+                  const isCurrentCount = index + 1 === numCards || index === 0;
+                  return (
+                    <div
+                      key={index}
+                      className={`
+                        flex justify-between items-center px-1 py-0.5 rounded
+                        ${isCurrentCount ? "bg-blue-100 font-semibold" : ""}
+                      `}
+                    >
+                      <span>
+                        {index + 1} Card{index === 0 ? "" : "s"}
+                      </span>
+                      <span className="font-bold">${value}M</span>
+                    </div>
+                  );
+                })}
               </div>
             )}
             <div className="text-xs font-medium opacity-75 text-center">

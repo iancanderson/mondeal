@@ -82,12 +82,6 @@ function PlayerArea({
     return card.type === CardType.PROPERTY && !!card.isWildcard;
   };
 
-  const handleCardClick = (card: Card) => {
-    if (isCurrentPlayer && isWildcard(card) && onWildCardClick) {
-      onWildCardClick(card);
-    }
-  };
-
   const completedSets = getCompletedSetCount();
 
   return (
@@ -132,24 +126,14 @@ function PlayerArea({
                       </div>
                       <div className="flex gap-0.5 relative">
                         {propertySet.cards.map((card: Card) => (
-                          <div
-                            key={card.id}
-                            className={
-                              isCurrentPlayer &&
-                              canReassignWildCard &&
-                              isWildcard(card)
-                                ? "cursor-pointer hover:scale-105 transition-transform"
-                                : ""
-                            }
-                          >
+                          <div key={card.id}>
                             <CardView
                               card={card}
-                              clickable={
-                                isCurrentPlayer &&
-                                canReassignWildCard &&
-                                isWildcard(card)
+                              numCards={propertySet.cards.length}
+                              clickable={canReassignWildCard && card.isWildcard}
+                              onClick={() =>
+                                card.isWildcard && onWildCardClick(card)
                               }
-                              onClick={() => handleCardClick(card)}
                             />
                           </div>
                         ))}
