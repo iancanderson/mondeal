@@ -173,11 +173,17 @@ function CardView({ card, clickable, onClick }: CardViewProps) {
       `}
       onClick={clickable ? onClick : undefined}
     >
+      {card.type === CardType.MONEY && (
+        <div className="flex flex-col flex-1 items-center justify-center">
+          <div className="text-2xl font-bold text-green-700 drop-shadow-sm">
+            ${card.value}M
+          </div>
+        </div>
+      )}
+
       {card.type === CardType.PROPERTY && (
         <>
-          <div
-            className={`w-full h-7 ${getBgColor()} px-1 pt-1 flex items-center justify-center`}
-          >
+          <div className={`w-full h-7 ${getBgColor()} px-1 pt-1 flex items-center justify-center`}>
             <div className="text-[10px] font-bold leading-tight text-white drop-shadow-sm">
               {card.name}
             </div>
@@ -187,42 +193,26 @@ function CardView({ card, clickable, onClick }: CardViewProps) {
             {!card.isWildcard && card.color && (
               <div className="text-[8px] space-y-0.5">
                 {getRentValues(card.color).map((value, index) => (
-                  <div
-                    key={index}
-                    className="flex justify-between items-center"
-                  >
-                    <span>
-                      {index + 1} Card{index === 0 ? "" : "s"}
-                    </span>
+                  <div key={index} className="flex justify-between items-center">
+                    <span>{index + 1} Card{index === 0 ? "" : "s"}</span>
                     <span className="font-bold">${value}M</span>
                   </div>
                 ))}
               </div>
             )}
-            <div className="text-[10px] font-medium opacity-75 text-center">
-              Value: ${card.value}M
-            </div>
+            <div className="text-[10px] font-medium opacity-75 text-center">Value: ${card.value}M</div>
           </div>
         </>
       )}
 
-      {card.type !== CardType.PROPERTY && (
+      {card.type !== CardType.PROPERTY && card.type !== CardType.MONEY && (
         <div className="flex flex-col flex-1 p-2">
           <div className="text-xs font-bold mb-1 leading-tight drop-shadow-sm">
             {card.name}
           </div>
 
           <div className="mt-auto">
-            {card.type === CardType.MONEY && (
-              <div className="text-base font-bold text-green-700 drop-shadow-sm">
-                ${card.value}M
-              </div>
-            )}
-            {card.type !== CardType.MONEY && (
-              <div className="text-[10px] font-medium opacity-75">
-                Value: ${card.value}M
-              </div>
-            )}
+            <div className="text-[10px] font-medium opacity-75">Value: ${card.value}M</div>
           </div>
         </div>
       )}
