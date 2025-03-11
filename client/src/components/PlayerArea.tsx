@@ -125,18 +125,25 @@ function PlayerArea({
                         </span>
                       </div>
                       <div className="flex gap-0.5 relative">
-                        {propertySet.cards.map((card: Card) => (
-                          <div key={card.id}>
-                            <CardView
-                              card={card}
-                              numCards={propertySet.cards.length}
-                              clickable={canReassignWildCard && card.isWildcard}
-                              onClick={() =>
-                                card.isWildcard && onWildCardClick(card)
-                              }
-                            />
-                          </div>
-                        ))}
+                        {propertySet.cards.map((card: Card) => {
+                          const cardToRender = card.isWildcard
+                            ? { ...card, color: color as PropertyColor }
+                            : card;
+                          return (
+                            <div key={card.id}>
+                              <CardView
+                                card={cardToRender}
+                                numCards={propertySet.cards.length}
+                                clickable={
+                                  canReassignWildCard && card.isWildcard
+                                }
+                                onClick={() =>
+                                  card.isWildcard && onWildCardClick(card)
+                                }
+                              />
+                            </div>
+                          );
+                        })}
                         {(propertySet.houses > 0 || propertySet.hotels > 0) && (
                           <div className="absolute -top-2 -right-2 bg-white px-1 rounded-full shadow border text-xs flex items-center gap-0.5">
                             {propertySet.houses > 0 && (

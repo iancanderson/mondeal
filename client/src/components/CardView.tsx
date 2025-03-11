@@ -266,7 +266,7 @@ function CardView({ card, clickable, onClick, numCards }: CardViewProps) {
 
           <div className="flex flex-col flex-1 bg-white text-black">
             <div className="flex-1 p-2">
-              {!card.isWildcard && card.color && (
+              {card.color && (
                 <div className="text-[9px] space-y-0.5">
                   {getRentValues(card.color).map((value, index) => {
                     const isCurrentCount =
@@ -286,6 +286,11 @@ function CardView({ card, clickable, onClick, numCards }: CardViewProps) {
                       </div>
                     );
                   })}
+                  {card.isWildcard && !card.color && (
+                    <div className="text-[9px] italic text-center mb-1">
+                      Wild Property Card
+                    </div>
+                  )}
                 </div>
               )}
             </div>
