@@ -94,6 +94,13 @@ function CardView({ card, clickable, onClick }: CardViewProps) {
         }
       }
     }
+    return "";
+  };
+
+  const getCardBg = () => {
+    if (card.type === "MONEY") {
+      return "bg-gradient-to-b from-emerald-100 to-emerald-50";
+    }
     if (
       card.type === "RENT" &&
       card.rentColors &&
@@ -103,7 +110,7 @@ function CardView({ card, clickable, onClick }: CardViewProps) {
         card.rentColors[0]
       )} ${getSecondColorClass(card.rentColors[1])}`;
     }
-    return card.type === "MONEY" ? "bg-emerald-100" : "bg-amber-50";
+    return "bg-gradient-to-b from-gray-50 to-white";
   };
 
   const getTextColor = () => {
@@ -126,39 +133,50 @@ function CardView({ card, clickable, onClick }: CardViewProps) {
   return (
     <div
       className={`
-        border rounded-lg p-1 w-16 h-24 flex flex-col cursor-pointer text-xs
+        relative border-2 rounded-xl w-20 h-28 flex flex-col overflow-hidden
+        shadow-md transition-all duration-200 select-none
         ${
           clickable
-            ? "hover:shadow-lg transform hover:scale-105 transition-transform"
+            ? "hover:shadow-xl hover:scale-105 hover:-translate-y-1 cursor-pointer"
             : ""
         }
-        ${getBgColor()}
+        ${getCardBg()}
         ${getTextColor()}
+        border-white/30
       `}
       onClick={clickable ? onClick : undefined}
     >
-      <div className="text-xs font-bold mb-1 flex-1 leading-tight">
-        {card.name}
-      </div>
+      {card.type === "PROPERTY" && (
+        <div className={`w-full h-7 ${getBgColor()} px-1 pt-1`}>
+          <div className="text-[10px] font-bold leading-tight text-white drop-shadow-sm">
+            {card.name}
+          </div>
+        </div>
+      )}
 
-      <div className="mt-auto">
-        {card.type === "MONEY" && (
-          <div className="text-base font-bold text-green-700">{card.name}</div>
-        )}
-        {card.type === "PROPERTY" && (
-          <div className="text-xs italic mb-0.5">
-            {card.isWildcard ? "Wild Card" : card.color}
+      <div
+        className={`flex flex-col flex-1 p-2 ${
+          card.type !== "PROPERTY" ? "pt-2" : "pt-1"
+        }`}
+      >
+        {card.type !== "PROPERTY" && (
+          <div className="text-xs font-bold mb-1 leading-tight drop-shadow-sm">
+            {card.name}
           </div>
         )}
-        {card.type === "RENT" && card.rentColors && (
-          <div className="text-xs italic mb-0.5">
-            {card.rentColors.join("/")} Rent
-          </div>
-        )}
-        {card.type === "ACTION" && (
-          <div className="text-xs italic mb-0.5">Action Card</div>
-        )}
-        <div className="text-xs">Value: ${card.value}M</div>
+
+        <div className="mt-auto">
+          {card.type === "MONEY" && (
+            <div className="text-base font-bold text-green-700 drop-shadow-sm">
+              ${card.value}M
+            </div>
+          )}
+          {card.type !== "MONEY" && (
+            <div className="text-[10px] font-medium opacity-75">
+              Value: ${card.value}M
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
