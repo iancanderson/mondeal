@@ -214,7 +214,7 @@ function CardView({ card, clickable, onClick }: CardViewProps) {
   return (
     <div
       className={`
-        relative border-2 rounded-xl w-20 h-28 flex flex-col overflow-hidden
+        relative border-2 rounded-xl w-24 h-36 flex flex-col overflow-hidden
         shadow-md transition-all duration-200 select-none text-center
         ${
           clickable
@@ -229,7 +229,7 @@ function CardView({ card, clickable, onClick }: CardViewProps) {
     >
       {card.type === CardType.MONEY && (
         <div className="flex flex-col flex-1 items-center justify-center">
-          <div className="text-2xl font-bold text-green-700 drop-shadow-sm">
+          <div className="text-3xl font-bold text-green-700 drop-shadow-sm">
             ${card.value}M
           </div>
         </div>
@@ -237,16 +237,16 @@ function CardView({ card, clickable, onClick }: CardViewProps) {
 
       {card.type === CardType.ACTION && (
         <div className="flex flex-col flex-1">
-          <div className="text-xs font-bold mb-1 leading-tight drop-shadow-sm p-2">
+          <div className="text-sm font-bold mb-1 leading-tight drop-shadow-sm p-2">
             {card.name}
           </div>
 
           <div className="flex-1 flex items-center justify-center">
-            <div className="text-3xl">{getActionEmoji(card.name)}</div>
+            <div className="text-4xl">{getActionEmoji(card.name)}</div>
           </div>
 
-          <div className="bg-emerald-100 py-1 text-center">
-            <div className="text-sm font-bold text-green-700">
+          <div className="bg-emerald-100 py-1.5 text-center">
+            <div className="text-base font-bold text-green-700">
               ${card.value}M
             </div>
           </div>
@@ -256,16 +256,16 @@ function CardView({ card, clickable, onClick }: CardViewProps) {
       {card.type === CardType.PROPERTY && (
         <>
           <div
-            className={`w-full h-7 ${getBgColor()} px-1 pt-1 flex items-center justify-center`}
+            className={`w-full h-9 ${getBgColor()} px-1.5 pt-1.5 flex items-center justify-center`}
           >
-            <div className="text-[10px] font-bold leading-tight text-white drop-shadow-sm">
+            <div className="text-xs font-bold leading-tight text-white drop-shadow-sm">
               {card.name}
             </div>
           </div>
 
-          <div className="flex flex-col flex-1 p-1.5 justify-between bg-white text-black">
+          <div className="flex flex-col flex-1 p-2 justify-between bg-white text-black">
             {!card.isWildcard && card.color && (
-              <div className="text-[8px] space-y-0.5">
+              <div className="text-[9px] space-y-0.5">
                 {getRentValues(card.color).map((value, index) => (
                   <div
                     key={index}
@@ -279,7 +279,7 @@ function CardView({ card, clickable, onClick }: CardViewProps) {
                 ))}
               </div>
             )}
-            <div className="text-[10px] font-medium opacity-75 text-center">
+            <div className="text-xs font-medium opacity-75 text-center">
               Value: ${card.value}M
             </div>
           </div>
@@ -288,13 +288,13 @@ function CardView({ card, clickable, onClick }: CardViewProps) {
 
       {card.type === CardType.RENT && (
         <div className="flex flex-col flex-1">
-          <div className="text-xs font-bold mb-1 leading-tight drop-shadow-sm p-2">
+          <div className="text-sm font-bold mb-1 leading-tight drop-shadow-sm p-2">
             Rent
           </div>
 
           <div className="flex-1 flex items-center justify-center">
             {card.rentColors && card.rentColors.length === 2 && (
-              <div className="w-14 h-14 rounded-full overflow-hidden border border-gray-300 shadow-inner relative">
+              <div className="w-16 h-16 rounded-full overflow-hidden border border-gray-300 shadow-inner relative">
                 <div className="flex h-full">
                   <div
                     className={`w-1/2 ${getRentCircleColor(
@@ -312,8 +312,8 @@ function CardView({ card, clickable, onClick }: CardViewProps) {
             )}
           </div>
 
-          <div className="bg-emerald-100 py-1 text-center">
-            <div className="text-sm font-bold text-green-700">
+          <div className="bg-emerald-100 py-1.5 text-center">
+            <div className="text-base font-bold text-green-700">
               ${card.value}M
             </div>
           </div>
