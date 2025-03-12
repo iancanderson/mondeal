@@ -18,6 +18,7 @@ import BirthdayModal from "../components/BirthdayModal";
 import DoubleRentModal from "../components/DoubleRentModal";
 import DiscardModal from "../components/DiscardModal";
 import { GameState, Player, Card, PropertyColor } from "../types";
+import { getRequiredSetSize } from "../utils";
 
 function Game() {
   const { roomId } = useParams();
@@ -257,6 +258,23 @@ function Game() {
         setShowPropertyUpgradeModal({ cardId: card.id, type: card.name });
         return;
       }
+
+      // Check if it's a Deal Breaker and if there are any complete sets to steal
+      if (card.name === "Deal Breaker") {
+        // Check if any player has a complete set
+        const hasCompleteSet = gameState?.players.some((p) => {
+          if (p.id === playerId) return false; // Skip current player
+          return Object.entries(p.properties).some(([color, propertySets]) => {
+            const requiredSize = getRequiredSetSize(color as PropertyColor);
+            return propertySets.some((set) => set.cards.length >= requiredSize);
+          });
+        });
+
+        if (!hasCompleteSet) {
+          return; // Don't allow playing Deal Breaker if no complete sets exist
+        }
+      }
+
       setSelectedActionCard(card);
       return;
     }

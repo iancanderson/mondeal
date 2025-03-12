@@ -29,6 +29,7 @@
 
 ## TODO
 
+- Set the right money values for property cards
 - Deal Breaker said there was no set to steal when there was.
 - If a player has more cards for a color than the set limit, start a new set for that color
 - Disallow playing Just Say No as an action on your own turn, not in response to anything
