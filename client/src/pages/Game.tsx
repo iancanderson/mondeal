@@ -701,8 +701,7 @@ function Game() {
         />
       )}
 
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">Game Room: {roomId}</h1>
+      <div className="flex justify-end items-center mb-4">
         <Link to="/" className="text-blue-500 hover:text-blue-700 underline">
           Back to Lobby
         </Link>
