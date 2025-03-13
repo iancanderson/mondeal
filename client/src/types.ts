@@ -89,7 +89,12 @@ export type ActionState =
   | { type: "SLY_DEAL"; playerId: string }
   | { type: "DEAL_BREAKER"; playerId: string }
   | { type: "FORCED_DEAL"; playerId: string }
-  | { type: "DEBT_COLLECTOR"; playerId: string; amount: number }
+  | {
+      type: "DEBT_COLLECTOR";
+      playerId: string;
+      amount: number;
+      targetPlayerId?: string;
+    }
   | {
       type: "RENT";
       playerId: string;

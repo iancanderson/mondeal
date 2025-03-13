@@ -231,7 +231,6 @@ function Game() {
   React.useEffect(() => {
     if (
       gameState?.pendingAction.type === "DEBT_COLLECTOR" &&
-      "targetPlayerId" in gameState.pendingAction &&
       gameState.pendingAction.targetPlayerId === playerId
     ) {
       setShowDebtPaymentModal(true);
@@ -239,6 +238,13 @@ function Game() {
       setShowDebtPaymentModal(false);
     }
   }, [gameState?.pendingAction, playerId]);
+
+  // Add handler for paying debt
+  const handlePayDebt = (paymentCardIds: string[]) => {
+    if (!roomId || !playerId) return;
+    socket.emit("payDebt", roomId, playerId, paymentCardIds);
+    setShowDebtPaymentModal(false);
+  };
 
   if (!roomId || !gameState) {
     return <div className="p-4">No Game State found. Return to Lobby.</div>;
@@ -510,12 +516,6 @@ function Game() {
     if (!roomId || !playerId || !gameState) return;
     socket.emit("discardCards", roomId, playerId, cardIds);
     setShowDiscardModal(false);
-  };
-
-  const handlePayDebt = (paymentCardIds: string[]) => {
-    if (!roomId || !playerId) return;
-    socket.emit("payDebt", roomId, playerId, paymentCardIds);
-    setShowDebtPaymentModal(false);
   };
 
   const getRentCards = () => {
