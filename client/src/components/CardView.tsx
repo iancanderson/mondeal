@@ -279,9 +279,7 @@ function CardView({ card, clickable, onClick, numCards }: CardViewProps) {
                           ${isCurrentCount ? "bg-blue-100 font-semibold" : ""}
                         `}
                       >
-                        <span>
-                          {index + 1} Card{index === 0 ? "" : "s"}
-                        </span>
+                        <span>{index + 1}</span>
                         <span className="font-bold">${value}M</span>
                       </div>
                     );
