@@ -721,21 +721,7 @@ function Game() {
             </div>
           )}
 
-          <div className="flex gap-4">
-            {gameState.players.map((player) => (
-              <PlayerArea
-                key={player.id}
-                player={player}
-                isCurrentPlayer={player.id === playerId}
-                onWildCardClick={handleWildCardClick}
-                canReassignWildCard={isMyTurn}
-                isCurrentTurn={gameState.players[gameState.currentPlayerIndex].id === player.id}
-                cardsPlayedThisTurn={gameState.cardsPlayedThisTurn}
-              />
-            ))}
-          </div>
-
-          <div className="border p-2 mt-4">
+          <div className="border p-2 mb-4">
             <h2 className="font-semibold">My Hand:</h2>
             <div className="flex gap-2">
               {myPlayer?.hand?.map((card) => (
@@ -748,6 +734,24 @@ function Game() {
               ))}
             </div>
           </div>
+
+          <div className="flex gap-4">
+            {gameState.players.map((player) => (
+              <PlayerArea
+                key={player.id}
+                player={player}
+                isCurrentPlayer={player.id === playerId}
+                onWildCardClick={handleWildCardClick}
+                canReassignWildCard={isMyTurn}
+                isCurrentTurn={
+                  gameState.players[gameState.currentPlayerIndex].id ===
+                  player.id
+                }
+                cardsPlayedThisTurn={gameState.cardsPlayedThisTurn}
+              />
+            ))}
+          </div>
+
           {isMyTurn && !winner && (
             <div className="mt-4">
               {gameState.cardsPlayedThisTurn === 3 ? (
@@ -771,7 +775,10 @@ function Game() {
           )}
 
           <div className="mt-8 flex justify-end">
-            <Link to="/" className="text-blue-500 hover:text-blue-700 underline">
+            <Link
+              to="/"
+              className="text-blue-500 hover:text-blue-700 underline"
+            >
               Back to Lobby
             </Link>
           </div>
@@ -797,7 +804,10 @@ function Game() {
           </div>
 
           <div className="mt-8 flex justify-end">
-            <Link to="/" className="text-blue-500 hover:text-blue-700 underline">
+            <Link
+              to="/"
+              className="text-blue-500 hover:text-blue-700 underline"
+            >
               Back to Lobby
             </Link>
           </div>

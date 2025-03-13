@@ -106,7 +106,7 @@ function PlayerArea({
           {isCurrentPlayer && " (You)"}
         </h3>
       </div>
-      
+
       <h3 className="font-bold text-lg border-b pb-1">
         {player.name} ({completedSets}/3)
       </h3>
@@ -147,20 +147,30 @@ function PlayerArea({
                       </div>
                       <div className="flex gap-0.5 relative">
                         {propertySet.cards.map((card: Card) => {
-                          const isPropertyCard = card.type === CardType.PROPERTY;
-                          const cardToRender = isPropertyCard && 'isWildcard' in card && card.isWildcard
-                            ? { ...card, color: color as PropertyColor }
-                            : card;
+                          const isPropertyCard =
+                            card.type === CardType.PROPERTY;
+                          const cardToRender =
+                            isPropertyCard &&
+                            "isWildcard" in card &&
+                            card.isWildcard
+                              ? { ...card, color: color as PropertyColor }
+                              : card;
                           return (
                             <div key={card.id}>
                               <CardView
                                 card={cardToRender}
                                 numCards={propertySet.cards.length}
                                 clickable={
-                                  canReassignWildCard && isPropertyCard && 'isWildcard' in card && card.isWildcard
+                                  canReassignWildCard &&
+                                  isPropertyCard &&
+                                  "isWildcard" in card &&
+                                  card.isWildcard
                                 }
                                 onClick={() =>
-                                  isPropertyCard && 'isWildcard' in card && card.isWildcard && onWildCardClick(card)
+                                  isPropertyCard &&
+                                  "isWildcard" in card &&
+                                  card.isWildcard &&
+                                  onWildCardClick(card)
                                 }
                               />
                             </div>
