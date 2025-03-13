@@ -701,32 +701,13 @@ function Game() {
         />
       )}
 
-      <div className="flex justify-end items-center mb-4">
-        <Link to="/" className="text-blue-500 hover:text-blue-700 underline">
-          Back to Lobby
-        </Link>
-      </div>
-
       {gameState?.isStarted ? (
         <>
-          <div className="my-4">
-            <h2 className="font-semibold text-lg">
-              Current Turn:{" "}
-              {gameState.players[gameState.currentPlayerIndex].name}
-            </h2>
-            {isMyTurn && (
-              <div className="text-sm text-gray-600">
-                <div>
-                  Cards played this turn: {gameState.cardsPlayedThisTurn}/3
-                </div>
-              </div>
-            )}
-            {winner && (
-              <div className="text-green-600 text-xl font-bold text-center py-4 bg-green-50 rounded-lg my-4">
-                🎉 Winner: {winner.name} 🎉
-              </div>
-            )}
-          </div>
+          {winner && (
+            <div className="text-green-600 text-xl font-bold text-center py-4 bg-green-50 rounded-lg my-4">
+              🎉 Winner: {winner.name} 🎉
+            </div>
+          )}
 
           {/* Add discard pile display */}
           {gameState.discardPile.length > 0 && (
@@ -740,9 +721,6 @@ function Game() {
             </div>
           )}
 
-          {/* Remove erroneous line and replace with Players heading */}
-          <h2 className="text-xl font-semibold">Players</h2>
-
           <div className="flex gap-4">
             {gameState.players.map((player) => (
               <PlayerArea
@@ -751,9 +729,12 @@ function Game() {
                 isCurrentPlayer={player.id === playerId}
                 onWildCardClick={handleWildCardClick}
                 canReassignWildCard={isMyTurn}
+                isCurrentTurn={gameState.players[gameState.currentPlayerIndex].id === player.id}
+                cardsPlayedThisTurn={gameState.cardsPlayedThisTurn}
               />
             ))}
           </div>
+
           <div className="border p-2 mt-4">
             <h2 className="font-semibold">My Hand:</h2>
             <div className="flex gap-2">
@@ -788,6 +769,12 @@ function Game() {
               )}
             </div>
           )}
+
+          <div className="mt-8 flex justify-end">
+            <Link to="/" className="text-blue-500 hover:text-blue-700 underline">
+              Back to Lobby
+            </Link>
+          </div>
         </>
       ) : (
         <>
@@ -807,6 +794,12 @@ function Game() {
                 {player.name} - {player.isReady ? "Ready" : "Not Ready"}
               </div>
             ))}
+          </div>
+
+          <div className="mt-8 flex justify-end">
+            <Link to="/" className="text-blue-500 hover:text-blue-700 underline">
+              Back to Lobby
+            </Link>
           </div>
         </>
       )}

@@ -5,9 +5,11 @@ import { getRequiredSetSize } from "../utils";
 
 interface PlayerAreaProps {
   player: Player;
-  isCurrentPlayer?: boolean;
-  onWildCardClick?: (card: Card) => void;
-  canReassignWildCard?: boolean;
+  isCurrentPlayer: boolean;
+  onWildCardClick: (card: Card) => void;
+  canReassignWildCard: boolean;
+  isCurrentTurn?: boolean;
+  cardsPlayedThisTurn?: number;
 }
 
 function PlayerArea({
@@ -15,7 +17,18 @@ function PlayerArea({
   isCurrentPlayer,
   onWildCardClick,
   canReassignWildCard,
+  isCurrentTurn,
+  cardsPlayedThisTurn = 0,
 }: PlayerAreaProps) {
+  const renderTurnArrows = () => {
+    const remainingActions = 3 - (cardsPlayedThisTurn || 0);
+    return Array.from({ length: remainingActions }, (_, i) => (
+      <span key={i} className="text-2xl text-blue-500 mr-1">
+        ➜
+      </span>
+    ));
+  };
+
   const propertyOrder = [
     PropertyColor.BROWN,
     PropertyColor.LIGHT_BLUE,
@@ -85,7 +98,15 @@ function PlayerArea({
   const completedSets = getCompletedSetCount();
 
   return (
-    <div className="border rounded-lg p-2 flex-1 bg-white shadow-sm">
+    <div className="border p-2 rounded min-w-[200px] bg-white shadow-sm">
+      <div className="flex items-center gap-2 mb-2">
+        {isCurrentTurn && renderTurnArrows()}
+        <h3 className={`font-semibold ${isCurrentTurn ? "text-blue-600" : ""}`}>
+          {player.name}
+          {isCurrentPlayer && " (You)"}
+        </h3>
+      </div>
+      
       <h3 className="font-bold text-lg border-b pb-1">
         {player.name} ({completedSets}/3)
       </h3>
@@ -126,7 +147,8 @@ function PlayerArea({
                       </div>
                       <div className="flex gap-0.5 relative">
                         {propertySet.cards.map((card: Card) => {
-                          const cardToRender = card.isWildcard
+                          const isPropertyCard = card.type === CardType.PROPERTY;
+                          const cardToRender = isPropertyCard && 'isWildcard' in card && card.isWildcard
                             ? { ...card, color: color as PropertyColor }
                             : card;
                           return (
@@ -135,10 +157,10 @@ function PlayerArea({
                                 card={cardToRender}
                                 numCards={propertySet.cards.length}
                                 clickable={
-                                  canReassignWildCard && card.isWildcard
+                                  canReassignWildCard && isPropertyCard && 'isWildcard' in card && card.isWildcard
                                 }
                                 onClick={() =>
-                                  card.isWildcard && onWildCardClick(card)
+                                  isPropertyCard && 'isWildcard' in card && card.isWildcard && onWildCardClick(card)
                                 }
                               />
                             </div>
