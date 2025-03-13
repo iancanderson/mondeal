@@ -61,6 +61,20 @@ export function createDeck(): Card[] {
     [PropertyColor.UTILITY]: ["Electric Company", "Water Works"],
   };
 
+  // Property values based on color groups
+  const propertyValues: Record<PropertyColor, number> = {
+    [PropertyColor.BROWN]: 1,
+    [PropertyColor.LIGHT_BLUE]: 1,
+    [PropertyColor.PURPLE]: 2,
+    [PropertyColor.ORANGE]: 2,
+    [PropertyColor.RED]: 3,
+    [PropertyColor.YELLOW]: 3,
+    [PropertyColor.GREEN]: 4,
+    [PropertyColor.BLUE]: 4,
+    [PropertyColor.RAILROAD]: 2,
+    [PropertyColor.UTILITY]: 2,
+  };
+
   // Add property cards
   Object.entries(properties).forEach(([color, propertyNames]) => {
     propertyNames.forEach((name) => {
@@ -68,10 +82,7 @@ export function createDeck(): Card[] {
         id: uuidv4(),
         name,
         type: CardType.PROPERTY,
-        value:
-          color === PropertyColor.RAILROAD || color === PropertyColor.UTILITY
-            ? 2
-            : 3,
+        value: propertyValues[color as PropertyColor],
         color: color as PropertyColor,
       });
     });
