@@ -110,9 +110,6 @@ function PlayerArea({
         )}
       </div>
 
-      <h3 className="font-bold text-lg border-b pb-1">
-        {player.name} ({Math.min(getCompletedSetCount(), 3)}/3)
-      </h3>
       <div className="mt-2">
         <div className="text-sm font-semibold mb-1">Properties:</div>
         <div className="flex flex-wrap gap-2">
