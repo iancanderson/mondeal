@@ -725,7 +725,7 @@ function Game() {
 
           <div className="border p-2 mb-4">
             <h2 className="font-semibold">My Hand:</h2>
-            <div className="flex gap-2">
+            <div className="grid grid-cols-7 gap-2">
               {myPlayer?.hand?.map((card) => (
                 <CardView
                   key={card.id}
