@@ -98,7 +98,7 @@ function PlayerArea({
   const completedSets = getCompletedSetCount();
 
   return (
-    <div className="border p-2 rounded min-w-[200px] bg-white shadow-sm">
+    <div className="border p-2 rounded bg-white shadow-sm w-full">
       <div className="flex items-center gap-2 mb-2">
         {isCurrentTurn && renderTurnArrows()}
         <h3 className={`font-semibold ${isCurrentTurn ? "text-blue-600" : ""}`}>
