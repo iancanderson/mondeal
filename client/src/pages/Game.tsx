@@ -17,6 +17,8 @@ import DebtCollectorModal from "../components/DebtCollectorModal";
 import BirthdayModal from "../components/BirthdayModal";
 import DoubleRentModal from "../components/DoubleRentModal";
 import DiscardModal from "../components/DiscardModal";
+import EndTurnCard from "../components/EndTurnCard";
+import EndTurnModal from "../components/EndTurnModal";
 import { GameState, Player, Card, PropertyColor } from "../types";
 import { getRequiredSetSize } from "../utils";
 
@@ -65,6 +67,7 @@ function Game() {
 
   // Add UI state for debt payment modal
   const [showDebtPaymentModal, setShowDebtPaymentModal] = useState(false);
+  const [showEndTurnModal, setShowEndTurnModal] = useState(false);
 
   // Handle window resize for confetti
   React.useEffect(() => {
@@ -701,23 +704,22 @@ function Game() {
         />
       )}
 
+      {showEndTurnModal && (
+        <EndTurnModal
+          remainingActions={3 - gameState.cardsPlayedThisTurn}
+          onConfirm={() => {
+            handleEndTurn();
+            setShowEndTurnModal(false);
+          }}
+          onCancel={() => setShowEndTurnModal(false)}
+        />
+      )}
+
       {gameState?.isStarted ? (
         <>
           {winner && (
             <div className="text-green-600 text-xl font-bold text-center py-4 bg-green-50 rounded-lg my-4">
               🎉 Winner: {winner.name} 🎉
-            </div>
-          )}
-
-          {/* Add discard pile display */}
-          {gameState.discardPile.length > 0 && (
-            <div className="my-4 p-3 bg-gray-100 rounded-lg">
-              <h3 className="font-semibold mb-2">Action Card Discard Pile:</h3>
-              <div className="flex gap-2 overflow-x-auto pb-2">
-                {gameState.discardPile.map((card, index) => (
-                  <CardView key={card.id} card={card} />
-                ))}
-              </div>
             </div>
           )}
 
@@ -748,33 +750,36 @@ function Game() {
                   player.id
                 }
                 cardsPlayedThisTurn={gameState.cardsPlayedThisTurn}
+                onEndTurn={
+                  isMyTurn && !winner && gameState.pendingAction.type === "NONE"
+                    ? () => setShowEndTurnModal(true)
+                    : undefined
+                }
               />
             ))}
           </div>
 
-          {isMyTurn && !winner && (
+          {isMyTurn && !winner && gameState.pendingAction.type !== "NONE" && (
             <div className="mt-4">
-              {gameState.cardsPlayedThisTurn === 3 ? (
-                <div className="text-green-600 mb-2">
-                  You've played 3 cards this turn. The turn will pass
-                  automatically.
-                </div>
-              ) : gameState.pendingAction.type !== "NONE" ? (
-                <div className="text-blue-600 mb-2">
-                  Complete your action to continue your turn.
-                </div>
-              ) : (
-                <button
-                  className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-                  onClick={handleEndTurn}
-                >
-                  End Turn
-                </button>
-              )}
+              <div className="text-blue-600 mb-2">
+                Complete your action to continue your turn.
+              </div>
             </div>
           )}
 
-          <div className="mt-8 flex justify-end">
+          {/* Action card discard pile moved to bottom */}
+          {gameState.discardPile.length > 0 && (
+            <div className="mt-8 mb-4 p-3 bg-gray-100 rounded-lg">
+              <h3 className="font-semibold mb-2">Action Card Discard Pile:</h3>
+              <div className="flex gap-2 overflow-x-auto pb-2">
+                {gameState.discardPile.map((card, index) => (
+                  <CardView key={card.id} card={card} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="mt-4 flex justify-end">
             <Link
               to="/"
               className="text-blue-500 hover:text-blue-700 underline"

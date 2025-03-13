@@ -10,6 +10,7 @@ interface PlayerAreaProps {
   canReassignWildCard: boolean;
   isCurrentTurn?: boolean;
   cardsPlayedThisTurn?: number;
+  onEndTurn?: () => void;
 }
 
 function PlayerArea({
@@ -19,17 +20,9 @@ function PlayerArea({
   canReassignWildCard,
   isCurrentTurn,
   cardsPlayedThisTurn = 0,
+  onEndTurn,
 }: PlayerAreaProps) {
-  const renderTurnArrows = () => {
-    const remainingActions = 3 - (cardsPlayedThisTurn || 0);
-    return Array.from({ length: remainingActions }, (_, i) => (
-      <span key={i} className="text-2xl text-blue-500 mr-1">
-        ➜
-      </span>
-    ));
-  };
-
-  const propertyOrder = [
+  const propertyOrder: PropertyColor[] = [
     PropertyColor.BROWN,
     PropertyColor.LIGHT_BLUE,
     PropertyColor.PURPLE,
@@ -42,7 +35,24 @@ function PlayerArea({
     PropertyColor.UTILITY,
   ];
 
-  const calculateBaseRent = (color: PropertyColor, count: number): number => {
+  const getCompletedSetCount = (): number => {
+    let completedSets = 0;
+    for (const [color, propertySets] of Object.entries(player.properties)) {
+      if (!isPropertyColor(color)) continue;
+      const requiredSize = getRequiredSetSize(color as PropertyColor);
+      for (const set of propertySets) {
+        if (set.cards.length >= requiredSize) {
+          completedSets++;
+        }
+      }
+    }
+    return completedSets;
+  };
+
+  const calculateTotalRent = (
+    color: PropertyColor,
+    propertySet: PropertySet
+  ): number => {
     const baseRents: Record<PropertyColor, number[]> = {
       [PropertyColor.BROWN]: [1, 2],
       [PropertyColor.LIGHT_BLUE]: [1, 2, 3],
@@ -55,60 +65,53 @@ function PlayerArea({
       [PropertyColor.RAILROAD]: [1, 2, 3, 4],
       [PropertyColor.UTILITY]: [1, 2],
     };
-    const rentIndex = Math.min(count, getRequiredSetSize(color)) - 1;
-    const baseRent = baseRents[color][rentIndex];
-    return baseRent;
-  };
 
-  const calculateTotalRent = (
-    color: PropertyColor,
-    propertySet: PropertySet
-  ): number => {
-    const baseRent = calculateBaseRent(color, propertySet.cards.length);
-    // Don't double for complete sets - base rent is all we need
-    let rent = baseRent;
+    const rentIndex =
+      Math.min(propertySet.cards.length, getRequiredSetSize(color)) - 1;
+    let rent = baseRents[color][rentIndex];
     rent += propertySet.houses * 3;
     rent += propertySet.hotels * 4;
     return rent;
   };
 
-  const getCompletedSetCount = (): number => {
-    let completedSets = 0;
-
-    for (const color in player.properties) {
-      const propertySets = player.properties[color as PropertyColor];
-      const requiredSize = getRequiredSetSize(color as PropertyColor);
-
-      // Count completed sets for this color
-      for (const set of propertySets) {
-        if (set.cards.length >= requiredSize) {
-          completedSets++;
-        }
-      }
-    }
-
-    return completedSets;
+  // Helper function to check if a string is a valid PropertyColor
+  const isPropertyColor = (color: string): color is PropertyColor => {
+    return Object.values(PropertyColor).includes(color as PropertyColor);
   };
 
-  // Helper function to check if a card is a wildcard property
-  const isWildcard = (card: Card): boolean => {
-    return card.type === CardType.PROPERTY && !!card.isWildcard;
+  const renderTurnArrows = () => {
+    const remainingActions = 3 - (cardsPlayedThisTurn || 0);
+    return Array.from({ length: remainingActions }, (_, i) => (
+      <span key={i} className="text-2xl text-blue-500 mr-1">
+        ➜
+      </span>
+    ));
   };
-
-  const completedSets = getCompletedSetCount();
 
   return (
     <div className="border p-2 rounded bg-white shadow-sm w-full">
-      <div className="flex items-center gap-2 mb-2">
-        {isCurrentTurn && renderTurnArrows()}
-        <h3 className={`font-semibold ${isCurrentTurn ? "text-blue-600" : ""}`}>
-          {player.name}
-          {isCurrentPlayer && " (You)"}
-        </h3>
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          {isCurrentTurn && renderTurnArrows()}
+          <h3
+            className={`font-semibold ${isCurrentTurn ? "text-blue-600" : ""}`}
+          >
+            {player.name}
+            {isCurrentPlayer && " (You)"}
+          </h3>
+        </div>
+        {isCurrentTurn && onEndTurn && (
+          <button
+            onClick={onEndTurn}
+            className="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded transition-colors"
+          >
+            End Turn
+          </button>
+        )}
       </div>
 
       <h3 className="font-bold text-lg border-b pb-1">
-        {player.name} ({completedSets}/3)
+        {player.name} ({Math.min(getCompletedSetCount(), 3)}/3)
       </h3>
       <div className="mt-2">
         <div className="text-sm font-semibold mb-1">Properties:</div>
