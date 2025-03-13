@@ -246,59 +246,12 @@ function CardView({ card, clickable, onClick, numCards }: CardViewProps) {
             <div className="text-4xl">{getActionEmoji(card.name)}</div>
           </div>
 
-          <div className="bg-emerald-100 py-1.5 text-center">
+          <div className="bg-emerald-100 py-1.5 text-center mt-auto">
             <div className="text-base font-bold text-green-700">
               ${card.value}M
             </div>
           </div>
         </div>
-      )}
-
-      {card.type === CardType.PROPERTY && (
-        <>
-          <div
-            className={`w-full h-9 ${getBgColor()} px-1.5 pt-1.5 flex items-center justify-center`}
-          >
-            <div className="text-xs font-bold leading-tight text-white drop-shadow-sm">
-              {card.name}
-            </div>
-          </div>
-
-          <div className="flex flex-col flex-1 bg-white text-black">
-            <div className="flex-1 p-2">
-              {card.color && (
-                <div className="text-[9px] space-y-0.5">
-                  {getRentValues(card.color).map((value, index) => {
-                    const isCurrentCount =
-                      index + 1 === numCards || (!numCards && index === 0);
-                    return (
-                      <div
-                        key={index}
-                        className={`
-                          flex justify-between items-center px-1 py-0.5 rounded
-                          ${isCurrentCount ? "bg-blue-100 font-semibold" : ""}
-                        `}
-                      >
-                        <span>{index + 1}</span>
-                        <span className="font-bold">${value}M</span>
-                      </div>
-                    );
-                  })}
-                  {card.isWildcard && !card.color && (
-                    <div className="text-[9px] italic text-center mb-1">
-                      Wild Property Card
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-            <div className="bg-emerald-100 py-1.5 text-center">
-              <div className="text-base font-bold text-green-700">
-                ${card.value}M
-              </div>
-            </div>
-          </div>
-        </>
       )}
 
       {card.type === CardType.RENT && (
@@ -327,12 +280,59 @@ function CardView({ card, clickable, onClick, numCards }: CardViewProps) {
             )}
           </div>
 
-          <div className="bg-emerald-100 py-1.5 text-center">
+          <div className="bg-emerald-100 py-1.5 text-center mt-auto">
             <div className="text-base font-bold text-green-700">
               ${card.value}M
             </div>
           </div>
         </div>
+      )}
+
+      {card.type === CardType.PROPERTY && (
+        <>
+          <div
+            className={`w-full h-9 ${getBgColor()} px-1.5 pt-1.5 flex items-center justify-center`}
+          >
+            <div className="text-xs font-bold leading-tight text-white drop-shadow-sm">
+              {card.name}
+            </div>
+          </div>
+
+          <div className="flex flex-col flex-1 bg-white text-black">
+            <div className="flex-1 p-2">
+              {card.color && (
+                <div className="text-[9px] flex flex-wrap gap-1.5 items-center justify-center">
+                  {getRentValues(card.color).map((value, index) => {
+                    const isCurrentCount =
+                      index + 1 === numCards || (!numCards && index === 0);
+                    return (
+                      <div
+                        key={index}
+                        className={
+                          isCurrentCount
+                            ? "text-blue-600 font-bold"
+                            : "text-gray-600"
+                        }
+                      >
+                        ${value}M
+                      </div>
+                    );
+                  })}
+                  {card.isWildcard && !card.color && (
+                    <div className="text-[9px] italic text-center w-full">
+                      Wild Property Card
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+            <div className="bg-emerald-100 py-1.5 text-center mt-auto">
+              <div className="text-base font-bold text-green-700">
+                ${card.value}M
+              </div>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );
