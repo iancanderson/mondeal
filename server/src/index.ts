@@ -572,19 +572,70 @@ io.on("connection", (socket) => {
     }
   );
 
+  // Add this after the other socket.on handlers
+  socket.on("rejoinGame", (roomId: string, playerId: string) => {
+    console.log(`Player ${playerId} attempting to rejoin room ${roomId}`);
+    const room = getRoom(roomId);
+    
+    if (!room) {
+      socket.emit("error", "Room not found. The game may have ended.");
+      return;
+    }
+    
+    // Check if the player exists in this room
+    const playerExists = room.gameState.players.some(p => p.id === playerId);
+    
+    if (!playerExists) {
+      socket.emit("error", "Player not found in this game.");
+      return;
+    }
+    
+    // Join the socket to the room
+    socket.join(roomId);
+    playerRooms.set(socket.id, roomId);
+    
+    // Send the current game state to the reconnecting player
+    socket.emit("roomJoined", {
+      gameState: room.gameState,
+      playerId: playerId
+    });
+    
+    // Notify other players that someone has rejoined
+    const player = room.gameState.players.find(p => p.id === playerId);
+    if (player) {
+      socket.to(roomId).emit("gameNotification", `${player.name} has rejoined the game.`);
+    }
+    
+    console.log(`Player ${playerId} successfully rejoined room ${roomId}`);
+  });
+
   // Handle disconnections
   socket.on("disconnect", () => {
     const roomId = playerRooms.get(socket.id);
     if (roomId) {
       const room = getRoom(roomId);
-      if (room && room.gameState.isStarted) {
-        // If game was in progress, notify other players and remove the room
-        socket
-          .to(roomId)
-          .emit("error", "A player has left the game. Game ended.");
-        removeRoom(roomId);
-        broadcastRoomUpdate();
+      
+      // Don't end the game when a player disconnects; allow them to rejoin later
+      if (room) {
+        // Just notify other players that someone disconnected
+        const socketIdToPlayer = new Map();
+        Object.keys(io.sockets.adapter.rooms.get(roomId) || {}).forEach(id => {
+          socketIdToPlayer.set(id, playerRooms.get(id));
+        });
+        
+        // Find which player disconnected by comparing with current connections
+        const disconnectedPlayer = room.gameState.players.find(p => 
+          !Array.from(socketIdToPlayer.values()).includes(p.id)
+        );
+        
+        if (disconnectedPlayer) {
+          socket.to(roomId).emit("gameNotification", `${disconnectedPlayer.name} disconnected. They can rejoin later.`);
+        } else {
+          socket.to(roomId).emit("gameNotification", "A player disconnected. They can rejoin later.");
+        }
       }
+      
+      // Remove this socket's connection from the tracking map
       playerRooms.delete(socket.id);
     }
   });

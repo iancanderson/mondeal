@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useLocation, Link, useNavigate } from "react-router-dom";
 import ReactConfetti from "react-confetti";
-import { socket } from "../services/socket";
+import { socket, saveGameSession, getSavedGameSession, clearGameSession, rejoinGame } from "../services/socket";
 import CardView from "../components/CardView";
 import PlayerArea from "../components/PlayerArea";
 import { ColorPicker } from "../components/ColorPicker";
@@ -17,7 +17,6 @@ import DebtCollectorModal from "../components/DebtCollectorModal";
 import BirthdayModal from "../components/BirthdayModal";
 import DoubleRentModal from "../components/DoubleRentModal";
 import DiscardModal from "../components/DiscardModal";
-import EndTurnCard from "../components/EndTurnCard";
 import EndTurnModal from "../components/EndTurnModal";
 import { GameState, Player, Card, PropertyColor } from "../types";
 import { getRequiredSetSize } from "../utils";
@@ -87,6 +86,25 @@ function Game() {
     playerIdRef.current = playerId;
   }, [playerId]);
 
+  // Auto-rejoin if we have saved session and no state was passed
+  React.useEffect(() => {
+    // Only try to rejoin if we don't already have a gameState
+    if (!gameState && !state?.gameState) {
+      const savedSession = getSavedGameSession();
+      
+      // If we have a saved session but no roomId parameter, navigate to the saved room
+      if (savedSession && savedSession.roomId && !roomId) {
+        navigate(`/game/${savedSession.roomId}`);
+        return;
+      }
+      
+      // If we're on the correct page for the saved room, attempt to rejoin
+      if (savedSession && savedSession.roomId === roomId) {
+        rejoinGame();
+      }
+    }
+  }, [gameState, state, roomId, navigate]);
+
   React.useEffect(() => {
     socket.on(
       "roomJoined",
@@ -94,6 +112,11 @@ function Game() {
         console.log("roomJoined received, playerId:", data.playerId);
         setGameState(data.gameState);
         setPlayerId(data.playerId);
+        
+        // Save session data when successfully joining a room
+        if (roomId && data.playerId) {
+          saveGameSession(roomId, data.playerId);
+        }
       }
     );
 
@@ -109,6 +132,11 @@ function Game() {
         }
         return gs;
       });
+
+      // Save or update playerId whenever we get a game state update
+      if (roomId && playerIdRef.current) {
+        saveGameSession(roomId, playerIdRef.current);
+      }
 
       if (
         gs.pendingAction.type === "DOUBLE_RENT_PENDING" &&
@@ -130,6 +158,7 @@ function Game() {
       alert(msg);
       // If error indicates game ended, navigate back to lobby
       if (msg.includes("Game ended")) {
+        clearGameSession();
         navigate("/");
       }
     });
@@ -144,7 +173,7 @@ function Game() {
       socket.off("error");
       socket.off("gameNotification");
     };
-  }, [navigate]);
+  }, [navigate, roomId]);
 
   // Update myPlayer whenever gameState changes, but maintain playerId
   React.useEffect(() => {
@@ -783,6 +812,7 @@ function Game() {
             <Link
               to="/"
               className="text-blue-500 hover:text-blue-700 underline"
+              onClick={clearGameSession}
             >
               Back to Lobby
             </Link>
@@ -812,6 +842,7 @@ function Game() {
             <Link
               to="/"
               className="text-blue-500 hover:text-blue-700 underline"
+              onClick={clearGameSession}
             >
               Back to Lobby
             </Link>

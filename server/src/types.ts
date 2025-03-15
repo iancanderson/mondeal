@@ -220,6 +220,7 @@ export interface ClientToServerEvents {
   ) => void;
   payDebt: (roomId: string, playerId: string, paymentCardIds: string[]) => void;
   discardCards: (roomId: string, playerId: string, cardIds: string[]) => void;
+  rejoinGame: (roomId: string, playerId: string) => void;
 }
 
 export function getRequiredSetSize(color: PropertyColor): number {
