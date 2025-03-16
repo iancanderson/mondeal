@@ -30,6 +30,7 @@
 
 ## TODO
 
+- If a user has disconnected from a game, they should see it in the lobby to rejoin it
 - Only show up to 4 bank cards per row
 - Sly deal didn't seem to work, nothing happened
 - Playing forced deal
