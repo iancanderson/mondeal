@@ -405,10 +405,8 @@ export function playCard(
     // Reset pending action to ensure turn can pass
     gameState.pendingAction = { type: "NONE" };
 
-    // Automatically end turn if this was the player's third card
-    if (gameState.cardsPlayedThisTurn >= 3) {
-      endTurn(gameState);
-    }
+    // Check if turn should end
+    checkAndEndTurnIfNecessary(gameState);
 
     // Send notification about the upgrade
     const newRent = calculateRent(propertySet, chosenColor);
@@ -541,13 +539,8 @@ export function playCard(
 
   gameState.cardsPlayedThisTurn++;
 
-  // Automatically end turn if this was the player's third card
-  if (gameState.cardsPlayedThisTurn >= 3) {
-    // Don't automatically end turn if there's a pending action
-    if (gameState.pendingAction.type === "NONE") {
-      endTurn(gameState);
-    }
-  }
+  // Check if turn should end
+  checkAndEndTurnIfNecessary(gameState);
 
   // Return notification info for action cards
   if (card.type === CardType.ACTION && playAsAction) {
@@ -667,8 +660,14 @@ export function reassignWildcard(
 
 /**
  * Advance to the next player's turn. Also check for winner.
+ * This should only be called when no action is pending.
  */
 export function endTurn(gameState: GameState) {
+  // Do not end turn if an action is pending
+  if (gameState.pendingAction.type !== "NONE") {
+    return;
+  }
+
   // Check if current player has won
   const currentPlayer = gameState.players[gameState.currentPlayerIndex];
   if (checkWinCondition(currentPlayer)) {
@@ -690,6 +689,18 @@ export function endTurn(gameState: GameState) {
     (gameState.currentPlayerIndex + 1) % gameState.players.length;
   // Start that player's turn
   startTurn(gameState);
+}
+
+/**
+ * Helper function to check if the turn should end based on cards played and pending actions.
+ */
+function checkAndEndTurnIfNecessary(gameState: GameState) {
+  if (
+    gameState.cardsPlayedThisTurn >= 3 &&
+    gameState.pendingAction.type === "NONE"
+  ) {
+    endTurn(gameState);
+  }
 }
 
 /**
@@ -818,6 +829,9 @@ export function executePropertySteal(
   // Reset the pending action
   gameState.pendingAction = { type: "NONE" };
 
+  // Check if turn should end
+  checkAndEndTurnIfNecessary(gameState); // Added this check
+
   return true;
 }
 
@@ -902,10 +916,8 @@ export function executeDealBreaker(
   // Reset the pending action
   gameState.pendingAction = { type: "NONE" };
 
-  // Check if this was the 3rd card played and end turn if so
-  if (gameState.cardsPlayedThisTurn >= 3) {
-    endTurn(gameState);
-  }
+  // Check if turn should end
+  checkAndEndTurnIfNecessary(gameState);
 
   return true;
 }
@@ -941,98 +953,100 @@ export function collectRent(
     return false;
   }
 
-  // Get all possible payment sources
-  const moneyPileCards = target.moneyPile;
+  // --- Start Bankruptcy Refactor ---
 
-  // Flatten all property cards from all sets of all colors
-  const propertyCards = Object.values(target.properties).flatMap(
-    (propertySets) => propertySets.flatMap((set) => set.cards)
-  );
-
-  const availableCards = [...moneyPileCards, ...propertyCards];
-
-  // Calculate total possible payment
-  const totalPossible = availableCards.reduce(
+  // Calculate total value of target's assets
+  const moneyValue = target.moneyPile.reduce(
     (sum, card) => sum + card.value,
     0
   );
+  const propertiesValue = Object.values(target.properties)
+    .flatMap((sets) => sets.flatMap((set) => set.cards))
+    .reduce((sum, card) => sum + card.value, 0);
+  const totalPossibleValue = moneyValue + propertiesValue;
 
-  // Check if this is a bankruptcy case (insufficient total funds)
-  const isBankruptcy = totalPossible < amount;
+  let cardsToTransfer: Card[] = [];
+  const isBankruptcy = totalPossibleValue < amount;
 
-  // In bankruptcy case, validate that ALL cards are being surrendered
-  if (isBankruptcy && paymentCards.length !== availableCards.length) {
-    return false;
-  }
+  if (isBankruptcy) {
+    // Player is bankrupt, transfer all assets
+    cardsToTransfer = [
+      ...target.moneyPile,
+      ...Object.values(target.properties).flatMap((sets) =>
+        sets.flatMap((set) => set.cards)
+      ),
+    ];
+    // Clear target's assets
+    target.moneyPile = [];
+    // Properly reset properties object
+    target.properties = Object.values(PropertyColor).reduce((acc, color) => {
+      acc[color] = [];
+      return acc;
+    }, {} as Record<PropertyColor, PropertySet[]>);
+  } else {
+    // Not bankrupt, validate and process paymentCards from client
+    const paymentValue = paymentCards.reduce((sum, cardId) => {
+      const card =
+        target.moneyPile.find((c) => c.id === cardId) ||
+        Object.values(target.properties)
+          .flatMap((sets) => sets.flatMap((set) => set.cards))
+          .find((c) => c.id === cardId);
+      return sum + (card?.value || 0);
+    }, 0);
 
-  // Validate all payment cards exist in allowed sources
-  for (const cardId of paymentCards) {
-    const cardExists = availableCards.some((c) => c.id === cardId);
-    if (!cardExists) {
+    if (paymentValue < amount) {
+      // Client sent insufficient payment value
       return false;
     }
-  }
 
-  // Transfer the selected cards
-  const paymentCardsToTransfer: Card[] = [];
-  for (const cardId of paymentCards) {
-    // Look for the card in money pile first
-    let card = target.moneyPile.find((c) => c.id === cardId);
-    let location: "money" | "property" = "money";
-
-    if (!card) {
-      // Look in properties
-      outer: for (const [color, propertySets] of Object.entries(
-        target.properties
-      )) {
-        if (!isPropertyColor(color)) continue;
-
-        for (let setIndex = 0; setIndex < propertySets.length; setIndex++) {
-          const set = propertySets[setIndex];
-          const cardIndex = set.cards.findIndex((c) => c.id === cardId);
-
-          if (cardIndex !== -1) {
-            card = set.cards[cardIndex];
-            location = "property";
-
-            // Remove from source player's properties
-            set.cards.splice(cardIndex, 1);
-
-            // If set is now empty, remove it
-            if (set.cards.length === 0) {
-              propertySets.splice(setIndex, 1);
-
-              // If no more sets for this color, remove the color entry
-              if (propertySets.length === 0) {
-                delete target.properties[color];
+    // Validate that all sent cards exist and remove them from target
+    for (const cardId of paymentCards) {
+      let found = false;
+      // Check money pile
+      const moneyIndex = target.moneyPile.findIndex((c) => c.id === cardId);
+      if (moneyIndex !== -1) {
+        cardsToTransfer.push(target.moneyPile.splice(moneyIndex, 1)[0]);
+        found = true;
+      } else {
+        // Check properties
+        outer: for (const [color, propertySets] of Object.entries(
+          target.properties
+        )) {
+          if (!isPropertyColor(color)) continue;
+          for (let setIndex = 0; setIndex < propertySets.length; setIndex++) {
+            const set = propertySets[setIndex];
+            const cardIndex = set.cards.findIndex((c) => c.id === cardId);
+            if (cardIndex !== -1) {
+              cardsToTransfer.push(set.cards.splice(cardIndex, 1)[0]);
+              found = true;
+              // Clean up empty sets/colors
+              if (set.cards.length === 0) {
+                propertySets.splice(setIndex, 1);
+                if (propertySets.length === 0) {
+                  delete target.properties[color];
+                }
               }
+              break outer;
             }
-            break outer;
           }
         }
       }
-    } else {
-      // Remove from money pile
-      target.moneyPile = target.moneyPile.filter((c) => c.id !== cardId);
+      if (!found) {
+        // Client sent a card ID that the player doesn't have or isn't playable for payment
+        // Note: This case might need more robust handling, e.g., returning the already processed cards back?
+        // For now, fail the operation.
+        console.error(
+          `Payment card ${cardId} not found for player ${targetPlayerId}`
+        );
+        return false;
+      }
     }
-
-    if (!card) {
-      return false;
-    }
-
-    paymentCardsToTransfer.push(card);
   }
 
-  // For non-bankruptcy case, verify payment amount
-  if (
-    !isBankruptcy &&
-    paymentCardsToTransfer.reduce((sum, card) => sum + card.value, 0) < amount
-  ) {
-    return false;
-  }
+  // --- End Bankruptcy Refactor ---
 
-  // Sort cards: properties go to collector's properties, others to money pile
-  for (const card of paymentCardsToTransfer) {
+  // Sort transferred cards: properties go to collector's properties, others to money pile
+  for (const card of cardsToTransfer) {
     if (card.type === CardType.PROPERTY) {
       // Add to collector's properties
       const color = card.isWildcard
@@ -1090,10 +1104,8 @@ export function collectRent(
   if (gameState.pendingAction.remainingPayers.length === 0) {
     gameState.pendingAction = { type: "NONE" };
 
-    // Check if this was the 3rd card played and end turn if so
-    if (gameState.cardsPlayedThisTurn >= 3) {
-      endTurn(gameState);
-    }
+    // Check if turn should end
+    checkAndEndTurnIfNecessary(gameState);
   }
 
   return true;
@@ -1132,81 +1144,75 @@ export function handleJustSayNoResponse(
     gameState.pendingAction = { type: "NONE" };
 
     // Check if the current player's turn should end
-    if (gameState.cardsPlayedThisTurn >= 3) {
-      endTurn(gameState);
-    }
+    checkAndEndTurnIfNecessary(gameState);
 
     return true;
   }
 
-  // Allow the action to proceed
-  const { actionType, sourcePlayerId, targetCardId, color, amount, myCardId } =
-    gameState.pendingAction;
+  // Player declined to use Just Say No. Revert pendingAction to the original state.
+  const originalAction = gameState.pendingAction; // Keep a reference
 
-  // Convert the JUST_SAY_NO_OPPORTUNITY back to the original action
-  switch (actionType) {
+  switch (originalAction.actionType) {
     case "SLY_DEAL":
-      if (!targetCardId) return false;
       gameState.pendingAction = {
         type: "SLY_DEAL",
-        playerId: sourcePlayerId,
+        playerId: originalAction.sourcePlayerId,
+        // We don't need targetCardId here, client will send it again
       };
-      return executePropertySteal(
-        gameState,
-        sourcePlayerId,
-        playerId,
-        targetCardId
-      );
-
+      break;
     case "DEAL_BREAKER":
-      if (!color) return false;
       gameState.pendingAction = {
         type: "DEAL_BREAKER",
-        playerId: sourcePlayerId,
+        playerId: originalAction.sourcePlayerId,
+        // We don't need color here, client will send it again
       };
-      return executeDealBreaker(
-        gameState,
-        sourcePlayerId,
-        playerId,
-        color as PropertyColor
-      );
-
+      break;
     case "RENT":
-      if (!color || amount === undefined) return false;
+      // Re-establish the RENT state for all players who haven't paid yet
       gameState.pendingAction = {
         type: "RENT",
-        playerId: sourcePlayerId,
-        color,
-        amount,
+        playerId: originalAction.sourcePlayerId,
+        color: originalAction.color!,
+        amount: originalAction.amount!,
         remainingPayers: gameState.players
-          .filter((p) => p.id !== sourcePlayerId)
+          .filter((p) => p.id !== originalAction.sourcePlayerId)
           .map((p) => p.id),
+        // isDoubled: originalAction.isDoubled // Assuming isDoubled was part of the JSN opportunity state if needed
       };
-      return true;
-
+      break;
     case "FORCED_DEAL":
-      if (!targetCardId || !myCardId) return false;
-
-      // Execute the Forced Deal immediately since they declined Just Say No
-      return executeForcedDeal(
-        gameState,
-        sourcePlayerId,
-        playerId,
-        targetCardId,
-        myCardId
-      );
-
+      gameState.pendingAction = {
+        type: "FORCED_DEAL",
+        playerId: originalAction.sourcePlayerId,
+        // We don't need target/my card IDs here, client will send them again
+      };
+      break;
     case "DEBT_COLLECTOR":
-      if (amount === undefined) return false;
       gameState.pendingAction = {
         type: "DEBT_COLLECTOR",
-        playerId: sourcePlayerId,
-        amount,
+        playerId: originalAction.sourcePlayerId,
+        amount: originalAction.amount!,
+        // We don't need targetPlayerId here, client will send it again
       };
-      return true;
+      break;
+    case "BIRTHDAY":
+      // Re-establish the BIRTHDAY state for all players who haven't paid yet
+      gameState.pendingAction = {
+        type: "BIRTHDAY",
+        playerId: originalAction.sourcePlayerId,
+        amount: originalAction.amount!,
+        remainingPayers: gameState.players
+          .filter((p) => p.id !== originalAction.sourcePlayerId)
+          .map((p) => p.id),
+      };
+      break;
+    default:
+      // Should not happen if actionType was set correctly
+      return false;
   }
 
-  return false;
+  // The action is now allowed to proceed, the client will likely trigger the next step
+  return true;
 }
 
 /**
@@ -1412,10 +1418,8 @@ export function executeForcedDeal(
   // Reset the pending action
   gameState.pendingAction = { type: "NONE" };
 
-  // Check if this was the 3rd card played and end turn if so
-  if (gameState.cardsPlayedThisTurn >= 3) {
-    endTurn(gameState);
-  }
+  // Check if turn should end
+  checkAndEndTurnIfNecessary(gameState);
 
   return true;
 }
@@ -1486,14 +1490,50 @@ export function payDebt(
   // Check if this is a bankruptcy case
   const isBankruptcy = totalPossible < amount;
 
-  // In bankruptcy case, validate that ALL cards are being surrendered
-  if (isBankruptcy && paymentCards.length !== availableCards.length) {
-    return false;
+  // --- Bankruptcy Handling ---
+  if (isBankruptcy) {
+    // Transfer all assets
+    const allAssets = [
+      ...debtor.moneyPile,
+      ...Object.values(debtor.properties).flatMap((sets) =>
+        sets.flatMap((set) => set.cards)
+      ),
+    ];
+    for (const card of allAssets) {
+      if (card.type === CardType.PROPERTY) {
+        const color = card.isWildcard ? PropertyColor.BROWN : card.color; // Assign a default or handle appropriately
+        if (!collector.properties[color]) {
+          collector.properties[color] = [];
+        }
+        let targetSet = collector.properties[color].find(
+          (set) => set.cards.length < getRequiredSetSize(color)
+        );
+        if (!targetSet) {
+          targetSet = { cards: [], houses: 0, hotels: 0 };
+          collector.properties[color].push(targetSet);
+        }
+        targetSet.cards.push(card);
+      } else {
+        collector.moneyPile.push(card);
+      }
+    }
+    // Clear debtor's assets
+    debtor.moneyPile = [];
+    debtor.properties = Object.values(PropertyColor).reduce((acc, color) => {
+      acc[color] = [];
+      return acc;
+    }, {} as Record<PropertyColor, PropertySet[]>);
+
+    // Reset pending action after bankruptcy
+    gameState.pendingAction = { type: "NONE" };
+    checkAndEndTurnIfNecessary(gameState);
+    return true; // Skip normal payment processing
   }
 
-  // For non-bankruptcy case, verify payment amount
+  // --- Non-Bankruptcy Payment Processing ---
+
+  // Verify payment amount
   if (
-    !isBankruptcy &&
     paymentCards.reduce((sum, cardId) => {
       const card = availableCards.find((c) => c.id === cardId);
       return sum + (card?.value || 0);
@@ -1566,10 +1606,8 @@ export function payDebt(
   // Reset pending action
   gameState.pendingAction = { type: "NONE" };
 
-  // Check if this was the 3rd card played and end turn if so
-  if (gameState.cardsPlayedThisTurn >= 3) {
-    endTurn(gameState);
-  }
+  // Check if turn should end
+  checkAndEndTurnIfNecessary(gameState);
 
   return true;
 }
@@ -1639,10 +1677,53 @@ export function collectBirthdayPayment(
   // Check if this is a bankruptcy case (insufficient total funds)
   const isBankruptcy = totalPossible < amount;
 
-  // In bankruptcy case, validate that ALL cards are being surrendered
-  if (isBankruptcy && paymentCards.length !== availableCards.length) {
-    return false;
+  // In bankruptcy case, transfer all assets and clear target's board
+  if (isBankruptcy) {
+    // Transfer all assets
+    const allAssets = [
+      ...target.moneyPile,
+      ...Object.values(target.properties).flatMap((sets) =>
+        sets.flatMap((set) => set.cards)
+      ),
+    ];
+    for (const card of allAssets) {
+      if (card.type === CardType.PROPERTY) {
+        const color = card.isWildcard ? PropertyColor.BROWN : card.color; // Assign a default or handle appropriately
+        if (!birthdayPerson.properties[color]) {
+          birthdayPerson.properties[color] = [];
+        }
+        let targetSet = birthdayPerson.properties[color].find(
+          (set) => set.cards.length < getRequiredSetSize(color)
+        );
+        if (!targetSet) {
+          targetSet = { cards: [], houses: 0, hotels: 0 };
+          birthdayPerson.properties[color].push(targetSet);
+        }
+        targetSet.cards.push(card);
+      } else {
+        birthdayPerson.moneyPile.push(card);
+      }
+    }
+    // Clear target's assets
+    target.moneyPile = [];
+    target.properties = Object.values(PropertyColor).reduce((acc, color) => {
+      acc[color] = [];
+      return acc;
+    }, {} as Record<PropertyColor, PropertySet[]>);
+
+    // Remove player from remaining payers and check if action is complete
+    gameState.pendingAction = {
+      ...gameState.pendingAction,
+      remainingPayers: remainingPayers.filter((id) => id !== targetPlayerId),
+    };
+    if (gameState.pendingAction.remainingPayers.length === 0) {
+      gameState.pendingAction = { type: "NONE" };
+      checkAndEndTurnIfNecessary(gameState);
+    }
+    return true; // Skip normal payment processing
   }
+
+  // --- Non-Bankruptcy Payment Processing ---
 
   // Validate all payment cards exist in allowed sources
   for (const cardId of paymentCards) {
@@ -1704,7 +1785,6 @@ export function collectBirthdayPayment(
 
   // For non-bankruptcy case, verify payment amount
   if (
-    !isBankruptcy &&
     paymentCardsToTransfer.reduce((sum, card) => sum + card.value, 0) < amount
   ) {
     return false;
@@ -1769,10 +1849,8 @@ export function collectBirthdayPayment(
   if (gameState.pendingAction.remainingPayers.length === 0) {
     gameState.pendingAction = { type: "NONE" };
 
-    // Check if this was the 3rd card played and end turn if so
-    if (gameState.cardsPlayedThisTurn >= 3) {
-      endTurn(gameState);
-    }
+    // Check if turn should end
+    checkAndEndTurnIfNecessary(gameState);
   }
 
   return true;
