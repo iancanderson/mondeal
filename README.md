@@ -30,6 +30,7 @@
 
 ## TODO
 
+- Ability to combine two sets of the same color (e.g. after you had a set then moved a rainbow property, should be able to combine same color cards into 1 set)
 - If a user has disconnected from a game, they should see it in the lobby to rejoin it
 - Only show up to 4 bank cards per row
 - Sly deal didn't seem to work, nothing happened
