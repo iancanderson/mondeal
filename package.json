@@ -3,5 +3,8 @@
   "scripts": {
     "heroku-postbuild": "cd client && npm install && npm run build && cd ../server && npm install && npm run build",
     "start-server": "cd server && npm start"
+  },
+  "engines": {
+    "node": "22.x"
   }
 }
