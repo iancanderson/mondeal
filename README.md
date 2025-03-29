@@ -27,14 +27,14 @@
 - Player has to discard down to 7 cards at end of turn
 - Debt Collector should let the person with the debt select how to pay, not the collector.
 - Allow player to auto-rejoin the game if they accidentally refresh the page, instead of making everyone quit the game.
+- If a user has disconnected from a game, they should see it in the lobby to rejoin it
+- Playing forced deal
 
 ## TODO
 
 - Ability to combine two sets of the same color (e.g. after you had a set then moved a rainbow property, should be able to combine same color cards into 1 set)
-- If a user has disconnected from a game, they should see it in the lobby to rejoin it
 - Only show up to 4 bank cards per row
 - Sly deal didn't seem to work, nothing happened
-- Playing forced deal
 - Deal Breaker said there was no set to steal when there was.
 - If a player has more cards for a color than the set limit, start a new set for that color
 - Disallow playing Just Say No as an action on your own turn, not in response to anything

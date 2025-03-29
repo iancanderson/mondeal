@@ -43,12 +43,20 @@ export function createRoom(playerInfo: { name: string; uuid: string }): {
 } {
   // Check if player already created a room
   if (roomCreators.has(playerInfo.uuid)) {
-    return { error: "You already have an active room" };
+    const existingRoomId = roomCreators.get(playerInfo.uuid);
+    // Make sure the room still exists
+    const roomExists = rooms.some(room => room.roomId === existingRoomId);
+    
+    if (roomExists) {
+      return { error: "You already have an active room" };
+    } else {
+      // If the room doesn't exist anymore, remove the entry from the map
+      roomCreators.delete(playerInfo.uuid);
+    }
   }
 
   const roomId = uuidv4();
   const playerId = uuidv4();
-
   const newRoom: Room = {
     roomId,
     gameState: {
@@ -72,7 +80,6 @@ export function createRoom(playerInfo: { name: string; uuid: string }): {
       pendingAction: { type: "NONE" },
     },
   };
-
   rooms.push(newRoom);
   roomCreators.set(playerInfo.uuid, roomId);
   return { room: newRoom, playerId };

@@ -162,6 +162,7 @@ export interface ClientToServerEvents {
     roomId: string,
     playerInfo: { name: string; uuid: string }
   ) => void;
+  rejoinGame: (roomId: string, playerId: string) => void;
   toggleReady: (roomId: string, playerId: string) => void;
   playCard: (
     roomId: string,
