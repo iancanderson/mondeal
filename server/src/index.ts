@@ -2,6 +2,7 @@ import express from "express";
 import http from "http";
 import { Server } from "socket.io";
 import cors from "cors";
+import path from "path";
 import {
   createRoom,
   joinRoom,
@@ -35,6 +36,15 @@ import {
 
 const app = express();
 app.use(cors());
+
+// Set up static file serving for the client build
+const clientDistPath = path.join(__dirname, "../../client/dist");
+app.use(express.static(clientDistPath));
+
+// Serve index.html for any routes not explicitly handled to support client-side routing
+app.get("*", (req, res) => {
+  res.sendFile(path.join(clientDistPath, "index.html"));
+});
 
 const server = http.createServer(app);
 
