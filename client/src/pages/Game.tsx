@@ -1,7 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useLocation, Link, useNavigate } from "react-router-dom";
 import ReactConfetti from "react-confetti";
-import { socket, saveGameSession, getSavedGameSession, clearGameSession, rejoinGame } from "../services/socket";
+import {
+  socket,
+  saveGameSession,
+  getSavedGameSession,
+  clearGameSession,
+  rejoinGame,
+} from "../services/socket";
 import CardView from "../components/CardView";
 import PlayerArea from "../components/PlayerArea";
 import { ColorPicker } from "../components/ColorPicker";
@@ -91,13 +97,13 @@ function Game() {
     // Only try to rejoin if we don't already have a gameState
     if (!gameState && !state?.gameState) {
       const savedSession = getSavedGameSession();
-      
+
       // If we have a saved session but no roomId parameter, navigate to the saved room
       if (savedSession && savedSession.roomId && !roomId) {
         navigate(`/game/${savedSession.roomId}`);
         return;
       }
-      
+
       // If we're on the correct page for the saved room, attempt to rejoin
       if (savedSession && savedSession.roomId === roomId) {
         rejoinGame();
@@ -112,7 +118,7 @@ function Game() {
         console.log("roomJoined received, playerId:", data.playerId);
         setGameState(data.gameState);
         setPlayerId(data.playerId);
-        
+
         // Save session data when successfully joining a room
         if (roomId && data.playerId) {
           saveGameSession(roomId, data.playerId);
@@ -291,28 +297,8 @@ function Game() {
     }
 
     if (card.type === "ACTION") {
-      if (card.name === "House" || card.name === "Hotel") {
-        // Show property upgrade modal for House/Hotel cards
-        setShowPropertyUpgradeModal({ cardId: card.id, type: card.name });
-        return;
-      }
-
-      // Check if it's a Deal Breaker and if there are any complete sets to steal
-      if (card.name === "Deal Breaker") {
-        // Check if any player has a complete set
-        const hasCompleteSet = gameState?.players.some((p) => {
-          if (p.id === playerId) return false; // Skip current player
-          return Object.entries(p.properties).some(([color, propertySets]) => {
-            const requiredSize = getRequiredSetSize(color as PropertyColor);
-            return propertySets.some((set) => set.cards.length >= requiredSize);
-          });
-        });
-
-        if (!hasCompleteSet) {
-          return; // Don't allow playing Deal Breaker if no complete sets exist
-        }
-      }
-
+      // Show the action card modal for all action cards including House/Hotel
+      // to give players the choice to play as money or action
       setSelectedActionCard(card);
       return;
     }
