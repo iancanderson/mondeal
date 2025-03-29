@@ -1,5 +1,13 @@
 import { v4 as uuidv4 } from "uuid";
-import { Room, GameState, Player, RoomInfo, ActionCardName, PropertyColor, PropertySet } from "./types";
+import {
+  Room,
+  GameState,
+  Player,
+  RoomInfo,
+  ActionCardName,
+  PropertyColor,
+  PropertySet,
+} from "./types";
 import {
   createDeck,
   dealInitialCards,
@@ -45,8 +53,8 @@ export function createRoom(playerInfo: { name: string; uuid: string }): {
   if (roomCreators.has(playerInfo.uuid)) {
     const existingRoomId = roomCreators.get(playerInfo.uuid);
     // Make sure the room still exists
-    const roomExists = rooms.some(room => room.roomId === existingRoomId);
-    
+    const roomExists = rooms.some((room) => room.roomId === existingRoomId);
+
     if (roomExists) {
       return { error: "You already have an active room" };
     } else {

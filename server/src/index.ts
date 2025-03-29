@@ -576,24 +576,24 @@ io.on("connection", (socket) => {
       socket.emit("error", "Room not found. The game may have ended.");
       return;
     }
-    
+
     // Check if the player exists in this room
     const player = room.gameState.players.find((p) => p.id === playerId);
     if (!player) {
       socket.emit("error", "Player not found in this game.");
       return;
     }
-    
+
     // Join the socket to the room
     socket.join(roomId);
     playerRooms.set(socket.id, roomId);
-    
+
     // Send the current game state to the reconnecting player
     socket.emit("roomJoined", {
       gameState: room.gameState,
       playerId: playerId,
     });
-    
+
     // Notify other players that someone has rejoined
     if (player) {
       socket
