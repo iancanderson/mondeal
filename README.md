@@ -38,4 +38,5 @@ TOP_CARDS=SLY_DEAL,FORCED_DEAL npm run dev
 
 ## TODO
 
+- expire games after an hour or something
 - Show modal to allow user to enter name if they click to join a game with a blank name
