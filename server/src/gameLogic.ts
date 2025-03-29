@@ -735,10 +735,9 @@ export function executePropertySteal(
     return true;
   }
 
-  if (
-    gameState.pendingAction.type !== "SLY_DEAL" ||
-    gameState.pendingAction.playerId !== sourcePlayerId
-  ) {
+  // Only check the pending action type, not the player ID
+  // The player ID may not match if the action was reset after Just Say No
+  if (gameState.pendingAction.type !== "SLY_DEAL") {
     return false;
   }
 
@@ -792,30 +791,27 @@ export function executePropertySteal(
 
   // Add to source player's properties
   if (!sourcePlayer.properties[cardColor]) {
-    sourcePlayer.properties[cardColor] = [
-      {
-        cards: [],
-        houses: 0,
-        hotels: 0,
-      },
-    ];
+    sourcePlayer.properties[cardColor] = [];
   }
 
   // Find an incomplete set to add the property to
   const requiredSetSize = getRequiredSetSize(cardColor);
-  let targetSet = sourcePlayer.properties[cardColor][0]; // Default to first set
+  let targetSet: PropertySet | undefined;
 
-  // Try to find an incomplete set
-  for (const set of sourcePlayer.properties[cardColor]) {
-    if (set.cards.length < requiredSetSize) {
-      targetSet = set;
-      break;
+  // First check if there are any existing sets for this color
+  if (sourcePlayer.properties[cardColor].length > 0) {
+    // Try to find an incomplete set
+    for (const set of sourcePlayer.properties[cardColor]) {
+      if (set.cards.length < requiredSetSize) {
+        targetSet = set;
+        break;
+      }
     }
   }
 
-  // If all sets are complete, create a new set
-  if (targetSet.cards.length >= requiredSetSize) {
-    const newSet = {
+  // If no incomplete set found or no sets exist, create a new one
+  if (!targetSet) {
+    const newSet: PropertySet = {
       cards: [],
       houses: 0,
       hotels: 0,
@@ -824,6 +820,7 @@ export function executePropertySteal(
     targetSet = newSet;
   }
 
+  // Add the stolen card to the target set
   targetSet.cards.push(stolenCard);
 
   // Reset the pending action

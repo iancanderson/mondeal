@@ -31,12 +31,12 @@
 - Playing forced deal
 - Should be able to play a house or hotel as money
 - Debt collector should work instead of doing nothing when choosing a player
+- Sly deal didn't seem to work, nothing happened
 
 ## TODO
 
 - Ability to combine two sets of the same color (e.g. after you had a set then moved a rainbow property, should be able to combine same color cards into 1 set)
 - Only show up to 4 bank cards per row
-- Sly deal didn't seem to work, nothing happened
 - Deal Breaker said there was no set to steal when there was.
 - If a player has more cards for a color than the set limit, start a new set for that color
 - Disallow playing Just Say No as an action on your own turn, not in response to anything
