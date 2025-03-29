@@ -361,6 +361,16 @@ function Game() {
   const handlePlayAsAction = (color?: PropertyColor) => {
     if (!selectedActionCard) return;
 
+    // Special handling for House and Hotel cards
+    if (selectedActionCard.name === "House" || selectedActionCard.name === "Hotel") {
+      setShowPropertyUpgradeModal({
+        cardId: selectedActionCard.id,
+        type: selectedActionCard.name as "House" | "Hotel"
+      });
+      setSelectedActionCard(null);
+      return;
+    }
+
     // Special handling for Forced Deal
     if (selectedActionCard.name === "Forced Deal") {
       socket.emit(
