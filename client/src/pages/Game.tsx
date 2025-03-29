@@ -283,7 +283,20 @@ function Game() {
   };
 
   if (!roomId || !gameState) {
-    return <div className="p-4">No Game State found. Return to Lobby.</div>;
+    return (
+      <div className="p-4">
+        No Game State found.
+        <div className="mt-4 flex justify-end">
+          <Link
+            to="/"
+            className="text-blue-500 hover:text-blue-700 underline"
+            onClick={clearGameSession}
+          >
+            Back to Lobby
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   const handleToggleReady = () => {
