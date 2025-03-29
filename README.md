@@ -36,7 +36,6 @@ TOP_CARDS=SLY_DEAL,FORCED_DEAL npm run dev
 - If a user has disconnected from a game, they should see it in the lobby to rejoin it
 - Playing forced deal
 
-## TSly deal didn't seem to work, nothing happened
+## TODO
 
-- Debt collector should work instead of doing nothing when choosing a player
--
+- Show modal to allow user to enter name if they click to join a game with a blank name
