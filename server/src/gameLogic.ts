@@ -167,6 +167,39 @@ export function createDeck(): Card[] {
     [deck[i], deck[j]] = [deck[j], deck[i]];
   }
 
+  // Check if TOP_CARDS environment variable is set
+  const topCardsValue = process.env.TOP_CARDS;
+  if (topCardsValue) {
+    // Parse comma-separated card names
+    const topCardNames = topCardsValue.split(",").map((name) => name.trim());
+
+    // Find specified cards and move them to the top of the deck (end of array, since we'll pop)
+    const cardsToMove = [];
+
+    // Process each requested card name
+    for (const cardName of topCardNames) {
+      // Find the card in the shuffled deck
+      const index = deck.findIndex(
+        (card) =>
+          card.name === cardName ||
+          card.name === ActionCardName[cardName as keyof typeof ActionCardName]
+      );
+
+      if (index !== -1) {
+        // Remove the card from its current position
+        const [card] = deck.splice(index, 1);
+        // Add to our list of cards to put on top
+        cardsToMove.push(card);
+        console.log(`Moving ${card.name} to the top of the deck for testing`);
+      } else {
+        console.log(`Requested card '${cardName}' not found in deck`);
+      }
+    }
+
+    // Put these cards on top (at the end, since we'll pop from the end)
+    deck.push(...cardsToMove);
+  }
+
   return deck;
 }
 
