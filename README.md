@@ -30,10 +30,10 @@
 - If a user has disconnected from a game, they should see it in the lobby to rejoin it
 - Playing forced deal
 - Should be able to play a house or hotel as money
+- Debt collector should work instead of doing nothing when choosing a player
 
 ## TODO
 
-- Debt collector should work instead of doing nothing when choosing a player
 - Ability to combine two sets of the same color (e.g. after you had a set then moved a rainbow property, should be able to combine same color cards into 1 set)
 - Only show up to 4 bank cards per row
 - Sly deal didn't seem to work, nothing happened

@@ -18,11 +18,18 @@ function RentModal({
   const [selectedCards, setSelectedCards] = useState<Card[]>([]);
   const [isBankrupt, setIsBankrupt] = useState(false);
 
-  if (pendingAction.type !== "RENT") return null;
+  // Support both RENT and DEBT_COLLECTOR action types
+  if (pendingAction.type !== "RENT" && pendingAction.type !== "DEBT_COLLECTOR")
+    return null;
 
-  // Don't show modal if player has already paid rent
-  if (!pendingAction.remainingPayers.includes(targetPlayer.id)) return null;
+  // Don't show modal if player has already paid rent (for RENT type only)
+  if (
+    pendingAction.type === "RENT" &&
+    !pendingAction.remainingPayers.includes(targetPlayer.id)
+  )
+    return null;
 
+  // For both RENT and DEBT_COLLECTOR, we need an amount
   const { amount } = pendingAction;
 
   // Calculate total value of selected cards
@@ -33,12 +40,12 @@ function RentModal({
 
   // Get all cards that could be used for payment (money pile + property cards)
   const moneyPileCards = targetPlayer.moneyPile;
-  
+
   // Fix: Properly handle the nested property sets structure
   const propertyCards = Object.values(targetPlayer.properties).flatMap(
-    propertySets => propertySets.flatMap(set => set.cards)
+    (propertySets) => propertySets.flatMap((set) => set.cards)
   );
-  
+
   const availableCards = [...moneyPileCards, ...propertyCards];
 
   // Calculate total possible payment from all available cards
@@ -69,17 +76,21 @@ function RentModal({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white p-6 rounded-lg shadow-lg max-w-2xl w-full">
         <h3 className="text-lg font-semibold mb-4">
-          Pay Rent to {currentPlayer.name}
+          {pendingAction.type === "RENT"
+            ? `Pay Rent to ${currentPlayer.name}`
+            : `Pay Debt to ${currentPlayer.name}`}
         </h3>
 
         <div className="mb-4">
           <p className="text-gray-700">
-            You owe ${amount}M in rent for {pendingAction.color} properties.
+            {pendingAction.type === "RENT"
+              ? `You owe $${amount}M in rent for ${pendingAction.color} properties.`
+              : `You owe $${amount}M to ${currentPlayer.name} for the Debt Collector.`}
           </p>
           {totalPossible < amount && !isBankrupt && (
             <div className="mt-2">
               <p className="text-red-600 mb-2">
-                Warning: You don't have enough cards to pay the full rent!
+                Warning: You don't have enough cards to pay the full amount!
               </p>
               <button
                 onClick={handleBankruptcy}
@@ -126,17 +137,23 @@ function RentModal({
             )}
 
             {/* Properties section - updated for array of property sets */}
-            {Object.entries(targetPlayer.properties).map(([color, propertySets]) => (
-              <React.Fragment key={color}>
-                {propertySets.map((propertySet, setIndex) => (
-                  <div key={`${color}-set-${setIndex}`} className="border-b pb-3">
-                    <p className="font-medium mb-2">{color} Properties (Set {setIndex + 1}):</p>
-                    <div className="flex flex-wrap gap-2">
-                      {propertySet.cards.map((card) => (
-                        <div
-                          key={card.id}
-                          onClick={() => !isBankrupt && handleCardClick(card)}
-                          className={`
+            {Object.entries(targetPlayer.properties).map(
+              ([color, propertySets]) => (
+                <React.Fragment key={color}>
+                  {propertySets.map((propertySet, setIndex) => (
+                    <div
+                      key={`${color}-set-${setIndex}`}
+                      className="border-b pb-3"
+                    >
+                      <p className="font-medium mb-2">
+                        {color} Properties (Set {setIndex + 1}):
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {propertySet.cards.map((card) => (
+                          <div
+                            key={card.id}
+                            onClick={() => !isBankrupt && handleCardClick(card)}
+                            className={`
                             transform transition 
                             ${
                               isBankrupt
@@ -146,15 +163,16 @@ function RentModal({
                                 : "hover:scale-105 cursor-pointer"
                             }
                           `}
-                        >
-                          <CardView card={card} />
-                        </div>
-                      ))}
+                          >
+                            <CardView card={card} />
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </React.Fragment>
-            ))}
+                  ))}
+                </React.Fragment>
+              )
+            )}
           </div>
         </div>
 
@@ -173,7 +191,11 @@ function RentModal({
                   : "bg-gray-300 text-gray-500 cursor-not-allowed"
               }`}
             >
-              {isBankrupt ? "Surrender All Cards" : "Pay Rent"}
+              {isBankrupt
+                ? "Surrender All Cards"
+                : pendingAction.type === "RENT"
+                ? "Pay Rent"
+                : "Pay Debt"}
             </button>
           </div>
         </div>

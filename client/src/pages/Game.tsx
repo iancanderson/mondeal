@@ -242,7 +242,8 @@ function Game() {
   React.useEffect(() => {
     if (
       gameState?.pendingAction.type === "DEBT_COLLECTOR" &&
-      gameState.pendingAction.playerId === playerId
+      gameState.pendingAction.playerId === playerId &&
+      !gameState.pendingAction.targetPlayerId
     ) {
       setShowDebtCollectorModal(true);
     } else {
