@@ -18,6 +18,7 @@ import {
 
 const rooms: Room[] = [];
 const roomCreators = new Map<string, string>(); // uuid -> roomId
+const ROOM_EXPIRY_MS = 60 * 60 * 1000; // 1 hour in milliseconds
 
 // Helper function to create empty properties object
 function createEmptyProperties(): Record<PropertyColor, PropertySet[]> {
@@ -31,6 +32,9 @@ function createEmptyProperties(): Record<PropertyColor, PropertySet[]> {
  * Get a list of available rooms that haven't started yet
  */
 export function getAvailableRooms(): RoomInfo[] {
+  // Expire old rooms before returning available rooms
+  expireRooms();
+
   return rooms
     .filter((room) => !room.gameState.isStarted)
     .map((room) => ({
@@ -87,6 +91,7 @@ export function createRoom(playerInfo: { name: string; uuid: string }): {
       cardsPlayedThisTurn: 0,
       pendingAction: { type: "NONE" },
     },
+    createdAt: Date.now(), // Add timestamp to track when the room was created
   };
   rooms.push(newRoom);
   roomCreators.set(playerInfo.uuid, roomId);
@@ -115,6 +120,9 @@ export function joinRoom(
   roomId: string,
   playerInfo: { name: string; uuid: string }
 ): { room?: Room; playerId?: string } {
+  // Expire old rooms before joining
+  expireRooms();
+
   const room = rooms.find((r) => r.roomId === roomId);
   if (!room) return {};
 
@@ -242,4 +250,24 @@ export function getRoom(roomId: string): Room | undefined {
 
 export function getRooms() {
   return rooms;
+}
+
+/**
+ * Expire rooms older than ROOM_EXPIRY_MS
+ */
+export function expireRooms(): void {
+  const now = Date.now();
+  const expiredRoomIds: string[] = [];
+
+  // Identify expired rooms
+  rooms.forEach((room) => {
+    if (now - room.createdAt > ROOM_EXPIRY_MS) {
+      expiredRoomIds.push(room.roomId);
+    }
+  });
+
+  // Remove expired rooms
+  expiredRoomIds.forEach((roomId) => {
+    removeRoom(roomId);
+  });
 }

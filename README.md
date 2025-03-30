@@ -35,8 +35,8 @@ TOP_CARDS=SLY_DEAL,FORCED_DEAL npm run dev
 - Allow player to auto-rejoin the game if they accidentally refresh the page, instead of making everyone quit the game.
 - If a user has disconnected from a game, they should see it in the lobby to rejoin it
 - Playing forced deal
+- Expire games after an hour
 
 ## TODO
 
-- expire games after an hour or something
 - Show modal to allow user to enter name if they click to join a game with a blank name

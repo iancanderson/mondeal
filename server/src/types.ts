@@ -142,6 +142,7 @@ export interface GameState {
 export interface Room {
   roomId: string;
   gameState: GameState;
+  createdAt: number; // Timestamp for when the room was created
 }
 
 export interface RoomInfo {
