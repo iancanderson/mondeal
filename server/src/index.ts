@@ -34,6 +34,8 @@ import {
   Player,
 } from "./types";
 
+const MAX_NAME_LENGTH = 20; // Maximum player name length
+
 const app = express();
 app.use(cors());
 
@@ -58,6 +60,11 @@ const io = new Server<ClientToServerEvents, ServerToClientEvents>(server, {
 function broadcastRoomUpdate() {
   io.emit("availableRooms", getAvailableRooms());
 }
+
+// Helper function to truncate name
+const truncateName = (name: string): string => {
+  return name.slice(0, MAX_NAME_LENGTH);
+};
 
 // Track player socket connections to rooms
 const playerRooms = new Map<string, string>(); // socketId -> roomId
@@ -414,6 +421,9 @@ io.on("connection", (socket) => {
   );
 
   socket.on("updatePlayerName", (playerId, newName, uuid) => {
+    // Truncate name to maximum length
+    const truncatedName = truncateName(newName);
+
     // Update player name in all rooms where this player exists
     const rooms = getRooms();
     const roomsWithPlayer = rooms.filter((room: Room) =>
@@ -426,7 +436,7 @@ io.on("connection", (socket) => {
         (p: Player) => p.uuid === uuid
       );
       if (player) {
-        player.name = newName;
+        player.name = truncatedName;
         // Broadcast the updated game state to all players in the room
         io.to(room.roomId).emit("updateGameState", room.gameState);
       }

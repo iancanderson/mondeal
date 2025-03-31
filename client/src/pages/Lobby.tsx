@@ -7,6 +7,12 @@ import { GameState, RoomInfo } from "../types";
 // Local storage keys
 const PLAYER_NAME_KEY = "monopolyDeal_playerName";
 const PLAYER_UUID_KEY = "monopolyDeal_playerUUID";
+const MAX_NAME_LENGTH = 20; // Maximum name length
+
+// Utility function to truncate name
+const truncateName = (name: string): string => {
+  return name.slice(0, MAX_NAME_LENGTH);
+};
 
 function Lobby() {
   const [playerName, setPlayerName] = useState(() => {
@@ -73,8 +79,10 @@ function Lobby() {
       alert("Enter player name");
       return;
     }
-    localStorage.setItem(PLAYER_NAME_KEY, playerName);
-    socket.emit("createRoom", { name: playerName, uuid: playerUUID });
+    const truncatedName = truncateName(playerName);
+    setPlayerName(truncatedName);
+    localStorage.setItem(PLAYER_NAME_KEY, truncatedName);
+    socket.emit("createRoom", { name: truncatedName, uuid: playerUUID });
   };
 
   const handleJoinRoom = (roomIdToJoin: string) => {
@@ -82,9 +90,11 @@ function Lobby() {
       alert("Enter player name");
       return;
     }
-    localStorage.setItem(PLAYER_NAME_KEY, playerName);
+    const truncatedName = truncateName(playerName);
+    setPlayerName(truncatedName);
+    localStorage.setItem(PLAYER_NAME_KEY, truncatedName);
     socket.emit("joinRoom", roomIdToJoin, {
-      name: playerName,
+      name: truncatedName,
       uuid: playerUUID,
     });
   };
@@ -113,6 +123,7 @@ function Lobby() {
             type="text"
             placeholder="Your Name"
             value={playerName}
+            maxLength={MAX_NAME_LENGTH}
             onChange={(e) => {
               const newName = e.target.value;
               setPlayerName(newName);

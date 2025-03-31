@@ -19,6 +19,12 @@ import {
 const rooms: Room[] = [];
 const roomCreators = new Map<string, string>(); // uuid -> roomId
 const ROOM_EXPIRY_MS = 60 * 60 * 1000; // 1 hour in milliseconds
+const MAX_NAME_LENGTH = 20; // Maximum player name length
+
+// Helper function to truncate name
+const truncateName = (name: string): string => {
+  return name.slice(0, MAX_NAME_LENGTH);
+};
 
 // Helper function to create empty properties object
 function createEmptyProperties(): Record<PropertyColor, PropertySet[]> {
@@ -67,6 +73,9 @@ export function createRoom(playerInfo: { name: string; uuid: string }): {
     }
   }
 
+  // Truncate name to maximum length
+  const truncatedName = truncateName(playerInfo.name);
+
   const roomId = uuidv4();
   const playerId = uuidv4();
   const newRoom: Room = {
@@ -76,7 +85,7 @@ export function createRoom(playerInfo: { name: string; uuid: string }): {
       players: [
         {
           id: playerId,
-          name: playerInfo.name,
+          name: truncatedName,
           uuid: playerInfo.uuid,
           hand: [],
           properties: createEmptyProperties(),
@@ -91,7 +100,7 @@ export function createRoom(playerInfo: { name: string; uuid: string }): {
       cardsPlayedThisTurn: 0,
       pendingAction: { type: "NONE" },
     },
-    createdAt: Date.now(), // Add timestamp to track when the room was created
+    createdAt: Date.now(),
   };
   rooms.push(newRoom);
   roomCreators.set(playerInfo.uuid, roomId);
@@ -131,6 +140,9 @@ export function joinRoom(
     return {};
   }
 
+  // Truncate name to maximum length
+  const truncatedName = truncateName(playerInfo.name);
+
   // Check if player already exists in the room
   const existingPlayer = room.gameState.players.find(
     (p) => p.uuid === playerInfo.uuid
@@ -142,7 +154,7 @@ export function joinRoom(
   const playerId = uuidv4();
   room.gameState.players.push({
     id: playerId,
-    name: playerInfo.name,
+    name: truncatedName,
     uuid: playerInfo.uuid,
     hand: [],
     properties: createEmptyProperties(),
